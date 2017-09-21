@@ -8,6 +8,7 @@ public class DicedSpriteRendererEditor : Editor
 
     private SerializedProperty dicedSprite;
     private SerializedProperty color;
+    private SerializedProperty shareMaterial;
 
     private GUIContent materialContent = new GUIContent("Material", "Material used by the renderer.");
 
@@ -15,6 +16,7 @@ public class DicedSpriteRendererEditor : Editor
     {
         dicedSprite = serializedObject.FindProperty("_dicedSprite");
         color = serializedObject.FindProperty("_color");
+        shareMaterial = serializedObject.FindProperty("_shareMaterial");
     }
 
     public override void OnInspectorGUI ()
@@ -23,6 +25,7 @@ public class DicedSpriteRendererEditor : Editor
         EditorGUILayout.PropertyField(dicedSprite);
         EditorGUILayout.PropertyField(color);
         TargetRenderer.Material = EditorGUILayout.ObjectField(materialContent, TargetRenderer.Material, typeof(Material), false) as Material;
+        EditorGUILayout.PropertyField(shareMaterial);
         serializedObject.ApplyModifiedProperties();
     }
 }

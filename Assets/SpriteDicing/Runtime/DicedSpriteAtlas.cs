@@ -2,6 +2,9 @@
 using UnityCommon;
 using UnityEngine;
 
+/// <summary>
+/// Manages diced sprite data and atlas texture.
+/// </summary>
 [CreateAssetMenu(menuName = "Sprites/Diced Sprite Atlas")]
 public class DicedSpriteAtlas : ScriptableObject
 {

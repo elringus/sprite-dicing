@@ -4,7 +4,7 @@
 /// Renders a DicedSprite via MeshRenderer using mesh generated with the sprite's data and atlas texture.
 /// </summary>
 [AddComponentMenu("Rendering/Diced Sprite Renderer")]
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer)), ExecuteInEditMode] 
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer)), ExecuteInEditMode]
 public class DicedSpriteRenderer : MonoBehaviour
 {
     /// <summary>
@@ -18,9 +18,24 @@ public class DicedSpriteRenderer : MonoBehaviour
     public Color Color { get { return _color; } set { SetMaterialColor(value); } }
 
     /// <summary>
-    /// Material used by the renderer. Will reference shared material in edit mode.
+    /// Renderer used to draw diced sprite generated mesh.
+    /// </summary>
+    public MeshRenderer Renderer { get { return GetRenderer(); } }
+
+    /// <summary>
+    /// Material used by the renderer. Will reference shared material in edit mode or when ShareMaterial is enabled.
     /// </summary>
     public Material Material { get { return GetMaterial(); } set { SetMaterial(value); } }
+
+    /// <summary>
+    /// Whether to use shared material. Enable to allow draw calls batching.
+    /// </summary>
+    public bool ShareMaterial { get { return _shareMaterial; } set { _shareMaterial = value; } }
+
+    /// <summary>
+    /// Generated diced sprite mesh. Will reference shared mesh in edit mode.
+    /// </summary>
+    public Mesh Mesh { get { return GetMesh(); } }
 
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -31,6 +46,8 @@ public class DicedSpriteRenderer : MonoBehaviour
     [SerializeField] private DicedSprite _dicedSprite;
     [Tooltip("Sprite tint color.")]
     [SerializeField] private Color _color = Color.white;
+    [Tooltip("Whether to use shared material. Enable to allow draw calls batching.")]
+    [SerializeField] private bool _shareMaterial = true;
 
     private MaterialPropertyBlock _materialPropertiesCache;
 
@@ -38,20 +55,20 @@ public class DicedSpriteRenderer : MonoBehaviour
     {
         mainTexPropertyId = Shader.PropertyToID("_MainTex");
         colorPropertyId = Shader.PropertyToID("_RendererColor");
+        InitializeMeshFilter();
+        InitializeMeshRenderer();
     }
 
     private void OnEnable ()
     {
-        InitializeMeshFilter();
-        InitializeMeshRenderer();
         SetDicedSprite(DicedSprite);
         SetMaterialColor(Color);
-        meshRenderer.enabled = true;
+        Renderer.enabled = true;
     }
 
     private void OnDisable ()
     {
-        meshRenderer.enabled = false;
+        Renderer.enabled = false;
     }
 
     private void OnValidate ()
@@ -67,7 +84,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// Assigns new diced sprite data and updates mesh to represnt 
+    /// Assigns new diced sprite data.
     /// </summary>
     public void SetDicedSprite (DicedSprite dicedSprite)
     {
@@ -75,7 +92,7 @@ public class DicedSpriteRenderer : MonoBehaviour
 
         if (!dicedSprite)
         {
-            GetMesh().Clear();
+            Mesh.Clear();
             return;
         }
 
@@ -85,14 +102,17 @@ public class DicedSpriteRenderer : MonoBehaviour
         dicedSprite.OnModified.AddListener(SetDicedSprite);
         #endif
 
-        dicedSprite.FillMesh(GetMesh());
+        dicedSprite.FillMesh(Mesh);
         SetMaterialMainTex(dicedSprite.AtlasTexture);
     }
 
     private void InitializeMeshFilter ()
     {
-        meshFilter = GetComponent<MeshFilter>();
-        meshFilter.hideFlags = HideFlags.HideInInspector;
+        if (!meshFilter)
+        {
+            meshFilter = GetComponent<MeshFilter>();
+            meshFilter.hideFlags = HideFlags.HideInInspector;
+        }
         if (!Application.isPlaying)
         {
             meshFilter.sharedMesh = new Mesh();
@@ -107,16 +127,20 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private void InitializeMeshRenderer ()
     {
-        meshRenderer = GetComponent<MeshRenderer>();
-        meshRenderer.hideFlags = HideFlags.HideInInspector;
-        if (!Material) Material = new Material(Shader.Find("Sprites/Default"));
+        if (!meshRenderer)
+        {
+            meshRenderer = GetComponent<MeshRenderer>();
+            meshRenderer.hideFlags = HideFlags.HideInInspector;
+        }
+        if (!Application.isPlaying && !Material)
+            Material = new Material(Shader.Find("Sprites/Default"));
     }
 
     private void SetMaterialMainTex (Texture2D mainText)
     {
         var materialProperties = GetMaterialProperties();
         materialProperties.SetTexture(mainTexPropertyId, mainText);
-        meshRenderer.SetPropertyBlock(materialProperties);
+        Renderer.SetPropertyBlock(materialProperties);
     }
 
     private void SetMaterialColor (Color color)
@@ -124,34 +148,37 @@ public class DicedSpriteRenderer : MonoBehaviour
         _color = color;
         var materialProperties = GetMaterialProperties();
         materialProperties.SetColor(colorPropertyId, color);
-        meshRenderer.SetPropertyBlock(materialProperties);
+        Renderer.SetPropertyBlock(materialProperties);
     }
 
     private MaterialPropertyBlock GetMaterialProperties ()
     {
-        Debug.Assert(meshRenderer);
         if (_materialPropertiesCache == null)
             _materialPropertiesCache = new MaterialPropertyBlock();
-        meshRenderer.GetPropertyBlock(_materialPropertiesCache);
+        Renderer.GetPropertyBlock(_materialPropertiesCache);
         return _materialPropertiesCache;
     }
 
     private Mesh GetMesh ()
     {
-        Debug.Assert(meshFilter);
+        if (!meshFilter) InitializeMeshFilter();
         return Application.isPlaying ? meshFilter.mesh : meshFilter.sharedMesh;
+    }
+
+    private MeshRenderer GetRenderer ()
+    {
+        if (!meshRenderer) InitializeMeshRenderer();
+        return meshRenderer;
     }
 
     private Material GetMaterial ()
     {
-        Debug.Assert(meshRenderer);
-        return Application.isPlaying ? meshRenderer.material : meshRenderer.sharedMaterial;
+        return !Application.isPlaying || ShareMaterial ? Renderer.sharedMaterial : Renderer.material;
     }
 
     private void SetMaterial (Material material)
     {
-        Debug.Assert(meshRenderer);
-        if (Application.isPlaying) meshRenderer.material = material;
-        else meshRenderer.sharedMaterial = material;
+        if (!Application.isPlaying || ShareMaterial) Renderer.sharedMaterial = material;
+        else Renderer.material = material;
     }
 }
