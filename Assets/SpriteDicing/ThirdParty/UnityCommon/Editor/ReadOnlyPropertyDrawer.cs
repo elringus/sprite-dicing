@@ -1,18 +1,24 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
 
-[CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
-public class ReadOnlyPropertyDrawer : PropertyDrawer
+namespace UnityCommon
 {
-    public override void OnGUI (Rect position, SerializedProperty property, GUIContent label)
+    using UnityEngine;
+    using UnityEditor;
+    
+    [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
+    public class ReadOnlyPropertyDrawer : PropertyDrawer
     {
-        GUI.enabled = false;
-        EditorGUI.PropertyField(position, property, label, true);
-        GUI.enabled = true;
+        public override void OnGUI (Rect position, SerializedProperty property, GUIContent label)
+        {
+            GUI.enabled = false;
+            EditorGUI.PropertyField(position, property, label, true);
+            GUI.enabled = true;
+        }
+    
+        public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
+        }
     }
-
-    public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
-    {
-        return EditorGUI.GetPropertyHeight(property, label, true);
-    }
+    
 }

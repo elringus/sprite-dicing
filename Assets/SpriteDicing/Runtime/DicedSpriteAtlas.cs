@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityCommon;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Sprites/Diced Sprite Atlas")]

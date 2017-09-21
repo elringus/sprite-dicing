@@ -1,6 +1,12 @@
-﻿using UnityEngine;
+﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
 
-/// <summary>
-/// The field won't be editable in the editor.
-/// </summary>
-public class ReadOnlyAttribute : PropertyAttribute { }
+namespace UnityCommon
+{
+    using UnityEngine;
+    
+    /// <summary>
+    /// The field won't be editable in the editor.
+    /// </summary>
+    public class ReadOnlyAttribute : PropertyAttribute { }
+    
+}

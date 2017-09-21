@@ -1,14 +1,20 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
 
-[CustomPropertyDrawer(typeof(EvenRangeAttribute))]
-public class EvenRangePropertyDrawer : PropertyDrawer
+namespace UnityCommon
 {
-    public override void OnGUI (Rect position, SerializedProperty property, GUIContent label)
+    using UnityEditor;
+    using UnityEngine;
+    
+    [CustomPropertyDrawer(typeof(EvenRangeAttribute))]
+    public class EvenRangePropertyDrawer : PropertyDrawer
     {
-        var evenRangeAttribute = attribute as EvenRangeAttribute;
-        var min = evenRangeAttribute.Min;
-        var max = evenRangeAttribute.Max;
-        property.intValue = EditorGUI.IntSlider(position, label, property.intValue, min, max).ToNearestEven(max);
+        public override void OnGUI (Rect position, SerializedProperty property, GUIContent label)
+        {
+            var evenRangeAttribute = attribute as EvenRangeAttribute;
+            var min = evenRangeAttribute.Min;
+            var max = evenRangeAttribute.Max;
+            property.intValue = EditorGUI.IntSlider(position, label, property.intValue, min, max).ToNearestEven(max);
+        }
     }
+    
 }
