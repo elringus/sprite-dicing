@@ -15,7 +15,6 @@ public class DicedSpriteEditor : Editor
 
     private Vector2 pivotValue;
 
-
     private void OnEnable ()
     {
         atlasTexture = serializedObject.FindProperty("atlasTexture");
@@ -57,5 +56,11 @@ public class DicedSpriteEditor : Editor
         pivotValue = EditorGUILayout.Vector2Field(pivotContent, pivotValue);
         if (EditorGUI.EndChangeCheck())
             TargetSprite.SetPivot(pivotValue);
+    }
+
+    [MenuItem("GameObject/2D Object/Diced Sprite")]
+    private static void CreateDicedSprite ()
+    {
+        new GameObject("New Diced Sprite", typeof(DicedSpriteRenderer));
     }
 }
