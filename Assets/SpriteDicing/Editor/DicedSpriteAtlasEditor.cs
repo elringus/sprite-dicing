@@ -25,7 +25,7 @@ public class DicedSpriteAtlasEditor : Editor
     private GUIContent dataSizeValueContent;
     private GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
     private GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
-    private GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save DicedSprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
+    private GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
     private GUIContent atlasTextureSizeLimitContent = new GUIContent("Atlas Texture Size Limit", "Maximum size of the generated atlas texture.");
     private GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
     private GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
@@ -48,7 +48,7 @@ public class DicedSpriteAtlasEditor : Editor
         includeSubfolders = serializedObject.FindProperty("includeSubfolders");
         prependSubfolderNames = serializedObject.FindProperty("prependSubfolderNames");
 
-        dataSizeValueContent = GetDataSizeContent();
+        dataSizeValueContent = GetDataSizeValueContent();
     }
 
     #region GUI
@@ -97,7 +97,7 @@ public class DicedSpriteAtlasEditor : Editor
         return new GUIContent(name, tooltip);
     }
 
-    private GUIContent GetDataSizeContent ()
+    private GUIContent GetDataSizeValueContent ()
     {
         long size = 0;
 
@@ -173,7 +173,7 @@ public class DicedSpriteAtlasEditor : Editor
         // Save generated sprites.
         SaveDicedSprites(newDicedSprites);
         // Update data size content.
-        dataSizeValueContent = GetDataSizeContent();
+        dataSizeValueContent = GetDataSizeValueContent();
         EditorUtility.ClearProgressBar();
     }
 
@@ -271,7 +271,7 @@ public class DicedSpriteAtlasEditor : Editor
         }
         else
         {
-            // Delete sprites stored in atlas asset (in case they were previously created).
+            // Delete sprites stored in atlas asset (in case they were previously added).
             for (int i = dicedSprites.arraySize - 1; i >= 0; i--)
                 DestroyImmediate(dicedSprites.GetArrayElementAtIndex(i).objectReferenceValue, true);
             AssetDatabase.Refresh();

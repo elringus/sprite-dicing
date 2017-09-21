@@ -15,10 +15,10 @@ public class DicedSpriteEditor : Editor
 
     private Vector2 pivotValue;
 
+
     private void OnEnable ()
     {
         atlasTexture = serializedObject.FindProperty("atlasTexture");
-
         pivotValue = TargetSprite.Pivot;
     }
 
