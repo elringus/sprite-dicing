@@ -183,8 +183,6 @@ public class DicedSpriteAtlasEditor : Editor
 
         foreach (var textureAsset in textureAssets)
         {
-            DisplayProgressBar("Dicing source textures...", .1f + .6f * textureAssets.ProgressOf(textureAsset));
-
             var sourceTexture = textureAsset.Object;
 
             // Make sure texture is readable and not crunched (can't get pixels otherwise).
@@ -201,6 +199,12 @@ public class DicedSpriteAtlasEditor : Editor
 
             for (int unitX = 0; unitX < unitCountX; unitX++)
             {
+                var textureProgress = .6f * textureAssets.ProgressOf(textureAsset);
+                var unitProgress = (.6f / textureAssets.Count) * ((float)unitX / unitCountX);
+                var textureNumber = textureAssets.IndexOf(textureAsset) + 1;
+                var message = string.Format("Dicing texture '{0}' ({1}/{2})...", textureAsset.Name, textureNumber, textureAssets.Count);
+                DisplayProgressBar(message, .1f + textureProgress + unitProgress);
+
                 var x = unitX * diceUnitSize.intValue;
                 for (int unitY = 0; unitY < unitCountY; unitY++)
                 {
