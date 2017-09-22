@@ -65,6 +65,23 @@ namespace UnityCommon
         {
             return (value % 2 == 0) ? value : Mathf.Min(value + 1, upperLimit);
         }
+    
+        /// <summary>
+        /// For 'source' rectangle inside 'target' rectangle, get the maximum scale factor 
+        /// that permits the 'source' rectangle to be scaled without stretching or squashing.
+        /// </summary>
+        /// <param name="targetSize">Size of the rectangle to be scaled to.</param>
+        /// <param name="sourceSize">Size of the rectangle to scale.</param>
+        /// <returns>Maximum scale factor preserving aspect ratio.</returns>
+        public static float MaxScaleKeepAspect (Vector2 targetSize, Vector2 sourceSize)
+        {
+            var targetAspect = targetSize.x / targetSize.y;
+            var sourceAspect = sourceSize.x / sourceSize.y;
+    
+            if (targetAspect > sourceAspect)
+                return targetSize.y / sourceSize.y;
+            return targetSize.x / sourceSize.x;
+        }
     }
     
 }

@@ -41,6 +41,7 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
+    private MaterialPropertyBlock materialPropertiesCache;
     private int mainTexPropertyId;
     private int colorPropertyId;
 
@@ -51,9 +52,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     [Tooltip("Whether to use shared material. Enable to allow draw calls batching.")]
     [SerializeField] private bool _shareMaterial = true;
     [Tooltip("Material to use for rendering. Default sprite material will be used if not provided.")]
-    [SerializeField] private Material customMaterial;
-
-    private MaterialPropertyBlock _materialPropertiesCache;
+    [SerializeField] private Material customMaterial = null;
 
     private void Awake ()
     {
@@ -156,10 +155,10 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private MaterialPropertyBlock GetMaterialProperties ()
     {
-        if (_materialPropertiesCache == null)
-            _materialPropertiesCache = new MaterialPropertyBlock();
-        Renderer.GetPropertyBlock(_materialPropertiesCache);
-        return _materialPropertiesCache;
+        if (materialPropertiesCache == null)
+            materialPropertiesCache = new MaterialPropertyBlock();
+        Renderer.GetPropertyBlock(materialPropertiesCache);
+        return materialPropertiesCache;
     }
 
     private Mesh GetMesh ()

@@ -108,7 +108,7 @@ NavMeshSettings:
     tileSize: 256
     accuratePlacement: 0
   m_NavMeshData: {fileID: 0}
---- !u!43 &539657373
+--- !u!43 &25640229
 Mesh:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
@@ -282,6 +282,7 @@ MonoBehaviour:
   _dicedSprite: {fileID: 0}
   _color: {r: 1, g: 1, b: 1, a: 1}
   _shareMaterial: 1
+  customMaterial: {fileID: 0}
 --- !u!23 &646984971
 MeshRenderer:
   m_ObjectHideFlags: 2
@@ -295,7 +296,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 1207630691}
+  - {fileID: 924228931}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -320,7 +321,7 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 646984968}
-  m_Mesh: {fileID: 539657373}
+  m_Mesh: {fileID: 25640229}
 --- !u!4 &646984973
 Transform:
   m_ObjectHideFlags: 0
@@ -334,7 +335,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &1207630691
+--- !u!21 &924228931
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
@@ -376,9 +377,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1719394263}
   - component: {fileID: 1719394262}
-  - component: {fileID: 1719394261}
-  - component: {fileID: 1719394260}
-  - component: {fileID: 1719394259}
   m_Layer: 0
   m_Name: MainCamera
   m_TagString: MainCamera
@@ -386,27 +384,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1719394259
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1719394258}
-  m_Enabled: 1
---- !u!124 &1719394260
-Behaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1719394258}
-  m_Enabled: 1
---- !u!92 &1719394261
-Behaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1719394258}
-  m_Enabled: 1
 --- !u!20 &1719394262
 Camera:
   m_ObjectHideFlags: 0
@@ -416,7 +393,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.8161765, g: 0.5327498, b: 0.17403765, a: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0

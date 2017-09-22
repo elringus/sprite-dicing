@@ -24,15 +24,25 @@ public class DicedSprite : ScriptableObject
     /// <summary>
     /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
     /// </summary>
-    public Vector2 Pivot { get { return _pivot; } set { _pivot = value; HandlePivotChange(); } }
+    public Vector2 Pivot { get { return _pivot; } set { if (_pivot != value) { _pivot = value; HandlePivotChange(); } } }
 
     /// <summary>
     /// Reference to the atlas texture where the dices of the original sprite texture are stored.
     /// </summary>
     public Texture2D AtlasTexture { get { return atlasTexture; } }
 
+    /// <summary>
+    /// UV rects to sample diced units on the atlas texture.
+    /// </summary>
+    public List<Vector2> UVs { get { return uvs; } }
+
+    /// <summary>
+    /// Vertice positions (in local 2D space) to generate diced sprite mesh.
+    /// </summary>
+    public List<Vector2> Vertices { get { return vertices; } }
+
     [SerializeField, ReadOnly] private Texture2D atlasTexture;
-    [SerializeField, ReadOnly] private List<Vector3> vertices;
+    [SerializeField, ReadOnly] private List<Vector2> vertices;
     [SerializeField, ReadOnly] private List<Vector2> uvs;
     [SerializeField, ReadOnly] private List<int> triangles;
 
@@ -42,8 +52,12 @@ public class DicedSprite : ScriptableObject
 
     private void OnValidate ()
     {
-        HandlePivotChange();
-        OnModified.Invoke(this);
+        var onModifiedCalled = false;
+
+        onModifiedCalled = HandlePivotChange();
+
+        if (!onModifiedCalled)
+            OnModified.Invoke(this);
     }
 
     /// <summary>
@@ -59,7 +73,7 @@ public class DicedSprite : ScriptableObject
 
         dicedSprite.atlasTexture = atlasTexture;
         dicedSprite.name = name;
-        dicedSprite.vertices = new List<Vector3>();
+        dicedSprite.vertices = new List<Vector2>();
         dicedSprite.uvs = new List<Vector2>();
         dicedSprite.triangles = new List<int>();
 
@@ -77,7 +91,7 @@ public class DicedSprite : ScriptableObject
     /// </summary>
     public void FillMesh (Mesh mesh)
     {
-        Debug.Assert(mesh);
+        if (!mesh) return;
 
         mesh.Clear();
 
@@ -87,17 +101,23 @@ public class DicedSprite : ScriptableObject
             return;
         }
 
-        mesh.SetVertices(vertices);
+        mesh.SetVertices(vertices.Select(v2 => new Vector3(v2.x, v2.y)).ToList());
         mesh.SetUVs(0, uvs);
         mesh.SetTriangles(triangles, 0);
         mesh.RecalculateBounds();
     }
 
-    private void Clear ()
+    /// <summary>
+    /// Calculates sprite rectangle using vertex data.
+    /// </summary>
+    public Rect EvaluateSpriteRect ()
     {
-        vertices.Clear();
-        uvs.Clear();
-        triangles.Clear();
+        var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
+        var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
+        var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
+        var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
+        var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
+        return new Rect(minVertPos, spriteSize);
     }
 
     private void AddDicedUnit (DicedUnit dicedUnit)
@@ -118,7 +138,7 @@ public class DicedSprite : ScriptableObject
         AddTriangle(startIndex + 2, startIndex + 3, startIndex);
     }
 
-    private void AddVertice (Vector3 position, Vector2 uv)
+    private void AddVertice (Vector2 position, Vector2 uv)
     {
         vertices.Add(position);
         uvs.Add(uv);
@@ -136,36 +156,31 @@ public class DicedSprite : ScriptableObject
     /// </summary>
     private void TrimVertices ()
     {
-        var minPosX = vertices.Min(pos => pos.x);
-        var minPosY = vertices.Min(pos => pos.y);
-        var minPos = new Vector3(minPosX, minPosY);
-
-        if (minPosX > 0 || minPosY > 0)
+        var spriteRect = EvaluateSpriteRect();
+        if (spriteRect.min.x > 0 || spriteRect.min.y > 0)
             for (int i = 0; i < vertices.Count; i++)
-                vertices[i] -= minPos;
+                vertices[i] -= spriteRect.min;
 
         OnModified.Invoke(this);
     }
 
+    /// <summary>
+    /// Corrects geometry data to to match current pivot value.
+    /// </summary>
+    /// <returns>Whether geometry data has been changed and OnModified event called.</returns>
     private bool HandlePivotChange ()
     {
-        var minPosX = vertices.Min(pos => pos.x);
-        var maxPosX = vertices.Max(pos => pos.x);
-        var minPosY = vertices.Min(pos => pos.y);
-        var maxPosY = vertices.Max(pos => pos.y);
+        var spriteRect = EvaluateSpriteRect();
 
-        var sizeX = Mathf.Abs(maxPosX - minPosX);
-        var sizeY = Mathf.Abs(maxPosY - minPosY);
-
-        var curPivot = new Vector2(-minPosX / sizeX, -minPosY / sizeY);
+        var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
         if (curPivot == Pivot) return false;
 
-        var curDeltaX = sizeX * curPivot.x;
-        var curDeltaY = sizeY * curPivot.y;
-        var newDeltaX = sizeX * Pivot.x;
-        var newDeltaY = sizeY * Pivot.y;
+        var curDeltaX = spriteRect.size.x * curPivot.x;
+        var curDeltaY = spriteRect.size.y * curPivot.y;
+        var newDeltaX = spriteRect.size.x * Pivot.x;
+        var newDeltaY = spriteRect.size.y * Pivot.y;
 
-        var deltaPos = new Vector3(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
+        var deltaPos = new Vector2(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
 
         for (int i = 0; i < vertices.Count; i++)
             vertices[i] -= deltaPos;
