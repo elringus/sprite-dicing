@@ -37,6 +37,8 @@ public class DicedSpriteRenderer : MonoBehaviour
     /// </summary>
     public Mesh Mesh { get { return GetMesh(); } }
 
+    private static Material defaultMaterial;
+
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private int mainTexPropertyId;
@@ -48,6 +50,8 @@ public class DicedSpriteRenderer : MonoBehaviour
     [SerializeField] private Color _color = Color.white;
     [Tooltip("Whether to use shared material. Enable to allow draw calls batching.")]
     [SerializeField] private bool _shareMaterial = true;
+    [Tooltip("Material to use for rendering. Default sprite material will be used if not provided.")]
+    [SerializeField] private Material customMaterial;
 
     private MaterialPropertyBlock _materialPropertiesCache;
 
@@ -73,7 +77,7 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private void OnValidate ()
     {
-        if (!isActiveAndEnabled) return;
+        ValidateMaterial();
         SetDicedSprite(DicedSprite);
         SetMaterialColor(Color);
     }
@@ -132,8 +136,7 @@ public class DicedSpriteRenderer : MonoBehaviour
             meshRenderer = GetComponent<MeshRenderer>();
             meshRenderer.hideFlags = HideFlags.HideInInspector;
         }
-        if (!Application.isPlaying && !Material)
-            Material = new Material(Shader.Find("Sprites/Default"));
+        if (!Material) ValidateMaterial();
     }
 
     private void SetMaterialMainTex (Texture2D mainText)
@@ -180,5 +183,15 @@ public class DicedSpriteRenderer : MonoBehaviour
     {
         if (!Application.isPlaying || ShareMaterial) Renderer.sharedMaterial = material;
         else Renderer.material = material;
+    }
+
+    private void ValidateMaterial ()
+    {
+        if (!defaultMaterial)
+            defaultMaterial = new Material(Shader.Find("Sprites/Default"));
+        if (customMaterial && Material != customMaterial)
+            Material = customMaterial;
+        else if (!customMaterial && Material != defaultMaterial)
+            Material = defaultMaterial;
     }
 }

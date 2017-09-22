@@ -22,9 +22,9 @@ public class DicedSprite : ScriptableObject
     public string Name { get { return name; } }
 
     /// <summary>
-    /// Sprite pivot point in its local space.
+    /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
     /// </summary>
-    public Vector2 Pivot { get { return _pivot; } set { SetPivot(value); } }
+    public Vector2 Pivot { get { return _pivot; } set { _pivot = value; HandlePivotChange(); } }
 
     /// <summary>
     /// Reference to the atlas texture where the dices of the original sprite texture are stored.
@@ -39,6 +39,12 @@ public class DicedSprite : ScriptableObject
     [SerializeField] private Vector2 _pivot;
 
     private const int MESH_VERTICES_LIMIT = 65000; // Unity limitation.
+
+    private void OnValidate ()
+    {
+        HandlePivotChange();
+        OnModified.Invoke(this);
+    }
 
     /// <summary>
     /// Creates instance of a diced sprite object.
@@ -61,7 +67,7 @@ public class DicedSprite : ScriptableObject
             dicedSprite.AddDicedUnit(dicedUnit);
 
         dicedSprite.TrimVertices();
-        dicedSprite.SetPivot(pivot);
+        dicedSprite.Pivot = pivot;
 
         return dicedSprite;
     }
@@ -85,16 +91,6 @@ public class DicedSprite : ScriptableObject
         mesh.SetUVs(0, uvs);
         mesh.SetTriangles(triangles, 0);
         mesh.RecalculateBounds();
-    }
-
-    /// <summary>
-    /// Set new pivot point for the sprite.
-    /// </summary>
-    /// <param name="pivot">Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.</param>
-    public void SetPivot (Vector2 pivot)
-    {
-        HandlePivotChange(_pivot, pivot);
-        _pivot = pivot;
     }
 
     private void Clear ()
@@ -135,6 +131,9 @@ public class DicedSprite : ScriptableObject
         triangles.Add(idx2);
     }
 
+    /// <summary>
+    /// Repositions all the vertices so that they start at the local origin (0, 0).
+    /// </summary>
     private void TrimVertices ()
     {
         var minPosX = vertices.Min(pos => pos.x);
@@ -144,34 +143,35 @@ public class DicedSprite : ScriptableObject
         if (minPosX > 0 || minPosY > 0)
             for (int i = 0; i < vertices.Count; i++)
                 vertices[i] -= minPos;
+
+        OnModified.Invoke(this);
     }
 
-    private void HandlePivotChange (Vector2 oldPivot, Vector2 newPivot)
+    private bool HandlePivotChange ()
     {
-        if (oldPivot == newPivot) return;
-
         var minPosX = vertices.Min(pos => pos.x);
         var maxPosX = vertices.Max(pos => pos.x);
         var minPosY = vertices.Min(pos => pos.y);
         var maxPosY = vertices.Max(pos => pos.y);
 
-        var oldDeltaX = Mathf.Abs(maxPosX - minPosX) * oldPivot.x;
-        var oldDeltaY = Mathf.Abs(maxPosY - minPosY) * oldPivot.y;
-        var newDeltaX = Mathf.Abs(maxPosX - minPosX) * newPivot.x;
-        var newDeltaY = Mathf.Abs(maxPosY - minPosY) * newPivot.y;
+        var sizeX = Mathf.Abs(maxPosX - minPosX);
+        var sizeY = Mathf.Abs(maxPosY - minPosY);
 
-        var deltaPos = new Vector3(newDeltaX - oldDeltaX, newDeltaY - oldDeltaY);
+        var curPivot = new Vector2(-minPosX / sizeX, -minPosY / sizeY);
+        if (curPivot == Pivot) return false;
+
+        var curDeltaX = sizeX * curPivot.x;
+        var curDeltaY = sizeY * curPivot.y;
+        var newDeltaX = sizeX * Pivot.x;
+        var newDeltaY = sizeY * Pivot.y;
+
+        var deltaPos = new Vector3(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
 
         for (int i = 0; i < vertices.Count; i++)
             vertices[i] -= deltaPos;
 
         OnModified.Invoke(this);
+        return true;
     }
 
-    #if UNITY_EDITOR
-    private void OnValidate ()
-    {
-        OnModified.Invoke(this);
-    }
-    #endif
 }

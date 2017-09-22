@@ -5,7 +5,7 @@ using UnityCommon;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(DicedSpriteAtlas))]
+[CustomEditor(typeof(DicedSpriteAtlas)), CanEditMultipleObjects]
 public class DicedSpriteAtlasEditor : Editor
 {
     protected DicedSpriteAtlas TargetAtlas { get { return target as DicedSpriteAtlas; } }

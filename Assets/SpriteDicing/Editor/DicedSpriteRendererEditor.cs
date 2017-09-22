@@ -1,7 +1,6 @@
 ﻿using UnityEditor;
-using UnityEngine;
 
-[CustomEditor(typeof(DicedSpriteRenderer))]
+[CustomEditor(typeof(DicedSpriteRenderer)), CanEditMultipleObjects]
 public class DicedSpriteRendererEditor : Editor
 {
     protected DicedSpriteRenderer TargetRenderer { get { return target as DicedSpriteRenderer; } }
@@ -9,14 +8,14 @@ public class DicedSpriteRendererEditor : Editor
     private SerializedProperty dicedSprite;
     private SerializedProperty color;
     private SerializedProperty shareMaterial;
-
-    private GUIContent materialContent = new GUIContent("Material", "Material used by the renderer.");
+    private SerializedProperty customMaterial;
 
     private void OnEnable ()
     {
         dicedSprite = serializedObject.FindProperty("_dicedSprite");
         color = serializedObject.FindProperty("_color");
         shareMaterial = serializedObject.FindProperty("_shareMaterial");
+        customMaterial = serializedObject.FindProperty("customMaterial");
     }
 
     public override void OnInspectorGUI ()
@@ -24,7 +23,7 @@ public class DicedSpriteRendererEditor : Editor
         serializedObject.Update();
         EditorGUILayout.PropertyField(dicedSprite);
         EditorGUILayout.PropertyField(color);
-        TargetRenderer.Material = EditorGUILayout.ObjectField(materialContent, TargetRenderer.Material, typeof(Material), false) as Material;
+        EditorGUILayout.PropertyField(customMaterial);
         EditorGUILayout.PropertyField(shareMaterial);
         serializedObject.ApplyModifiedProperties();
     }

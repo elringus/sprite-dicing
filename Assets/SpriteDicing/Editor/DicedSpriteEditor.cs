@@ -1,31 +1,30 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(DicedSprite))]
+[CustomEditor(typeof(DicedSprite)), CanEditMultipleObjects]
 public class DicedSpriteEditor : Editor
 {
     protected DicedSprite TargetSprite { get { return target as DicedSprite; } }
 
     private SerializedProperty atlasTexture;
+    private SerializedProperty pivot;
 
-    private GUIContent subAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas.");
+    private GUIContent subAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Multi-editing not supported.");
     private GUIContent mainAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Raname asset object in the editor to change.");
     private GUIContent pivotContent = new GUIContent("Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.");
     private GUIContent atlasTextureContent = new GUIContent("Atlas Texture", "Reference to the atlas texture where the dices of the original sprite texture are stored.");
 
-    private Vector2 pivotValue;
-
     private void OnEnable ()
     {
+        pivot = serializedObject.FindProperty("_pivot");
         atlasTexture = serializedObject.FindProperty("atlasTexture");
-        pivotValue = TargetSprite.Pivot;
     }
 
     public override void OnInspectorGUI ()
     {
         serializedObject.Update();
         SpriteNameGUI();
-        PivotGUI();
+        EditorGUILayout.PropertyField(pivot, pivotContent);
         EditorGUILayout.PropertyField(atlasTexture, atlasTextureContent);
         serializedObject.ApplyModifiedProperties();
     }
@@ -48,14 +47,6 @@ public class DicedSpriteEditor : Editor
             if (EditorGUI.EndChangeCheck())
                 AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(target));
         }
-    }
-
-    private void PivotGUI ()
-    {
-        EditorGUI.BeginChangeCheck();
-        pivotValue = EditorGUILayout.Vector2Field(pivotContent, pivotValue);
-        if (EditorGUI.EndChangeCheck())
-            TargetSprite.SetPivot(pivotValue);
     }
 
     [MenuItem("GameObject/2D Object/Diced Sprite")]
