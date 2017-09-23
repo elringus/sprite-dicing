@@ -16,7 +16,7 @@ public class PackageExporter : EditorWindow
     private static string outputFileName = PACKAGE_NAME;
     private static string assetsPath = "Assets/" + PACKAGE_NAME;
     private static string namespaceToWrap = PACKAGE_NAME;
-    private static string copyright = "// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.";
+    private static string copyright = "// Copyright 2017 Elringus (Artyom Sovetnikov). All Rights Reserved.";
     private static string tabChars = "    ";
     private static Dictionary<string, string> modifiedScripts = new Dictionary<string, string>();
 

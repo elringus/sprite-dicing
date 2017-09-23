@@ -109,6 +109,11 @@ public class DicedSpriteRenderer : MonoBehaviour
         SetMaterialMainTex(dicedSprite.AtlasTexture);
     }
 
+    public void BlendShape (DicedSprite targetSprite, float blendDuration)
+    {
+
+    }
+
     private void InitializeMeshFilter ()
     {
         if (!meshFilter)

@@ -9,11 +9,10 @@ namespace UnityCommon
         /// <summary>
         /// Creates a texture.
         /// </summary>
-        public static Texture2D CreateTexture (int width, int height, bool alphaIsTransparency = false, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
+        public static Texture2D CreateTexture (int width, int height, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             TextureFormat textureFormat = TextureFormat.RGBA32, bool mipmap = false, bool linear = false, string name = "")
         {
             var texture = new Texture2D(width, height, textureFormat, mipmap, linear);
-            texture.alphaIsTransparency = alphaIsTransparency;
             texture.wrapMode = wrapMode;
             if (!string.IsNullOrEmpty(name))
                 texture.name = name;
@@ -23,19 +22,19 @@ namespace UnityCommon
         /// <summary>
         /// Creates a square texture.
         /// </summary>
-        public static Texture2D CreateTexture (int size, bool alphaIsTransparency = false, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
+        public static Texture2D CreateTexture (int size, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             TextureFormat textureFormat = TextureFormat.RGBA32, bool mipmap = false, bool linear = false, string name = "")
         {
-            return CreateTexture(size, size, alphaIsTransparency, wrapMode, textureFormat, mipmap, linear, name);
+            return CreateTexture(size, size, wrapMode, textureFormat, mipmap, linear, name);
         }
     
         /// <summary>
         /// Creates a texture and fills it with provided colors.
         /// </summary>
-        public static Texture2D CreateTexture (int width, int height, Color[] pixelColors, bool alphaIsTransparency = false, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
+        public static Texture2D CreateTexture (int width, int height, Color[] pixelColors, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             TextureFormat textureFormat = TextureFormat.RGBA32, bool mipmap = false, bool linear = false, string name = "")
         {
-            var texture = CreateTexture(width, height, alphaIsTransparency, wrapMode, textureFormat, mipmap, linear, name);
+            var texture = CreateTexture(width, height, wrapMode, textureFormat, mipmap, linear, name);
             texture.SetPixels(pixelColors);
             texture.Apply();
             return texture;
@@ -44,10 +43,10 @@ namespace UnityCommon
         /// <summary>
         /// Creates a square texture and fills it with provided colors.
         /// </summary>
-        public static Texture2D CreateTexture (int size, Color[] pixelColors, bool alphaIsTransparency = false, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
+        public static Texture2D CreateTexture (int size, Color[] pixelColors, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             TextureFormat textureFormat = TextureFormat.RGBA32, bool mipmap = false, bool linear = false, string name = "")
         {
-            return CreateTexture(size, size, pixelColors, alphaIsTransparency, wrapMode, textureFormat, mipmap, linear, name);
+            return CreateTexture(size, size, pixelColors, wrapMode, textureFormat, mipmap, linear, name);
         }
     
         /// <summary>

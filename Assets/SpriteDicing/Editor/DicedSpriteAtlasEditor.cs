@@ -143,7 +143,8 @@ public class DicedSpriteAtlasEditor : Editor
     {
         var inputFolderHelper = new FolderAssetHelper(inputFolder.objectReferenceValue);
         // Create new atlas texture with the max allowed size; it will be auto-trimmed (if necessary) when packing textures.
-        var newAtlasTexture = TextureUtils.CreateTexture(atlasTextureSizeLimit.intValue, true, name: target.name + "Texture");
+        var newAtlasTexture = TextureUtils.CreateTexture(atlasTextureSizeLimit.intValue, name: target.name + "Texture");
+        newAtlasTexture.alphaIsTransparency = true;
         // Load source texture assets from the input directory.
         DisplayProgressBar("Loading source textures...", .1f);
         var sourceTextureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolders.boolValue, prependSubfolderNames.boolValue);
