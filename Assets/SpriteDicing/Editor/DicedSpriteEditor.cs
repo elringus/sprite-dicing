@@ -43,7 +43,7 @@ public class DicedSpriteEditor : Editor
             var centerXCorrection = previewRect.center.x / sizeCorrection - (TargetSprite.Vertices.Average(v => v.x) + pivorCorrection.x);
 
             // Iterate target sprite's quads (4 verts each).
-            for (int i = 0; i < (TargetSprite.Vertices.Count - 4); i += 4)
+            for (int i = 0; i < (TargetSprite.Vertices.Count - 3); i += 4)
             {
                 // Evaluate UV rect of the current quad.
                 var uvRect = new Rect(TargetSprite.UVs[i], TargetSprite.UVs[i + 2] - TargetSprite.UVs[i]);
