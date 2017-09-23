@@ -32,6 +32,7 @@ public class DicedSpriteAtlas : ScriptableObject
     [SerializeField] private int diceUnitSize = 64;
     [SerializeField] private int padding = 2;
     [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
+    [SerializeField] private bool keepOriginalPivot;
     [SerializeField] private bool decoupleSpriteData;
     [FolderAsset]
     [SerializeField] private Object inputFolder;

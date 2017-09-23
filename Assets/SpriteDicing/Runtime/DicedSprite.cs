@@ -67,7 +67,8 @@ public class DicedSprite : ScriptableObject
     /// <param name="atlasTexture">Reference to the atlas texture.</param>
     /// <param name="dicedUnits">List of the diced units used to build this sprite.</param>
     /// <param name="pivot">Sprite pivot point in its local space.</param>
-    public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, Vector2 pivot)
+    /// <param name="keepOriginalPivot">Whether to preserve original sprite position by correcting its pivot.</param>
+    public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, Vector2 pivot, bool keepOriginalPivot)
     {
         var dicedSprite = ScriptableObject.CreateInstance<DicedSprite>();
 
@@ -80,8 +81,8 @@ public class DicedSprite : ScriptableObject
         foreach (var dicedUnit in dicedUnits)
             dicedSprite.AddDicedUnit(dicedUnit);
 
-        dicedSprite.TrimVertices();
-        dicedSprite.Pivot = pivot;
+        var originalPivot = dicedSprite.TrimVertices();
+        dicedSprite.Pivot = keepOriginalPivot ? originalPivot : pivot;
 
         return dicedSprite;
     }
@@ -154,7 +155,8 @@ public class DicedSprite : ScriptableObject
     /// <summary>
     /// Repositions all the vertices so that they start at the local origin (0, 0).
     /// </summary>
-    private void TrimVertices ()
+    /// <returns>Pivot point to preserve original position of the sprite.</returns>
+    private Vector2 TrimVertices ()
     {
         var spriteRect = EvaluateSpriteRect();
         if (spriteRect.min.x > 0 || spriteRect.min.y > 0)
@@ -162,6 +164,10 @@ public class DicedSprite : ScriptableObject
                 vertices[i] -= spriteRect.min;
 
         OnModified.Invoke(this);
+
+        var pivotX = spriteRect.min.x / spriteRect.size.x;
+        var pivotY = spriteRect.min.y / spriteRect.size.y;
+        return new Vector2(-pivotX, -pivotY);
     }
 
     /// <summary>

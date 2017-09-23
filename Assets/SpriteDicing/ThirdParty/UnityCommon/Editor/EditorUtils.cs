@@ -44,6 +44,7 @@ namespace UnityCommon
         {
             var wrapMode = texture.wrapMode;
             var alphaIsTransparency = texture.alphaIsTransparency;
+            var maxSize = Mathf.Max(texture.width, texture.height);
     
             path = string.Format("{0}/{1}.png", path.GetBefore("/", false), texture.name);
             Debug.Assert(AssetDatabase.IsValidFolder(path.GetBefore("/")));
@@ -59,6 +60,7 @@ namespace UnityCommon
             textureImporter.wrapMode = wrapMode;
             textureImporter.mipmapEnabled = generateMipmaps;
             textureImporter.textureCompression = compression;
+            textureImporter.maxTextureSize = maxSize;
             AssetDatabase.ImportAsset(path);
     
             if (destroyInitialTextureObject)

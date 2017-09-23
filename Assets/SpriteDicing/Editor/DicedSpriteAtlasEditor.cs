@@ -13,6 +13,7 @@ public class DicedSpriteAtlasEditor : Editor
     private SerializedProperty atlasTexture;
     private SerializedProperty dicedSprites;
     private SerializedProperty defaultPivot;
+    private SerializedProperty keepOriginalPivot;
     private SerializedProperty decoupleSpriteData;
     private SerializedProperty atlasTextureSizeLimit;
     private SerializedProperty pixelsPerUnit;
@@ -25,6 +26,7 @@ public class DicedSpriteAtlasEditor : Editor
     private GUIContent dataSizeValueContent;
     private GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
     private GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
+    private GUIContent keepOriginalPivotContent = new GUIContent("Keep Original Pivot", "Whether to preserve original sprites pivot (usable for animations).");
     private GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
     private GUIContent atlasTextureSizeLimitContent = new GUIContent("Atlas Texture Size Limit", "Maximum size of the generated atlas texture.");
     private GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
@@ -39,6 +41,7 @@ public class DicedSpriteAtlasEditor : Editor
         atlasTexture = serializedObject.FindProperty("atlasTexture");
         dicedSprites = serializedObject.FindProperty("dicedSprites");
         defaultPivot = serializedObject.FindProperty("defaultPivot");
+        keepOriginalPivot = serializedObject.FindProperty("keepOriginalPivot");
         decoupleSpriteData = serializedObject.FindProperty("decoupleSpriteData");
         atlasTextureSizeLimit = serializedObject.FindProperty("atlasTextureSizeLimit");
         pixelsPerUnit = serializedObject.FindProperty("pixelsPerUnit");
@@ -59,34 +62,13 @@ public class DicedSpriteAtlasEditor : Editor
         EditorGUILayout.PropertyField(dicedSprites, true);
         EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
         EditorGUILayout.Space();
-        EditorGUILayout.PropertyField(defaultPivot, defaultPivotContent);
         EditorGUILayout.PropertyField(decoupleSpriteData, decoupleSpriteDataContent);
+        PivotGUI();
         EditorGUILayout.PropertyField(atlasTextureSizeLimit, atlasTextureSizeLimitContent);
         pixelsPerUnit.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnit.floatValue));
         EditorGUILayout.PropertyField(diceUnitSize, diceUnitSizeContent);
         padding.intValue = EditorGUILayout.IntSlider(paddingContent, padding.intValue, 2, diceUnitSize.intValue / 2).ToNearestEven();
-        EditorGUILayout.PropertyField(inputFolder, inputFolderContent);
-        using (new EditorGUI.DisabledScope(!inputFolder.objectReferenceValue))
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var rect = EditorGUILayout.GetControlRect();
-                rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
-                rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-                EditorGUIUtility.labelWidth = 50;
-                ToggleLeftGUI(rect, includeSubfolders, includeSubfoldersContent);
-                rect.x += rect.width + 2;
-                using (new EditorGUI.DisabledScope(!includeSubfolders.boolValue))
-                    ToggleLeftGUI(rect, prependSubfolderNames, prependSubfolderNamesContent);
-                EditorGUIUtility.labelWidth = 0;
-            }
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.Space(EditorGUIUtility.labelWidth);
-                if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
-                    BuildAtlas();
-            }
-        }
+        InputFolderGUI();
         serializedObject.ApplyModifiedProperties();
     }
 
@@ -121,6 +103,47 @@ public class DicedSpriteAtlasEditor : Editor
         var isBinary = EditorSettings.serializationMode != SerializationMode.ForceText;
         var label = string.Format("{0} KB {1}", size, isBinary ? string.Empty : "(uncompressed)");
         return new GUIContent(label);
+    }
+
+    private void PivotGUI ()
+    {
+        using (new EditorGUI.DisabledScope(keepOriginalPivot.boolValue))
+            EditorGUILayout.PropertyField(defaultPivot, defaultPivotContent);
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
+            rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+            EditorGUIUtility.labelWidth = 50;
+            ToggleLeftGUI(rect, keepOriginalPivot, keepOriginalPivotContent);
+            EditorGUIUtility.labelWidth = 0;
+        }
+    }
+
+    private void InputFolderGUI ()
+    {
+        EditorGUILayout.PropertyField(inputFolder, inputFolderContent);
+        using (new EditorGUI.DisabledScope(!inputFolder.objectReferenceValue))
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var rect = EditorGUILayout.GetControlRect();
+                rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
+                rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+                EditorGUIUtility.labelWidth = 50;
+                ToggleLeftGUI(rect, includeSubfolders, includeSubfoldersContent);
+                rect.x += rect.width + 2;
+                using (new EditorGUI.DisabledScope(!includeSubfolders.boolValue))
+                    ToggleLeftGUI(rect, prependSubfolderNames, prependSubfolderNamesContent);
+                EditorGUIUtility.labelWidth = 0;
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Space(EditorGUIUtility.labelWidth);
+                if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
+                    BuildAtlas();
+            }
+        }
     }
 
     private void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
@@ -169,7 +192,7 @@ public class DicedSpriteAtlasEditor : Editor
         // Generate diced sprites from the diced units.
         var newDicedSprites = dicedUnits
             .GroupBy(unit => unit.Name)
-            .Select(units => DicedSprite.CreateInstance(units.First().Name, savedAtlasTexture, units.ToList(), defaultPivot.vector2Value))
+            .Select(units => DicedSprite.CreateInstance(units.First().Name, savedAtlasTexture, units.ToList(), defaultPivot.vector2Value, keepOriginalPivot.boolValue))
             .ToList();
         // Save generated sprites.
         SaveDicedSprites(newDicedSprites);
