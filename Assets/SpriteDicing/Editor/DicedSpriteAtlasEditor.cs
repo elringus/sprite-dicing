@@ -180,6 +180,9 @@ public class DicedSpriteAtlasEditor : Editor
         var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
         // Create textures from the distinct units using their padded colors (to prevent texture bleeding).
         var distinctTextures = distinctUnits.Select(unit => TextureUtils.CreateTexture(diceUnitSize.intValue + padding.intValue * 2, unit.PaddedColors)).ToArray();
+        // Check if atlas size limit is enough to fit all the textures.
+        if (distinctTextures.Sum(tex => tex.width * tex.height) > Mathf.Pow(atlasTextureSizeLimit.intValue, 2))
+            Debug.LogWarning("SpriteDicing: Source textures were scaled down to fit the atlas size limit. Consider increasing the limit or using additional atlases.");
         // Pack distinct unit textures to the atlas and retrieve uv rects.
         DisplayProgressBar("Packing diced textures...", .8f);
         var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasTextureSizeLimit.intValue).ToList();

@@ -68,7 +68,8 @@ public class DicedSprite : ScriptableObject
     /// <param name="dicedUnits">List of the diced units used to build this sprite.</param>
     /// <param name="pivot">Sprite pivot point in its local space.</param>
     /// <param name="keepOriginalPivot">Whether to preserve original sprite position by correcting its pivot.</param>
-    public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, Vector2 pivot, bool keepOriginalPivot)
+    public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, 
+        Vector2 pivot = default(Vector2), bool keepOriginalPivot = true)
     {
         var dicedSprite = ScriptableObject.CreateInstance<DicedSprite>();
 
@@ -98,7 +99,8 @@ public class DicedSprite : ScriptableObject
 
         if (vertices.Count >= MESH_VERTICES_LIMIT)
         {
-            Debug.LogError(string.Format("Mesh can't have more than {0} vertices. Consider increasing Dice Unit Size of the Diced Sprite Atlas.", MESH_VERTICES_LIMIT));
+            Debug.LogError(string.Format("Mesh can't have more than {0} vertices. " +
+                "Consider increasing Dice Unit Size of the Diced Sprite Atlas.", MESH_VERTICES_LIMIT));
             return;
         }
 
