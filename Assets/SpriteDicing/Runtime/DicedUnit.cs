@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Represents a single piece diced off a sprite texture.
 /// </summary>
-public struct DicedUnit
+public class DicedUnit
 {
     /// <summary>
     /// Name of the original texture (sprite) from which this unit was diced off.

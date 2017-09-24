@@ -25,8 +25,8 @@ public class DicedSpriteAtlas : ScriptableObject
     // Editor-only data to track source sprite textures and store build configuration.
     // Disabled warnings are about 'unused' variables (managed by the editor script via reflection).
     #pragma warning disable 0169, 0414, 1635
-    [IntPopup(1024, 2048, 4096, 8192)]
-    [SerializeField] private int atlasTextureSizeLimit = 2048;
+    [SerializeField] private int atlasSizeLimit = 2048;
+    [SerializeField] private bool forceSquare = false;
     [SerializeField] private float pixelsPerUnit = 100f;
     [IntPopup(8, 16, 32, 64, 128, 256)]
     [SerializeField] private int diceUnitSize = 64;

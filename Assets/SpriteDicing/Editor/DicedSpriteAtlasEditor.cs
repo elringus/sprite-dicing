@@ -15,7 +15,8 @@ public class DicedSpriteAtlasEditor : Editor
     private SerializedProperty defaultPivot;
     private SerializedProperty keepOriginalPivot;
     private SerializedProperty decoupleSpriteData;
-    private SerializedProperty atlasTextureSizeLimit;
+    private SerializedProperty atlasSizeLimit;
+    private SerializedProperty forceSquare;
     private SerializedProperty pixelsPerUnit;
     private SerializedProperty diceUnitSize;
     private SerializedProperty padding;
@@ -26,9 +27,10 @@ public class DicedSpriteAtlasEditor : Editor
     private GUIContent dataSizeValueContent;
     private GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
     private GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
-    private GUIContent keepOriginalPivotContent = new GUIContent("Keep Original Pivot", "Whether to preserve original sprites pivot (usable for animations).");
+    private GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
     private GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
-    private GUIContent atlasTextureSizeLimitContent = new GUIContent("Atlas Texture Size Limit", "Maximum size of the generated atlas texture.");
+    private GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of the generated atlas texture.");
+    private GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
     private GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
     private GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
     private GUIContent paddingContent = new GUIContent("Padding", "The pixel gap between adjacent diced units inside atlas. Increase to prevent texture bleeding artefacts when scaling or using mipmaps.");
@@ -43,7 +45,8 @@ public class DicedSpriteAtlasEditor : Editor
         defaultPivot = serializedObject.FindProperty("defaultPivot");
         keepOriginalPivot = serializedObject.FindProperty("keepOriginalPivot");
         decoupleSpriteData = serializedObject.FindProperty("decoupleSpriteData");
-        atlasTextureSizeLimit = serializedObject.FindProperty("atlasTextureSizeLimit");
+        atlasSizeLimit = serializedObject.FindProperty("atlasSizeLimit");
+        forceSquare = serializedObject.FindProperty("forceSquare");
         pixelsPerUnit = serializedObject.FindProperty("pixelsPerUnit");
         diceUnitSize = serializedObject.FindProperty("diceUnitSize");
         padding = serializedObject.FindProperty("padding");
@@ -64,7 +67,7 @@ public class DicedSpriteAtlasEditor : Editor
         EditorGUILayout.Space();
         EditorGUILayout.PropertyField(decoupleSpriteData, decoupleSpriteDataContent);
         PivotGUI();
-        EditorGUILayout.PropertyField(atlasTextureSizeLimit, atlasTextureSizeLimitContent);
+        SizeGUI();
         pixelsPerUnit.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnit.floatValue));
         EditorGUILayout.PropertyField(diceUnitSize, diceUnitSizeContent);
         padding.intValue = EditorGUILayout.IntSlider(paddingContent, padding.intValue, 2, diceUnitSize.intValue / 2).ToNearestEven();
@@ -107,16 +110,30 @@ public class DicedSpriteAtlasEditor : Editor
 
     private void PivotGUI ()
     {
-        using (new EditorGUI.DisabledScope(keepOriginalPivot.boolValue))
-            EditorGUILayout.PropertyField(defaultPivot, defaultPivotContent);
         using (new EditorGUILayout.HorizontalScope())
         {
             var rect = EditorGUILayout.GetControlRect();
-            rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
+            rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-            EditorGUIUtility.labelWidth = 50;
+            using (new EditorGUI.DisabledScope(keepOriginalPivot.boolValue))
+                defaultPivot.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivot.vector2Value);
+            rect.x += rect.width + 5;
             ToggleLeftGUI(rect, keepOriginalPivot, keepOriginalPivotContent);
-            EditorGUIUtility.labelWidth = 0;
+        }
+    }
+
+    private void SizeGUI ()
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, -1, atlasSizeLimitContent);
+            rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+            var popupValues = new int[] { 1024, 2048, 4096, 8192 };
+            var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+            EditorGUI.IntPopup(rect, atlasSizeLimit, popupLabels, popupValues, GUIContent.none);
+            rect.x += rect.width + 5;
+            ToggleLeftGUI(rect, forceSquare, forceSquareContent);
         }
     }
 
@@ -132,7 +149,7 @@ public class DicedSpriteAtlasEditor : Editor
                 rect.width = Mathf.Max(50, (rect.width - 4) / 2);
                 EditorGUIUtility.labelWidth = 50;
                 ToggleLeftGUI(rect, includeSubfolders, includeSubfoldersContent);
-                rect.x += rect.width + 2;
+                rect.x += rect.width + 5;
                 using (new EditorGUI.DisabledScope(!includeSubfolders.boolValue))
                     ToggleLeftGUI(rect, prependSubfolderNames, prependSubfolderNamesContent);
                 EditorGUIUtility.labelWidth = 0;
@@ -166,7 +183,7 @@ public class DicedSpriteAtlasEditor : Editor
     {
         var inputFolderHelper = new FolderAssetHelper(inputFolder.objectReferenceValue);
         // Create new atlas texture with the max allowed size; it will be auto-trimmed (if necessary) when packing textures.
-        var newAtlasTexture = TextureUtils.CreateTexture(atlasTextureSizeLimit.intValue, name: target.name + "Texture");
+        var newAtlasTexture = TextureUtils.CreateTexture(atlasSizeLimit.intValue, name: target.name + "Texture");
         newAtlasTexture.alphaIsTransparency = true;
         // Load source texture assets from the input directory.
         DisplayProgressBar("Loading source textures...", .1f);
@@ -176,18 +193,17 @@ public class DicedSpriteAtlasEditor : Editor
         // Remove all the full-transparent units (no need to render them).
         DisplayProgressBar("Processing diced units...", .7f);
         dicedUnits.RemoveAll(unit => unit.Colors.All(color => color.a == 0));
+
         // Select diced units with distinct colors (we'll reuse them to render repeating patterns).
         var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
         // Create textures from the distinct units using their padded colors (to prevent texture bleeding).
         var distinctTextures = distinctUnits.Select(unit => TextureUtils.CreateTexture(diceUnitSize.intValue + padding.intValue * 2, unit.PaddedColors)).ToArray();
-        // Check if atlas size limit is enough to fit all the textures.
-        if (distinctTextures.Sum(tex => tex.width * tex.height) > Mathf.Pow(atlasTextureSizeLimit.intValue, 2))
-            Debug.LogWarning("SpriteDicing: Source textures were scaled down to fit the atlas size limit. Consider increasing the limit or using additional atlases.");
         // Pack distinct unit textures to the atlas and retrieve uv rects.
         DisplayProgressBar("Packing diced textures...", .8f);
-        var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasTextureSizeLimit.intValue).ToList();
+        var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasSizeLimit.intValue).ToList();
         // Map distinct uv rects to the diced units using color hashes as equality keys.
         MapDicedUnitUVs(dicedUnits, distinctUVRects, distinctUnits.Select(unit => unit.Colors).ToList(), newAtlasTexture);
+
         // Save generated atlas texture.
         DisplayProgressBar("Saving generated assets...", .9f);
         var savedAtlasTexture = newAtlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
@@ -202,6 +218,25 @@ public class DicedSpriteAtlasEditor : Editor
         // Update data size content.
         dataSizeValueContent = GetDataSizeValueContent();
         EditorUtility.ClearProgressBar();
+    }
+
+    private static List<Texture2D> CreateAtlasTextures (List<DicedUnit> dicedUnits, int sizeLimit, bool forceSquare, string baseName)
+    {
+        var colorsHashToUV = new Dictionary<int, Rect>();
+        foreach (var dicedUnit in dicedUnits)
+        {
+            if (colorsHashToUV.ContainsKey(dicedUnit.ColorsHashCode))
+                dicedUnit.QuadUVs = colorsHashToUV[dicedUnit.ColorsHashCode];
+            else
+            {
+                // ...
+                colorsHashToUV.Add(dicedUnit.ColorsHashCode, new Rect());
+            }
+        }
+
+
+
+        return new List<Texture2D>();
     }
 
     private List<DicedUnit> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
@@ -252,9 +287,8 @@ public class DicedSpriteAtlasEditor : Editor
 
     private void MapDicedUnitUVs (List<DicedUnit> dicedUnits, List<Rect> distinctUVRects, List<Color[]> distinctColors, Texture2D atlasTexture)
     {
-        for (int i = 0; i < dicedUnits.Count; i++)
+        foreach (var dicedUnit in dicedUnits)
         {
-            var dicedUnit = dicedUnits[i];
             var distinctIndex = distinctColors.FindIndex(colors => ArrayEqualityComparer<Color>.Equals(colors, dicedUnit.Colors));
             var paddedUVs = distinctUVRects[distinctIndex];
             // We've used padded rects when building atlas to prevent texture bleeding. 
@@ -264,7 +298,6 @@ public class DicedSpriteAtlasEditor : Editor
                 .Crop(-padding.intValue)
                 .Scale(1f / atlasTexture.width, 1f / atlasTexture.height);
             dicedUnit.QuadUVs = correctedUVs;
-            dicedUnits[i] = dicedUnit;
         }
     }
 
@@ -315,7 +348,7 @@ public class DicedSpriteAtlasEditor : Editor
         }
     }
 
-    private void DisplayProgressBar (string activity, float progress)
+    private static void DisplayProgressBar (string activity, float progress)
     {
         EditorUtility.DisplayProgressBar("Building Diced Sprite Atlas", activity, progress);
     }
