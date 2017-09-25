@@ -194,47 +194,60 @@ public class DicedSpriteAtlasEditor : Editor
         DisplayProgressBar("Processing diced units...", .7f);
         dicedUnits.RemoveAll(unit => unit.Colors.All(color => color.a == 0));
 
-        // Select diced units with distinct colors (we'll reuse them to render repeating patterns).
-        var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
-        // Create textures from the distinct units using their padded colors (to prevent texture bleeding).
-        var distinctTextures = distinctUnits.Select(unit => TextureUtils.CreateTexture(diceUnitSize.intValue + padding.intValue * 2, unit.PaddedColors)).ToArray();
-        // Pack distinct unit textures to the atlas and retrieve uv rects.
-        DisplayProgressBar("Packing diced textures...", .8f);
-        var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasSizeLimit.intValue).ToList();
-        // Map distinct uv rects to the diced units using color hashes as equality keys.
-        MapDicedUnitUVs(dicedUnits, distinctUVRects, distinctUnits.Select(unit => unit.Colors).ToList(), newAtlasTexture);
 
-        // Save generated atlas texture.
-        DisplayProgressBar("Saving generated assets...", .9f);
-        var savedAtlasTexture = newAtlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
-        atlasTexture.objectReferenceValue = savedAtlasTexture;
-        // Generate diced sprites from the diced units.
-        var newDicedSprites = dicedUnits
-            .GroupBy(unit => unit.Name)
-            .Select(units => DicedSprite.CreateInstance(units.First().Name, savedAtlasTexture, units.ToList(), defaultPivot.vector2Value, keepOriginalPivot.boolValue))
-            .ToList();
-        // Save generated sprites.
-        SaveDicedSprites(newDicedSprites);
-        // Update data size content.
-        dataSizeValueContent = GetDataSizeValueContent();
+        // ---------------------------- 
+        //// Select diced units with distinct colors (we'll reuse them to render repeating patterns).
+        //var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
+        //// Create textures from the distinct units using their padded colors (to prevent texture bleeding).
+        //var distinctTextures = distinctUnits.Select(unit => TextureUtils.CreateTexture(diceUnitSize.intValue + padding.intValue * 2, unit.PaddedColors)).ToArray();
+        //// Pack distinct unit textures to the atlas and retrieve uv rects.
+        //DisplayProgressBar("Packing diced textures...", .8f);
+        //var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasSizeLimit.intValue).ToList();
+        //// Map distinct uv rects to the diced units using color hashes as equality keys.
+        //MapDicedUnitUVs(dicedUnits, distinctUVRects, distinctUnits.Select(unit => unit.Colors).ToList(), newAtlasTexture);
+        // ---------------------------- 
+
+
+        // ---------------------------- 
+        var newAtlasTextures = CreateAtlasTextures(dicedUnits);
+        foreach (var newTexture in newAtlasTextures)
+        {
+            // ... save texture and generate sprites
+        }
+        // ---------------------------- 
+
+
+        //// Save generated atlas texture.
+        //DisplayProgressBar("Saving generated assets...", .9f);
+        //var savedAtlasTexture = newAtlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
+        //atlasTexture.objectReferenceValue = savedAtlasTexture;
+        //// Generate diced sprites from the diced units.
+        //var newDicedSprites = dicedUnits
+        //    .GroupBy(unit => unit.Name)
+        //    .Select(units => DicedSprite.CreateInstance(units.First().Name, savedAtlasTexture, units.ToList(), defaultPivot.vector2Value, keepOriginalPivot.boolValue))
+        //    .ToList();
+        //// Save generated sprites.
+        //SaveDicedSprites(newDicedSprites);
+        //// Update data size content.
+        //dataSizeValueContent = GetDataSizeValueContent();
         EditorUtility.ClearProgressBar();
     }
 
-    private static List<Texture2D> CreateAtlasTextures (List<DicedUnit> dicedUnits, int sizeLimit, bool forceSquare, string baseName)
+    private List<Texture2D> CreateAtlasTextures (List<DicedUnit> dicedUnits)
     {
-        var colorsHashToUV = new Dictionary<int, Rect>();
-        foreach (var dicedUnit in dicedUnits)
-        {
-            if (colorsHashToUV.ContainsKey(dicedUnit.ColorsHashCode))
-                dicedUnit.QuadUVs = colorsHashToUV[dicedUnit.ColorsHashCode];
-            else
-            {
-                // ...
-                colorsHashToUV.Add(dicedUnit.ColorsHashCode, new Rect());
-            }
-        }
+        // Group diced units by colors hash and convert to dictionary.
+        var hashToUnits = dicedUnits.GroupBy(unit => unit.ColorsHashCode).ToDictionary(unitsGroup => unitsGroup.Key, unitsGroup => unitsGroup.ToList());
+        // Evaluate how many units can be packed to a single atlas.
+        var unitLimit = Mathf.FloorToInt(Mathf.Pow(atlasSizeLimit.intValue, 2) / Mathf.Pow(diceUnitSize.intValue + padding.intValue * 2f, 2));
+        // Evaluate required number of atlas textures to create.
+        var atlasCount = Mathf.CeilToInt(hashToUnits.Keys.Count / (float)unitLimit);
+        // Spread diced units among the required number of atlas textures and insure any given sprite reference only a single atlas texture.
+        var unitsPerAtlas = hashToUnits.Aggregate(new List<List<DicedUnit>> { new List<DicedUnit>() }, (seed, item) => {
 
 
+
+            return seed;
+        });
 
         return new List<Texture2D>();
     }

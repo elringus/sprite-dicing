@@ -12,6 +12,11 @@ public class DicedUnit
     public string Name { get; set; }
 
     /// <summary>
+    /// Atlas texture containing unit's texture.
+    /// </summary>
+    public Texture2D AtlasTexture { get; set; }
+
+    /// <summary>
     /// Positions of the quad vertices used to represent the unit in (local) space.
     /// </summary>
     public Rect QuadVerts { get; set; }
