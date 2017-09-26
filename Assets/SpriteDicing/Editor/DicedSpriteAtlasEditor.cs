@@ -191,12 +191,12 @@ public class DicedSpriteAtlasEditor : Editor
         var sourceTextureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolders.boolValue, prependSubfolderNames.boolValue);
         // Dice source textures, evaluate quad rects and colors.
         var dicedUnits = DiceSourceTextures(sourceTextureAssets);
-        // Remove all the full-transparent units (no need to render them).
-        DisplayProgressBar("Processing diced units...", .7f);
-        dicedUnits.RemoveAll(unit => unit.Colors.All(color => color.a == 0));
 
 
         // ---------------------------- 
+        // Remove all the full-transparent units (no need to render them).
+        //DisplayProgressBar("Processing diced units...", .7f);
+        //dicedUnits.RemoveAll(unit => unit.Colors.All(color => color.a == 0));
         //// Select diced units with distinct colors (we'll reuse them to render repeating patterns).
         //var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
         //// Create textures from the distinct units using their padded colors (to prevent texture bleeding).
@@ -234,49 +234,42 @@ public class DicedSpriteAtlasEditor : Editor
         EditorUtility.ClearProgressBar();
     }
 
-    private List<Texture2D> CreateAtlasTextures (List<DicedUnit> dicedUnits)
+    private List<Texture2D> CreateAtlasTextures (Dictionary<string, List<DicedUnit>> nameToUnitsMap)
     {
-        // Group diced units by colors hash and convert to dictionary.
-        var hashToUnits = dicedUnits.GroupBy(unit => unit.ColorsHashCode).ToDictionary(group => group.Key, group => group.ToList());
+        var unitSize = diceUnitSize.intValue;
+        var paddingSize = padding.intValue;
+        var atlasSizeLimit = this.atlasSizeLimit.intValue;
         // Evaluate how many units can be packed to a single atlas.
-        var unitLimit = Mathf.FloorToInt(Mathf.Pow(atlasSizeLimit.intValue, 2) / Mathf.Pow(diceUnitSize.intValue + padding.intValue * 2f, 2));
-        // Evaluate required number of atlas textures to create.
-        var atlasCount = Mathf.CeilToInt(hashToUnits.Count / (float)unitLimit);
-        // Spread diced units among the required number of atlas textures and insure any given sprite reference only a single atlas texture.
-        var unitsPerAtlas = hashToUnits.Aggregate(new Dictionary<int, List<DicedUnit>>[atlasCount], (seed, item) => {
-            // Collect units with cross-sprite references to the bucket.
-            var bucket = new Dictionary<int, List<DicedUnit>> { { item.Key, item.Value } };
-            var refNames = item.Value.Select(unit => unit.Name).ToList();
-            for (int i = 0; i < seed.Length; i++)
-            {
-                if (seed[i] == null) seed[i] = new Dictionary<int, List<DicedUnit>>();
-                var refs = seed[i].Where(units => units.Value.Exists(unit => refNames.Contains(unit.Name)));
-                seed[i] = seed[i].Except(refs).ToDictionary(x => x.Key, x => x.Value);
-                bucket = bucket.Union(refs).ToDictionary(x => x.Key, x => x.Value);
-            }
-            // Find seed item with the least free space (but enough for the bucket).
-            var suitableSeedItem = seed.OrderBy(seedItem => seedItem.Count).LastOrDefault(seedItem => (seedItem.Count + bucket.Count) <= unitLimit);
-            if (suitableSeedItem == null)
-                throw new UnityException("SpriteDicing: Not enough space to pack the diced textures. Consider increasing atlas size limit.");
-            var suitableSeedItemIndex = Array.FindIndex(seed, seedItem => seedItem == suitableSeedItem);
-            // Insert bucket to the suitable seed item.
-            seed[suitableSeedItemIndex] = suitableSeedItem.Union(bucket).ToDictionary(x => x.Key, x => x.Value);
-            return seed;
-        });
+        var unitLimit = Mathf.FloorToInt(Mathf.Pow(atlasSizeLimit, 2) / Mathf.Pow(unitSize + paddingSize * 2f, 2));
 
+        // Group name->units map to name->hash->units enumerable and order by number of distinct units.
+        var nameToHashToUnitsEnumerable = nameToUnitsMap.Select(nameToUnits => new KeyValuePair<string, Dictionary<int, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
+            .GroupBy(units => units.ColorsHashCode).ToDictionary(x => x.Key, x => x.ToList())))
+            .OrderBy(item => item.Value.Count);
+        // Pack units with distinct (inside atlas group) colors to the atlas textures.
+        // Insure sprites integrity (units whith equal names should be in a single atlas) and atlas size limit (distinct units per atlas count).
+        foreach (var nameToHashToUnits in nameToHashToUnitsEnumerable)
+        {
+
+        }
 
 
 
         return new List<Texture2D>();
     }
 
-    private List<DicedUnit> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
+    private Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
     {
-        var dicedUnits = new List<DicedUnit>();
+        // Texture name -> units diced off the texture.
+        var dicedUnits = new Dictionary<string, List<DicedUnit>>();
+        var unitSize = diceUnitSize.intValue;
 
         foreach (var textureAsset in textureAssets)
         {
             var sourceTexture = textureAsset.Object;
+            var key = dicedUnits.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid().ToString() : textureAsset.Name;
+            var value = new List<DicedUnit>();
+            var nameToUnits = new KeyValuePair<string, List<DicedUnit>>(key, value);
 
             // Make sure texture is readable and not crunched (can't get pixels otherwise).
             var textureImporter = textureAsset.Importer as TextureImporter;
@@ -287,8 +280,8 @@ public class DicedSpriteAtlasEditor : Editor
                 AssetDatabase.ImportAsset(textureAsset.Path);
             }
 
-            var unitCountX = Mathf.CeilToInt((float)sourceTexture.width / diceUnitSize.intValue);
-            var unitCountY = Mathf.CeilToInt((float)sourceTexture.height / diceUnitSize.intValue);
+            var unitCountX = Mathf.CeilToInt((float)sourceTexture.width / unitSize);
+            var unitCountY = Mathf.CeilToInt((float)sourceTexture.height / unitSize);
 
             for (int unitX = 0; unitX < unitCountX; unitX++)
             {
@@ -298,19 +291,23 @@ public class DicedSpriteAtlasEditor : Editor
                 var message = string.Format("Dicing texture '{0}' ({1}/{2})...", textureAsset.Name, textureNumber, textureAssets.Count);
                 DisplayProgressBar(message, .1f + textureProgress + unitProgress);
 
-                var x = unitX * diceUnitSize.intValue;
+                var x = unitX * unitSize;
                 for (int unitY = 0; unitY < unitCountY; unitY++)
                 {
-                    var y = unitY * diceUnitSize.intValue;
-                    var pixelsRect = new Rect(x, y, diceUnitSize.intValue, diceUnitSize.intValue);
+                    var y = unitY * unitSize;
+                    var pixelsRect = new Rect(x, y, unitSize, unitSize);
                     var paddedRect = pixelsRect.Crop(padding.intValue);
                     var colors = sourceTexture.GetPixels(pixelsRect);
+                    // Skip transparent units (no need to render them).
+                    if (colors.All(color => color.a == 0)) continue;
                     var paddedColors = sourceTexture.GetPixels(paddedRect);
                     var quadVerts = pixelsRect.Scale(1f / pixelsPerUnit.floatValue);
                     var dicedUnit = new DicedUnit() { Name = textureAsset.Name, QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
-                    dicedUnits.Add(dicedUnit);
+                    nameToUnits.Value.Add(dicedUnit);
                 }
             }
+
+            dicedUnits.Add(nameToUnits.Key, nameToUnits.Value);
         }
 
         return dicedUnits;
