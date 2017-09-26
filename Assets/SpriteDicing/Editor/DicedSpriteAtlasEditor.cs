@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityCommon;
@@ -236,18 +237,35 @@ public class DicedSpriteAtlasEditor : Editor
     private List<Texture2D> CreateAtlasTextures (List<DicedUnit> dicedUnits)
     {
         // Group diced units by colors hash and convert to dictionary.
-        var hashToUnits = dicedUnits.GroupBy(unit => unit.ColorsHashCode).ToDictionary(unitsGroup => unitsGroup.Key, unitsGroup => unitsGroup.ToList());
+        var hashToUnits = dicedUnits.GroupBy(unit => unit.ColorsHashCode).ToDictionary(group => group.Key, group => group.ToList());
         // Evaluate how many units can be packed to a single atlas.
         var unitLimit = Mathf.FloorToInt(Mathf.Pow(atlasSizeLimit.intValue, 2) / Mathf.Pow(diceUnitSize.intValue + padding.intValue * 2f, 2));
         // Evaluate required number of atlas textures to create.
-        var atlasCount = Mathf.CeilToInt(hashToUnits.Keys.Count / (float)unitLimit);
+        var atlasCount = Mathf.CeilToInt(hashToUnits.Count / (float)unitLimit);
         // Spread diced units among the required number of atlas textures and insure any given sprite reference only a single atlas texture.
-        var unitsPerAtlas = hashToUnits.Aggregate(new List<List<DicedUnit>> { new List<DicedUnit>() }, (seed, item) => {
-
-
-
+        var unitsPerAtlas = hashToUnits.Aggregate(new Dictionary<int, List<DicedUnit>>[atlasCount], (seed, item) => {
+            // Collect units with cross-sprite references to the bucket.
+            var bucket = new Dictionary<int, List<DicedUnit>> { { item.Key, item.Value } };
+            var refNames = item.Value.Select(unit => unit.Name).ToList();
+            for (int i = 0; i < seed.Length; i++)
+            {
+                if (seed[i] == null) seed[i] = new Dictionary<int, List<DicedUnit>>();
+                var refs = seed[i].Where(units => units.Value.Exists(unit => refNames.Contains(unit.Name)));
+                seed[i] = seed[i].Except(refs).ToDictionary(x => x.Key, x => x.Value);
+                bucket = bucket.Union(refs).ToDictionary(x => x.Key, x => x.Value);
+            }
+            // Find seed item with the least free space (but enough for the bucket).
+            var suitableSeedItem = seed.OrderBy(seedItem => seedItem.Count).LastOrDefault(seedItem => (seedItem.Count + bucket.Count) <= unitLimit);
+            if (suitableSeedItem == null)
+                throw new UnityException("SpriteDicing: Not enough space to pack the diced textures. Consider increasing atlas size limit.");
+            var suitableSeedItemIndex = Array.FindIndex(seed, seedItem => seedItem == suitableSeedItem);
+            // Insert bucket to the suitable seed item.
+            seed[suitableSeedItemIndex] = suitableSeedItem.Union(bucket).ToDictionary(x => x.Key, x => x.Value);
             return seed;
         });
+
+
+
 
         return new List<Texture2D>();
     }
