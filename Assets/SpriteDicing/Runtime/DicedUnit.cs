@@ -7,11 +7,6 @@ using UnityEngine;
 public class DicedUnit
 {
     /// <summary>
-    /// Name of the original texture (sprite) from which this unit was diced off.
-    /// </summary>
-    public string Name { get; set; }
-
-    /// <summary>
     /// Atlas texture containing unit's texture.
     /// </summary>
     public Texture2D AtlasTexture { get; set; }

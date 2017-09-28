@@ -14,11 +14,16 @@ public class DicedSpriteAtlas : ScriptableObject
     public int SpritesCount { get { return dicedSprites.Count; } }
 
     /// <summary>
+    /// Number of textures used by this atlas.
+    /// </summary>
+    public int TexturesCount { get { return atlasTextures.Count; } }
+
+    /// <summary>
     /// Whether the atlas is built and ready to be used.
     /// </summary>
-    public bool IsBuilt { get { return atlasTexture && SpritesCount > 0; } }
+    public bool IsBuilt { get { return TexturesCount > 0 && SpritesCount > 0; } }
 
-    [SerializeField, ReadOnly] private Texture2D atlasTexture = null;
+    [SerializeField, ReadOnly] private List<Texture2D> atlasTextures = new List<Texture2D>();
     [SerializeField, ReadOnly] private List<DicedSprite> dicedSprites = new List<DicedSprite>();
 
     #if UNITY_EDITOR
@@ -49,13 +54,5 @@ public class DicedSpriteAtlas : ScriptableObject
     public DicedSprite GetSprite (string spriteName)
     {
         return dicedSprites.Find(sprite => sprite.Name.Equals(spriteName));
-    }
-
-    /// <summary>
-    /// Get size of the generated atlas texture.
-    /// </summary>
-    public Vector2 GetAtlasTextureSize ()
-    {
-        return atlasTexture ? new Vector2(atlasTexture.width, atlasTexture.height) : Vector2.zero;
     }
 }

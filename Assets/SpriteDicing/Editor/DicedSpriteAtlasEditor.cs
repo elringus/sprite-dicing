@@ -11,7 +11,7 @@ public class DicedSpriteAtlasEditor : Editor
 {
     protected DicedSpriteAtlas TargetAtlas { get { return target as DicedSpriteAtlas; } }
 
-    private SerializedProperty atlasTexture;
+    private SerializedProperty atlasTextures;
     private SerializedProperty dicedSprites;
     private SerializedProperty defaultPivot;
     private SerializedProperty keepOriginalPivot;
@@ -41,7 +41,7 @@ public class DicedSpriteAtlasEditor : Editor
 
     private void OnEnable ()
     {
-        atlasTexture = serializedObject.FindProperty("atlasTexture");
+        atlasTextures = serializedObject.FindProperty("atlasTextures");
         dicedSprites = serializedObject.FindProperty("dicedSprites");
         defaultPivot = serializedObject.FindProperty("defaultPivot");
         keepOriginalPivot = serializedObject.FindProperty("keepOriginalPivot");
@@ -62,7 +62,7 @@ public class DicedSpriteAtlasEditor : Editor
     public override void OnInspectorGUI ()
     {
         serializedObject.Update();
-        EditorGUILayout.PropertyField(atlasTexture);
+        EditorGUILayout.PropertyField(atlasTextures, true);
         EditorGUILayout.PropertyField(dicedSprites, true);
         EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
         EditorGUILayout.Space();
@@ -182,165 +182,15 @@ public class DicedSpriteAtlasEditor : Editor
     #region Atlas generation
     private void BuildAtlas ()
     {
+        DisplayProgressBar("Loading source textures...", .0f);
         var inputFolderHelper = new FolderAssetHelper(inputFolder.objectReferenceValue);
-        // Create new atlas texture with the max allowed size; it will be auto-trimmed (if necessary) when packing textures.
-        var newAtlasTexture = TextureUtils.CreateTexture(atlasSizeLimit.intValue, name: target.name + "Texture");
-        newAtlasTexture.alphaIsTransparency = true;
-        // Load source texture assets from the input directory.
-        DisplayProgressBar("Loading source textures...", .1f);
-        var sourceTextureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolders.boolValue, prependSubfolderNames.boolValue);
-        // Dice source textures, evaluate quad rects and colors.
-        var dicedUnits = DiceSourceTextures(sourceTextureAssets);
-
-
-        // ---------------------------- 
-        // Remove all the full-transparent units (no need to render them).
-        //DisplayProgressBar("Processing diced units...", .7f);
-        //dicedUnits.RemoveAll(unit => unit.Colors.All(color => color.a == 0));
-        //// Select diced units with distinct colors (we'll reuse them to render repeating patterns).
-        //var distinctUnits = dicedUnits.DistinctBy(unit => unit.Colors, new ArrayEqualityComparer<Color>()).ToList();
-        //// Create textures from the distinct units using their padded colors (to prevent texture bleeding).
-        //var distinctTextures = distinctUnits.Select(unit => TextureUtils.CreateTexture(diceUnitSize.intValue + padding.intValue * 2, unit.PaddedColors)).ToArray();
-        //// Pack distinct unit textures to the atlas and retrieve uv rects.
-        //DisplayProgressBar("Packing diced textures...", .8f);
-        //var distinctUVRects = newAtlasTexture.PackTextures(distinctTextures, 0, atlasSizeLimit.intValue).ToList();
-        //// Map distinct uv rects to the diced units using color hashes as equality keys.
-        //MapDicedUnitUVs(dicedUnits, distinctUVRects, distinctUnits.Select(unit => unit.Colors).ToList(), newAtlasTexture);
-        // ---------------------------- 
-
-
-        // ---------------------------- 
-        var newAtlasTextures = CreateAtlasTextures(dicedUnits);
-        // Save created atlas textures.
-        foreach (var newTexture in newAtlasTextures)
-        {
-            var savedAtlasTexture = newTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
-            //atlasTexture.objectReferenceValue = savedAtlasTexture;
-        }
-        // ---------------------------- 
-
-
-
-        //// Generate diced sprites from the diced units.
-        //var newDicedSprites = dicedUnits
-        //    .GroupBy(unit => unit.Name)
-        //    .Select(units => DicedSprite.CreateInstance(units.First().Name, savedAtlasTexture, units.ToList(), defaultPivot.vector2Value, keepOriginalPivot.boolValue))
-        //    .ToList();
-        //// Save generated sprites.
-        //SaveDicedSprites(newDicedSprites);
-        //// Update data size content.
-        //dataSizeValueContent = GetDataSizeValueContent();
+        var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolders.boolValue, prependSubfolderNames.boolValue);
+        var dicedUnits = DiceSourceTextures(textureAssets);
+        if (!CreateAtlasTextures(dicedUnits)) { EditorUtility.ClearProgressBar(); return; }
+        CreateDicedSprites(dicedUnits);
+        dataSizeValueContent = GetDataSizeValueContent();
+        AssetDatabase.SaveAssets();
         EditorUtility.ClearProgressBar();
-    }
-
-    private List<Texture2D> CreateAtlasTextures (Dictionary<string, List<DicedUnit>> nameToUnitsMap)
-    {
-        var unitSize = diceUnitSize.intValue;
-        var paddingSize = padding.intValue;
-        var paddedUnitSize = unitSize + paddingSize * 2;
-        var forceSquare = this.forceSquare.boolValue;
-        var atlasSizeLimit = this.atlasSizeLimit.intValue;
-        // Evaluate how many units can be packed to a single atlas.
-        var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(atlasSizeLimit, 2) / Mathf.Pow(paddedUnitSize, 2));
-        // Group name->units map to name->hash->units enumerable and order by number of distinct units.
-        var nameToHashToUnitsEnumerable = nameToUnitsMap.Select(nameToUnits => new KeyValuePair<string, Dictionary<int, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
-            .GroupBy(units => units.ColorsHashCode).ToDictionary(x => x.Key, x => x.ToList()))).OrderBy(item => item.Value.Count);
-        // Pack units with distinct (inside atlas group) colors to the atlas textures.
-        // Insure sprites integrity (units whith equal names should be in a single atlas) and atlas size limit (distinct units per atlas count).
-        var atlasTextures = new List<Texture2D>(); // Resulting atlas textures to store distinct diced unit textures.
-        atlasTextures.Add(TextureUtils.CreateTexture(atlasSizeLimit, name: target.name + " 000"));
-        var hashToUV = new Dictionary<int, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
-        var yToLastXMap = new Dictionary<int, int>();
-        var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize);
-
-        var totalUnitsPacked = 0;  // 3136 when texture is out bounds while limit is 3236
-        var totalUnitsSkiped = 0; // 1000+ when out of bounds
-
-        foreach (var nameToHashToUnits in nameToHashToUnitsEnumerable)
-        {
-            // Ensure current atlas texture has enough space to pack the units; create a new one if needed.
-            var unitsToPackCount = nameToHashToUnits.Value.Count(hashToUnits => !hashToUV.ContainsKey(hashToUnits.Key));
-            if (hashToUV.Keys.Count + unitsToPackCount > unitsPerAtlasLimit)
-            {
-                var newAtlasTexture = TextureUtils.CreateTexture(atlasSizeLimit, name: string.Format("{0} {1:000}", target.name, atlasTextures.Count));
-                atlasTextures.Add(newAtlasTexture);
-                hashToUV.Clear();
-                yToLastXMap = new Dictionary<int, int>();
-                xLimit = Mathf.NextPowerOfTwo(paddedUnitSize);
-            }
-
-            // Iterate diced units of a sprite grouped by color hashes.
-            foreach (var hashToUnits in nameToHashToUnits.Value)
-            {
-                if (hashToUV.ContainsKey(hashToUnits.Key))
-                {
-                    // We've already packed unit with the same colors to this atlas; assign it's UVs to the others in the group.
-                    hashToUnits.Value.ForEach(unit => unit.QuadUVs = hashToUV[hashToUnits.Key]);
-                    totalUnitsSkiped++;
-                    continue;
-                }
-
-                int posX, posY; // Position of the new unit on the atlas texture.
-                // Find row positions that have enough room for more units until next power of two.
-                var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2);
-                if (suitableYToLastXEnumerable.Count() == 0) // When no suitable rows found.
-                {
-                    // Handle corner case when we just started.
-                    if (yToLastXMap.Count == 0)
-                    {
-                        yToLastXMap.Add(0, 0);
-                        posX = 0;
-                        posY = 0;
-                    }
-                    // Determine whether we need to add a new row or increase x limit.
-                    else if (xLimit > yToLastXMap.Last().Key)
-                    {
-                        var newRowYPos = yToLastXMap.Last().Key + paddedUnitSize;
-                        yToLastXMap.Add(newRowYPos, 0);
-                        posX = 0;
-                        posY = newRowYPos;
-                    }
-                    else
-                    {
-                        xLimit = Mathf.NextPowerOfTwo(xLimit + 1);
-                        posX = yToLastXMap.First().Value + paddedUnitSize;
-                        posY = 0;
-                        yToLastXMap[0] = posX;
-                    }
-                }
-                else // When suitable rows found.
-                {
-                    // Find one with the least number of elements and use it.
-                    var suitableYToLastX = suitableYToLastXEnumerable.OrderBy(yToLastX => yToLastX.Value).First();
-                    posX = suitableYToLastX.Value + paddedUnitSize;
-                    posY = suitableYToLastX.Key;
-                    yToLastXMap[posY] = posX;
-                }
-
-                // Write colors of the unit to the current atlas texture.
-                var colorsToPack = hashToUnits.Value.First().PaddedColors;
-                var currentAtlas = atlasTextures.Last();
-
-                if (posX + paddedUnitSize > atlasSizeLimit || posY + paddedUnitSize > atlasSizeLimit)
-                {
-                    Debug.Log("HUI");
-                }
-                totalUnitsPacked++;
-
-                currentAtlas.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
-                // Evaluate and assign UVs of the unit to the other units in the group.
-                var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-paddingSize).Scale(1f / atlasSizeLimit);
-                hashToUnits.Value.ForEach(unit => unit.QuadUVs = unitUVRect);
-                hashToUV.Add(hashToUnits.Key, unitUVRect);
-            }
-        }
-
-        // Apply packed pixels to the atlas textures.
-        atlasTextures.ForEach(atlasTexture => { atlasTexture.Apply(); });
-        // Crop atlas textures: http://answers.unity3d.com/questions/998264/crop-texture2d-getset-pixels.html
-        // Correct UV rects after crop.
-
-        return atlasTextures;
     }
 
     private Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
@@ -370,11 +220,11 @@ public class DicedSpriteAtlasEditor : Editor
 
             for (int unitX = 0; unitX < unitCountX; unitX++)
             {
-                var textureProgress = .6f * textureAssets.ProgressOf(textureAsset);
-                var unitProgress = (.6f / textureAssets.Count) * ((float)unitX / unitCountX);
+                var textureProgress = .5f * textureAssets.ProgressOf(textureAsset);
+                var unitProgress = (.5f / textureAssets.Count) * ((float)unitX / unitCountX);
                 var textureNumber = textureAssets.IndexOf(textureAsset) + 1;
                 var message = string.Format("Dicing texture '{0}' ({1}/{2})...", textureAsset.Name, textureNumber, textureAssets.Count);
-                DisplayProgressBar(message, .1f + textureProgress + unitProgress);
+                DisplayProgressBar(message, textureProgress + unitProgress);
 
                 var x = unitX * unitSize;
                 for (int unitY = 0; unitY < unitCountY; unitY++)
@@ -382,12 +232,12 @@ public class DicedSpriteAtlasEditor : Editor
                     var y = unitY * unitSize;
                     var pixelsRect = new Rect(x, y, unitSize, unitSize);
                     var paddedRect = pixelsRect.Crop(padding.intValue);
-                    var colors = sourceTexture.GetPixels(pixelsRect);
+                    var colors = sourceTexture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
                     // Skip transparent units (no need to render them).
                     if (colors.All(color => color.a == 0)) continue;
                     var paddedColors = sourceTexture.GetPixels(paddedRect);
                     var quadVerts = pixelsRect.Scale(1f / pixelsPerUnit.floatValue);
-                    var dicedUnit = new DicedUnit() { Name = textureAsset.Name, QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
+                    var dicedUnit = new DicedUnit() { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
                     nameToUnits.Value.Add(dicedUnit);
                 }
             }
@@ -398,25 +248,163 @@ public class DicedSpriteAtlasEditor : Editor
         return nameToUnitsMap;
     }
 
-    private void MapDicedUnitUVs (List<DicedUnit> dicedUnits, List<Rect> distinctUVRects, List<Color[]> distinctColors, Texture2D atlasTexture)
+    // TODO: Use custom structs for all the maps, move out atlas generation to a separate .cs (?).
+    private bool CreateAtlasTextures (Dictionary<string, List<DicedUnit>> dicedUnits)
     {
-        foreach (var dicedUnit in dicedUnits)
+        DisplayProgressBar("Processing diced textures...", .5f);
+
+        // Delete any previously generated atlas textures.
+        for (int i = atlasTextures.arraySize - 1; i >= 0; i--)
         {
-            var distinctIndex = distinctColors.FindIndex(colors => ArrayEqualityComparer<Color>.Equals(colors, dicedUnit.Colors));
-            var paddedUVs = distinctUVRects[distinctIndex];
-            // We've used padded rects when building atlas to prevent texture bleeding. 
-            // Now we need to correct the uvs so they'll map to the original pixel rects.
-            var correctedUVs = paddedUVs
-                .Scale(atlasTexture.width, atlasTexture.height)
-                .Crop(-padding.intValue)
-                .Scale(1f / atlasTexture.width, 1f / atlasTexture.height);
-            dicedUnit.QuadUVs = correctedUVs;
+            var unusedTexture = atlasTextures.GetArrayElementAtIndex(i).objectReferenceValue;
+            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(unusedTexture));
+            DestroyImmediate(unusedTexture, true);
         }
+        atlasTextures.arraySize = 0;
+
+        var atlasCount = 0;
+        var unitSize = diceUnitSize.intValue;
+        var paddingSize = padding.intValue;
+        var paddedUnitSize = unitSize + paddingSize * 2;
+        var forceSquare = this.forceSquare.boolValue;
+        var atlasSizeLimit = this.atlasSizeLimit.intValue;
+        var unitsPerAtlasLimit = Mathf.Pow(atlasSizeLimit / paddedUnitSize, 2);
+
+        // Group name->units to name->hash->units map.
+        var unitsToPackMap = dicedUnits.Select(nameToUnits => new KeyValuePair<string, Dictionary<int, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
+            .GroupBy(units => units.ColorsHashCode).ToDictionary(hashToUnitsGroup => hashToUnitsGroup.Key, hashToUnitsGroup => hashToUnitsGroup.ToList())))
+            .ToDictionary(nameToHashToUnits => nameToHashToUnits.Key, nameToHashToUnits => nameToHashToUnits.Value);
+
+        // Pack units with distinct (inside atlas group) colors to the atlas textures.
+        // Insure sprites integrity (units belonging to one sprite should be in a common atlas) and atlas size limit (distinct units per atlas count).
+        while (unitsToPackMap.Count > 0)
+        {
+            atlasCount++;
+
+            var atlasTexture = TextureUtils.CreateTexture(atlasSizeLimit, name: string.Format("{0} {1:000}", target.name, atlasCount));
+            var hashToUV = new Dictionary<int, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
+            var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
+            var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
+            var packedUnits = new List<DicedUnit>(); // List of the units packed to the current atlas.
+
+            // Find units that can be packed to the current atlas (respecting atlas size limit and remaining free space).
+            Func<KeyValuePair<string, Dictionary<int, List<DicedUnit>>>> findSuitableUnitsToPack = () => {
+                return unitsToPackMap.FirstOrDefault(nameToHashToUnits => {
+                    var unitsToPackCount = nameToHashToUnits.Value.Count(hashToUnits => !hashToUV.ContainsKey(hashToUnits.Key));
+                    return hashToUV.Keys.Count + unitsToPackCount <= unitsPerAtlasLimit;
+                });
+            };
+
+            var suitableUnits = findSuitableUnitsToPack();
+            if (suitableUnits.Key == null) // None of the source textures fit atlas limit. 
+            {
+                Debug.LogError("SpriteDicing: Unable to fit input textures to the atlas. Consider increasing atlas size limit.");
+                return false; 
+            }
+
+            while (suitableUnits.Key != null)
+            {
+                var packingProgress = 1f - (unitsToPackMap.Count / (float)dicedUnits.Count);
+                DisplayProgressBar("Packing diced textures...", .5f + .5f * packingProgress);
+
+                // Iterate suitable for packing units grouped by their color hashes.
+                foreach (var hashToUnits in suitableUnits.Value)
+                {
+                    if (hashToUV.ContainsKey(hashToUnits.Key))
+                    {
+                        // We've already packed unit with the same colors to this atlas; assign it's UVs to the others in the group.
+                        hashToUnits.Value.ForEach(unit => unit.QuadUVs = hashToUV[hashToUnits.Key]);
+                        continue;
+                    }
+
+                    int posX, posY; // Position of the new unit on the atlas texture.
+                                    // Find row positions that have enough room for more units until next power of two.
+                    var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2);
+                    if (suitableYToLastXEnumerable.Count() == 0) // When no suitable rows found.
+                    {
+                        // Handle corner case when we just started.
+                        if (yToLastXMap.Count == 0)
+                        {
+                            yToLastXMap.Add(0, 0);
+                            posX = 0;
+                            posY = 0;
+                        }
+                        // Determine whether we need to add a new row or increase x limit.
+                        else if (xLimit > yToLastXMap.Last().Key)
+                        {
+                            var newRowYPos = yToLastXMap.Last().Key + paddedUnitSize;
+                            yToLastXMap.Add(newRowYPos, 0);
+                            posX = 0;
+                            posY = newRowYPos;
+                        }
+                        else
+                        {
+                            xLimit = Mathf.NextPowerOfTwo(xLimit + 1);
+                            posX = yToLastXMap.First().Value + paddedUnitSize;
+                            posY = 0;
+                            yToLastXMap[0] = posX;
+                        }
+                    }
+                    else // When suitable rows found.
+                    {
+                        // Find one with the least number of elements and use it.
+                        var suitableYToLastX = suitableYToLastXEnumerable.OrderBy(yToLastX => yToLastX.Value).First();
+                        posX = suitableYToLastX.Value + paddedUnitSize;
+                        posY = suitableYToLastX.Key;
+                        yToLastXMap[posY] = posX;
+                    }
+
+                    // Write colors of the unit to the current atlas texture.
+                    var colorsToPack = hashToUnits.Value.First().PaddedColors;
+                    atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
+                    // Evaluate and assign UVs of the unit to the other units in the group.
+                    var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-paddingSize).Scale(1f / atlasSizeLimit);
+                    hashToUnits.Value.ForEach(unit => unit.QuadUVs = unitUVRect);
+                    hashToUV.Add(hashToUnits.Key, unitUVRect);
+                }
+
+                packedUnits.AddRange(suitableUnits.Value.SelectMany(u => u.Value));
+                unitsToPackMap.Remove(suitableUnits.Key);
+                suitableUnits = findSuitableUnitsToPack();
+            }
+
+            // Crop unused atlas texture space.
+            var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
+            if (needToCrop)
+            {
+                var croppedWidth = xLimit;
+                var croppedHeight = forceSquare ? croppedWidth : yToLastXMap.Last().Key + paddedUnitSize;
+                var croppedPixels = atlasTexture.GetPixels(0, 0, croppedWidth, croppedHeight);
+                atlasTexture = TextureUtils.CreateTexture(croppedWidth, croppedHeight, name: atlasTexture.name);
+                atlasTexture.SetPixels(croppedPixels);
+
+                // Correct UV rects after crop.
+                packedUnits.ForEach(unit => unit.QuadUVs = unit.QuadUVs
+                    .Scale(new Vector2(atlasSizeLimit / (float)croppedWidth, atlasSizeLimit / (float)croppedHeight)));
+            }
+
+            // Save atlas texture.
+            atlasTexture.alphaIsTransparency = true;
+            atlasTexture.Apply();
+            var savedTexture = atlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
+            atlasTextures.arraySize = Mathf.Max(atlasTextures.arraySize, atlasCount);
+            atlasTextures.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
+            packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
+        }
+
+        return true;
     }
 
-    private void SaveDicedSprites (List<DicedSprite> newDicedSprites)
+    private void CreateDicedSprites (Dictionary<string, List<DicedUnit>> dicedUnits)
     {
-        var folderPath = AssetDatabase.GetAssetPath(target).GetBefore("/", false) + "/" + target.name + "Sprites";
+        DisplayProgressBar("Generating diced sprites data...", 1f);
+
+        // Generate diced sprites using diced units.
+        var newDicedSprites = dicedUnits.Select(nameToUnits => DicedSprite.CreateInstance(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture,
+            nameToUnits.Value, defaultPivot.vector2Value, keepOriginalPivot.boolValue)).ToList();
+
+        // Save generated sprites.
+        var folderPath = AssetDatabase.GetAssetPath(target).GetBefore("/", false) + "/" + target.name;
         if (!decoupleSpriteData.boolValue)
         {
             // Delete generated sprites folder (in case it was previously created).
