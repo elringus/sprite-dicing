@@ -4,17 +4,15 @@ using UnityCommon;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class OnDicedSpriteModified : UnityEvent<DicedSprite> { }
-
 /// <summary>
 /// Contains data for rendering a diced sprite.
 /// </summary>
 public class DicedSprite : ScriptableObject
 {
     /// <summary>
-    /// Event executed when sprite data has been modified.
+    /// Event invoked when sprite data has been modified.
     /// </summary>
-    public readonly OnDicedSpriteModified OnModified = new OnDicedSpriteModified();
+    public event UnityAction<DicedSprite> OnModified;
 
     /// <summary>
     /// Name of the diced sprite object.
@@ -45,7 +43,6 @@ public class DicedSprite : ScriptableObject
     [SerializeField, ReadOnly] private List<Vector2> vertices;
     [SerializeField, ReadOnly] private List<Vector2> uvs;
     [SerializeField, ReadOnly] private List<int> triangles;
-
     [SerializeField] private Vector2 _pivot;
 
     private const int MESH_VERTICES_LIMIT = 65000; // Unity limitation.
@@ -57,7 +54,7 @@ public class DicedSprite : ScriptableObject
         onModifiedCalled = HandlePivotChange();
 
         if (!onModifiedCalled)
-            OnModified.Invoke(this);
+            OnModified.SafeInvoke(this);
     }
 
     /// <summary>
@@ -165,7 +162,7 @@ public class DicedSprite : ScriptableObject
             for (int i = 0; i < vertices.Count; i++)
                 vertices[i] -= spriteRect.min;
 
-        OnModified.Invoke(this);
+        OnModified.SafeInvoke(this);
 
         var pivotX = spriteRect.min.x / spriteRect.size.x;
         var pivotY = spriteRect.min.y / spriteRect.size.y;
@@ -193,7 +190,7 @@ public class DicedSprite : ScriptableObject
         for (int i = 0; i < vertices.Count; i++)
             vertices[i] -= deltaPos;
 
-        OnModified.Invoke(this);
+        OnModified.SafeInvoke(this);
         return true;
     }
 

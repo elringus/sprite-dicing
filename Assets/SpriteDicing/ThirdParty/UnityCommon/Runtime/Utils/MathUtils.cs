@@ -6,6 +6,14 @@ namespace UnityCommon
     
     public static class MathUtils
     {
+        public static float ClampAngle (float angle)
+        {
+            while (angle < -180f) angle += 360f;
+            while (angle > 180f) angle -= 360f;
+    
+            return angle;
+        }
+    
         public static bool IsEven (this int intValue)
         {
             return intValue % 2 == 0;
