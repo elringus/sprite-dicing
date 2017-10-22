@@ -119,7 +119,7 @@ public class DicedSpriteAtlasEditor : Editor
             using (new EditorGUI.DisabledScope(keepOriginalPivot.boolValue))
                 defaultPivot.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivot.vector2Value);
             rect.x += rect.width + 5;
-            ToggleLeftGUI(rect, keepOriginalPivot, keepOriginalPivotContent);
+            EditorUtils.ToggleLeftGUI(rect, keepOriginalPivot, keepOriginalPivotContent);
         }
     }
 
@@ -134,7 +134,7 @@ public class DicedSpriteAtlasEditor : Editor
             var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
             EditorGUI.IntPopup(rect, atlasSizeLimit, popupLabels, popupValues, GUIContent.none);
             rect.x += rect.width + 5;
-            ToggleLeftGUI(rect, forceSquare, forceSquareContent);
+            EditorUtils.ToggleLeftGUI(rect, forceSquare, forceSquareContent);
         }
     }
 
@@ -149,10 +149,10 @@ public class DicedSpriteAtlasEditor : Editor
                 rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
                 rect.width = Mathf.Max(50, (rect.width - 4) / 2);
                 EditorGUIUtility.labelWidth = 50;
-                ToggleLeftGUI(rect, includeSubfolders, includeSubfoldersContent);
+                EditorUtils.ToggleLeftGUI(rect, includeSubfolders, includeSubfoldersContent);
                 rect.x += rect.width + 5;
                 using (new EditorGUI.DisabledScope(!includeSubfolders.boolValue))
-                    ToggleLeftGUI(rect, prependSubfolderNames, prependSubfolderNamesContent);
+                    EditorUtils.ToggleLeftGUI(rect, prependSubfolderNames, prependSubfolderNamesContent);
                 EditorGUIUtility.labelWidth = 0;
             }
             using (new EditorGUILayout.HorizontalScope())
@@ -162,20 +162,6 @@ public class DicedSpriteAtlasEditor : Editor
                     BuildAtlas();
             }
         }
-    }
-
-    private void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
-    {
-        var toggleValue = property.boolValue;
-        EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
-        EditorGUI.BeginChangeCheck();
-        var oldIndent = EditorGUI.indentLevel;
-        EditorGUI.indentLevel = 0;
-        toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
-        EditorGUI.indentLevel = oldIndent;
-        if (EditorGUI.EndChangeCheck())
-            property.boolValue = property.hasMultipleDifferentValues ? true : !property.boolValue;
-        EditorGUI.showMixedValue = false;
     }
     #endregion
 
