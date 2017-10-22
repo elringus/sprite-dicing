@@ -4,7 +4,7 @@
 /// Renders a DicedSprite via MeshRenderer using mesh generated with the sprite's data and atlas texture.
 /// </summary>
 [AddComponentMenu("Rendering/Diced Sprite Renderer")]
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer)), ExecuteInEditMode]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer)), ExecuteInEditMode, DisallowMultipleComponent]
 public class DicedSpriteRenderer : MonoBehaviour
 {
     /// <summary>
@@ -18,6 +18,16 @@ public class DicedSpriteRenderer : MonoBehaviour
     public Color Color { get { return _color; } set { SetMaterialColor(value); } }
 
     /// <summary>
+    /// Flip sprite by X-axis.
+    /// </summary>
+    public bool FlipX { get { return _flipX; } set { SetMaterialFlip(value, FlipY); } }
+
+    /// <summary>
+    /// Flip sprite by Y-axis.
+    /// </summary>
+    public bool FlipY { get { return _flipY; } set { SetMaterialFlip(FlipX, value); } }
+
+    /// <summary>
     /// Renderer used to draw diced sprite generated mesh.
     /// </summary>
     public MeshRenderer Renderer { get { return GetRenderer(); } }
@@ -28,7 +38,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     public Material Material { get { return GetMaterial(); } set { SetMaterial(value); } }
 
     /// <summary>
-    /// Whether to use shared material. Enable to allow draw calls batching.
+    /// Whether to use shared material. Enable to allow batching.
     /// </summary>
     public bool ShareMaterial { get { return _shareMaterial; } set { _shareMaterial = value; } }
 
@@ -38,13 +48,19 @@ public class DicedSpriteRenderer : MonoBehaviour
     public Mesh Mesh { get { return GetMesh(); } }
 
     [Tooltip("Diced sprite data used for rendering.")]
-    [SerializeField] private DicedSprite _dicedSprite;
+    [SerializeField] private DicedSprite _dicedSprite = null;
     [Tooltip("Sprite tint color.")]
     [SerializeField] private Color _color = Color.white;
-    [Tooltip("Whether to use shared material. Enable to allow draw calls batching.")]
+    [Tooltip("Flip sprite by X-axis.")]
+    [SerializeField] private bool _flipX = false;
+    [Tooltip("Flip sprite by Y-axis.")]
+    [SerializeField] private bool _flipY = false;
+    [Tooltip("Whether to use shared material. Enable to allow batching.")]
     [SerializeField] private bool _shareMaterial = true;
-    [Tooltip("Material to use for rendering. Default sprite material will be used if not provided.")]
+    [Tooltip("Material to use for rendering. Default diced sprite material will be used if not provided.")]
     [SerializeField] private Material customMaterial = null;
+
+    private const string DEFAULT_SHADER_PATH = "SpriteDicing/Default";
 
     private static Material defaultMaterial;
 
@@ -53,11 +69,13 @@ public class DicedSpriteRenderer : MonoBehaviour
     private MaterialPropertyBlock materialPropertiesCache;
     private int mainTexPropertyId;
     private int colorPropertyId;
+    private int flipPropertyId;
 
     private void Awake ()
     {
         mainTexPropertyId = Shader.PropertyToID("_MainTex");
-        colorPropertyId = Shader.PropertyToID("_RendererColor");
+        colorPropertyId = Shader.PropertyToID("_TintColor");
+        flipPropertyId = Shader.PropertyToID("_Flip");
         InitializeMeshFilter();
         InitializeMeshRenderer();
     }
@@ -66,6 +84,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     {
         SetDicedSprite(DicedSprite);
         SetMaterialColor(Color);
+        SetMaterialFlip(FlipX, FlipY);
         Renderer.enabled = true;
     }
 
@@ -79,6 +98,7 @@ public class DicedSpriteRenderer : MonoBehaviour
         ValidateMaterial();
         SetDicedSprite(DicedSprite);
         SetMaterialColor(Color);
+        SetMaterialFlip(FlipX, FlipY);
     }
 
     private void OnDidApplyAnimationProperties ()
@@ -99,9 +119,9 @@ public class DicedSpriteRenderer : MonoBehaviour
 
         _dicedSprite = newDicedSprite;
 
-        if (!DicedSprite && Mesh.vertexCount > 0)
+        if (!DicedSprite)
         {
-            Mesh.Clear();
+            if (Mesh.vertexCount > 0) Mesh.Clear();
             return;
         }
 
@@ -117,16 +137,9 @@ public class DicedSpriteRenderer : MonoBehaviour
             if (!meshFilter) meshFilter = gameObject.AddComponent<MeshFilter>();
             meshFilter.hideFlags = HideFlags.HideInInspector;
         }
-        if (!Application.isPlaying)
-        {
-            meshFilter.sharedMesh = new Mesh();
-            meshFilter.sharedMesh.name = "Generated Diced Sprite Mesh (Shared)";
-        }
-        else if (!meshFilter.mesh)
-        {
-            meshFilter.mesh = new Mesh();
-            meshFilter.mesh.name = "Generated Diced Sprite Mesh";
-        }
+        meshFilter.sharedMesh = new Mesh();
+        meshFilter.sharedMesh.hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
+        meshFilter.sharedMesh.name = "Generated Diced Sprite Mesh (Shared)";
     }
 
     private void InitializeMeshRenderer ()
@@ -140,23 +153,32 @@ public class DicedSpriteRenderer : MonoBehaviour
         if (!Material) ValidateMaterial();
     }
 
-    private void SetMaterialMainTex (Texture2D mainText)
+    private void SetMaterialMainTex (Texture2D newMainText)
     {
         var materialProperties = GetMaterialProperties();
-        materialProperties.SetTexture(mainTexPropertyId, mainText);
+        materialProperties.SetTexture(mainTexPropertyId, newMainText);
         Renderer.SetPropertyBlock(materialProperties);
     }
 
-    private void SetMaterialColor (Color color)
+    private void SetMaterialColor (Color newColor)
     {
-        _color = color;
+        _color = newColor;
         var materialProperties = GetMaterialProperties();
-        materialProperties.SetColor(colorPropertyId, color);
+        materialProperties.SetColor(colorPropertyId, newColor);
+        Renderer.SetPropertyBlock(materialProperties);
+    }
+
+    private void SetMaterialFlip (bool flipX, bool flipY)
+    {
+        _flipX = flipX;
+        _flipY = flipY;
+        var materialProperties = GetMaterialProperties();
+        materialProperties.SetVector(flipPropertyId, new Vector4(FlipX ? -1 : 1, FlipY ? -1 : 1));
         Renderer.SetPropertyBlock(materialProperties);
     }
 
     private MaterialPropertyBlock GetMaterialProperties ()
-    {
+    { 
         if (materialPropertiesCache == null)
             materialPropertiesCache = new MaterialPropertyBlock();
         Renderer.GetPropertyBlock(materialPropertiesCache);
@@ -166,7 +188,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     private Mesh GetMesh ()
     {
         if (!meshFilter) InitializeMeshFilter();
-        return Application.isPlaying ? meshFilter.mesh : meshFilter.sharedMesh;
+        return meshFilter.sharedMesh;
     }
 
     private MeshRenderer GetRenderer ()
@@ -180,16 +202,16 @@ public class DicedSpriteRenderer : MonoBehaviour
         return !Application.isPlaying || ShareMaterial ? Renderer.sharedMaterial : Renderer.material;
     }
 
-    private void SetMaterial (Material material)
+    private void SetMaterial (Material newMaterial)
     {
-        if (!Application.isPlaying || ShareMaterial) Renderer.sharedMaterial = material;
-        else Renderer.material = material;
+        if (!Application.isPlaying || ShareMaterial) Renderer.sharedMaterial = newMaterial;
+        else Renderer.material = newMaterial;
     }
 
     private void ValidateMaterial ()
     {
         if (!defaultMaterial)
-            defaultMaterial = new Material(Shader.Find("Sprites/Default"));
+            defaultMaterial = new Material(Shader.Find(DEFAULT_SHADER_PATH));
         if (customMaterial && Material != customMaterial)
             Material = customMaterial;
         else if (!customMaterial && Material != defaultMaterial)
