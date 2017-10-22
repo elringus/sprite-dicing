@@ -45,7 +45,7 @@ namespace UnityCommon
         {
             if (!AssetDatabase.IsValidFolder(path))
             {
-                var folderGuid = AssetDatabase.CreateFolder(path.GetBefore("/", false), path.GetAfter("/"));
+                var folderGuid = AssetDatabase.CreateFolder(path.GetBeforeLast("/"), path.GetAfter("/"));
                 var folderAssetPath = AssetDatabase.GUIDToAssetPath(folderGuid);
                 Debug.Assert(AssetDatabase.IsValidFolder(folderAssetPath));
                 FolderObject = AssetDatabase.LoadAssetAtPath<Object>(folderAssetPath);

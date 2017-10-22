@@ -390,7 +390,7 @@ public class DicedSpriteAtlasEditor : Editor
             nameToUnits.Value, defaultPivot.vector2Value, keepOriginalPivot.boolValue)).ToList();
 
         // Save generated sprites.
-        var folderPath = AssetDatabase.GetAssetPath(target).GetBefore("/", false) + "/" + target.name;
+        var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
         if (!decoupleSpriteData.boolValue)
         {
             // Delete generated sprites folder (in case it was previously created).

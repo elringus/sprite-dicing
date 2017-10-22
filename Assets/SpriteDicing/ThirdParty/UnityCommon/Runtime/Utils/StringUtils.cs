@@ -32,14 +32,28 @@ namespace UnityCommon
         }
     
         /// <summary>
-        /// Attempts to extract content before the specified match.
+        /// Attempts to extract content before the specified match (on first occurence).
         /// </summary>
-        public static string GetBefore (this string content, string matchString, bool onFirstOccurence = true)
+        public static string GetBefore (this string content, string matchString)
         {
             Debug.Assert(content != null);
             if (content.Contains(matchString))
             {
-                var endIndex = onFirstOccurence ? content.IndexOf(matchString) : content.LastIndexOf(matchString);
+                var endIndex = content.IndexOf(matchString);
+                return content.Substring(0, endIndex);
+            }
+            else return null;
+        }
+    
+        /// <summary>
+        /// Attempts to extract content before the specified match (on last occurence).
+        /// </summary>
+        public static string GetBeforeLast (this string content, string matchString)
+        {
+            Debug.Assert(content != null);
+            if (content.Contains(matchString))
+            {
+                var endIndex = content.LastIndexOf(matchString);
                 return content.Substring(0, endIndex);
             }
             else return null;
@@ -54,6 +68,21 @@ namespace UnityCommon
             if (content.Contains(matchString))
             {
                 var startIndex = content.LastIndexOf(matchString) + matchString.Length;
+                if (content.Length <= startIndex) return string.Empty;
+                return content.Substring(startIndex);
+            }
+            else return null;
+        }
+    
+        /// <summary>
+        /// Attempts to extract content after the specified match (on first occurence).
+        /// </summary>
+        public static string GetAfterFirst (this string content, string matchString)
+        {
+            Debug.Assert(content != null);
+            if (content.Contains(matchString))
+            {
+                var startIndex = content.IndexOf(matchString) + matchString.Length;
                 if (content.Length <= startIndex) return string.Empty;
                 return content.Substring(startIndex);
             }
