@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityCommon;
 using UnityEngine;
-using UnityEngine.Events;
 
 /// <summary>
 /// Contains data for rendering a diced sprite.
@@ -12,7 +11,7 @@ public class DicedSprite : ScriptableObject
     /// <summary>
     /// Event invoked when sprite data has been modified.
     /// </summary>
-    public event UnityAction<DicedSprite> OnModified;
+    public event System.Action<DicedSprite> OnModified;
 
     /// <summary>
     /// Name of the diced sprite object.

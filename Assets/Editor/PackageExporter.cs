@@ -46,7 +46,7 @@ namespace UnityCommon
         }
     
         [MenuItem("Assets/+ Export Package (Wrap)", priority = 20)]
-        private static void ExportPackageStore ()
+        private static void ExportPackageWrapped ()
         {
             if (IsReadyToExport)
                 Export(true);
@@ -55,7 +55,7 @@ namespace UnityCommon
         private void OnGUI ()
         {
             EditorGUILayout.LabelField("Package Exporter Settings", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Settings are stored in editor's PlayerPrefs and won't be exposed in builds or project assets.", EditorStyles.miniLabel);
+            EditorGUILayout.HelpBox("Settings are stored in editor's PlayerPrefs and won't be exposed in builds or project assets.", MessageType.Info);
             EditorGUILayout.Space();
             PackageName = EditorGUILayout.TextField("Package Name", PackageName);
             Copyright = EditorGUILayout.TextField("Copyright Notice", Copyright);
