@@ -1,10 +1,10 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
+using UnityEditor;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    using UnityEditor;
-    
     [CustomPropertyDrawer(typeof(FolderAssetHelper))]
     public class FolderAssetPropertyDrawer : PropertyDrawer
     {
@@ -15,5 +15,4 @@ namespace UnityCommon
                 property.objectReferenceValue = folderObject;
         }
     }
-    
 }

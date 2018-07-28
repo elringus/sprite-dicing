@@ -1,11 +1,11 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using System.Linq;
+using UnityEngine;
+using UnityEditor;
 
 namespace UnityCommon
 {
-    using System.Linq;
-    using UnityEngine;
-    using UnityEditor;
-    
     [CustomPropertyDrawer(typeof(IntPopupAttribute))]
     public class IntPopupPropertyDrawer : PropertyDrawer
     {
@@ -22,5 +22,4 @@ namespace UnityCommon
             }
         }
     }
-    
 }

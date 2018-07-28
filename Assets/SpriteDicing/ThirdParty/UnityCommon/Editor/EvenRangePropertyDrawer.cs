@@ -1,10 +1,10 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEditor;
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using UnityEditor;
-    using UnityEngine;
-    
     [CustomPropertyDrawer(typeof(EvenRangeAttribute))]
     public class EvenRangePropertyDrawer : PropertyDrawer
     {
@@ -16,5 +16,4 @@ namespace UnityCommon
             property.intValue = EditorGUI.IntSlider(position, label, property.intValue, min, max).ToNearestEven(max);
         }
     }
-    
 }

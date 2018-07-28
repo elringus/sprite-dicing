@@ -1,9 +1,9 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    
     /// <summary>
     /// The field will be edited as an integer popup selection field.
     /// </summary>
@@ -13,11 +13,10 @@ namespace UnityCommon
         /// Available options for the popup value.
         /// </summary>
         public int[] Values { get; private set; }
-    
+
         public IntPopupAttribute (params int[] values)
         {
             Values = values;
         }
     }
-    
 }

@@ -1,10 +1,10 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
+using UnityEditor;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    using UnityEditor;
-    
     [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
     public class ReadOnlyPropertyDrawer : PropertyDrawer
     {
@@ -14,11 +14,10 @@ namespace UnityCommon
             EditorGUI.PropertyField(position, property, label, true);
             GUI.enabled = true;
         }
-    
+
         public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
         {
             return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
-    
 }

@@ -1,12 +1,11 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    
     /// <summary>
     /// The field won't be editable in the editor.
     /// </summary>
     public class ReadOnlyAttribute : PropertyAttribute { }
-    
 }

@@ -1,18 +1,18 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using UnityEditor;
-    using UnityEngine;
-    
     public struct FolderAsset<T>
     {
         public readonly string Name, Path;
         public readonly T Object;
         public AssetImporter Importer { get { return AssetImporter.GetAtPath(Path); } }
-    
+
         public FolderAsset (string name, string path, T @object)
         {
             Name = name;
@@ -20,17 +20,17 @@ namespace UnityCommon
             Object = @object;
         }
     }
-    
+
     /// <summary>
     /// Provides utils to work with folder assets.
     /// Should only be used in editor code.
     /// </summary>
-    public class FolderAssetHelper 
+    public class FolderAssetHelper
     {
         public Object FolderObject { get; private set; }
         public string Path { get { return AssetDatabase.GetAssetPath(FolderObject); } }
         public string FullPath { get { return Application.dataPath.GetBefore("Assets") + Path; } }
-    
+
         public FolderAssetHelper (Object folderObject)
         {
             FolderObject = folderObject;
@@ -40,7 +40,7 @@ namespace UnityCommon
                 return;
             }
         }
-    
+
         public FolderAssetHelper (string path)
         {
             if (!AssetDatabase.IsValidFolder(path))
@@ -52,21 +52,21 @@ namespace UnityCommon
             }
             else FolderObject = AssetDatabase.LoadAssetAtPath<Object>(path);
         }
-    
+
         public List<T> SetContainedAssets<T> (List<T> objectsToSave) where T : Object
         {
             var assetsToDestroy = LoadContainedAssets<T>()
                 .Where(containedAsset => !objectsToSave.Exists(objectToSave => objectToSave.name == containedAsset.Object.name)).ToList();
             assetsToDestroy.ForEach(assetToDestroy => AssetDatabase.DeleteAsset(assetToDestroy.Path));
-    
+
             var savedObjects = new List<T>();
             objectsToSave.ForEach(objectToSave => savedObjects.Add(objectToSave.CreateOrReplaceAsset<T>(Path + "/" + objectToSave.name + ".asset")));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-    
+
             return savedObjects;
         }
-    
+
         /// <summary>
         /// Loads asset objects contained in the current folder.
         /// </summary>
@@ -83,7 +83,7 @@ namespace UnityCommon
                 .Where(folderAsset => folderAsset.Object != null && (includeSubfolders || !folderAsset.Path.GetAfter(Path + "/").Contains("/")))
                 .ToList();
         }
-    
+
         private string ExtractAssetName (string assetPath, bool prependSubfolderNames)
         {
             var pathWithoutExtension = assetPath.Replace("." + assetPath.GetAfter("."), string.Empty);
@@ -91,5 +91,4 @@ namespace UnityCommon
             else return pathWithoutExtension.GetAfter("/");
         }
     }
-    
 }

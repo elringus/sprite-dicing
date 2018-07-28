@@ -1,9 +1,9 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    
     /// <summary>
     /// The field will be edited as a range of even integers.
     /// </summary>
@@ -11,12 +11,11 @@ namespace UnityCommon
     {
         public int Min { get; private set; }
         public int Max { get; private set; }
-    
+
         public EvenRangeAttribute (int min, int max)
         {
             Min = min;
             Max = max;
         }
     }
-    
 }

@@ -1,9 +1,9 @@
-﻿// Copyright 2012-2017 Elringus (Artyom Sovetnikov). All Rights Reserved.
+﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
+
+using UnityEngine;
 
 namespace UnityCommon
 {
-    using UnityEngine;
-    
     public static class TextureUtils
     {
         /// <summary>
@@ -18,7 +18,7 @@ namespace UnityCommon
                 texture.name = name;
             return texture;
         }
-    
+
         /// <summary>
         /// Creates a square texture.
         /// </summary>
@@ -27,7 +27,7 @@ namespace UnityCommon
         {
             return CreateTexture(size, size, wrapMode, textureFormat, mipmap, linear, name);
         }
-    
+
         /// <summary>
         /// Creates a texture and fills it with provided colors.
         /// </summary>
@@ -39,7 +39,7 @@ namespace UnityCommon
             texture.Apply();
             return texture;
         }
-    
+
         /// <summary>
         /// Creates a square texture and fills it with provided colors.
         /// </summary>
@@ -48,7 +48,7 @@ namespace UnityCommon
         {
             return CreateTexture(size, size, pixelColors, wrapMode, textureFormat, mipmap, linear, name);
         }
-    
+
         /// <summary>
         /// Read pixels from the texture, filling overbound regions with the provided color.
         /// </summary>
@@ -78,6 +78,14 @@ namespace UnityCommon
             }
             return colors;
         }
+
+        public static Texture2D ToTexture2D (this RenderTexture renderTexture)
+        {
+            var texture2d = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
+            RenderTexture.active = renderTexture;
+            texture2d.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            texture2d.Apply();
+            return texture2d;
+        }
     }
-    
 }
