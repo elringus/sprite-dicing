@@ -5,7 +5,7 @@ using UnityEngine;
 [CustomEditor(typeof(DicedSpriteRenderer)), CanEditMultipleObjects]
 public class DicedSpriteRendererEditor : Editor
 {
-    protected DicedSpriteRenderer TargetRenderer { get { return target as DicedSpriteRenderer; } }
+    protected DicedSpriteRenderer TargetRenderer => target as DicedSpriteRenderer;
 
     private SerializedProperty dicedSprite;
     private SerializedProperty color;
@@ -16,11 +16,11 @@ public class DicedSpriteRendererEditor : Editor
 
     private void OnEnable ()
     {
-        dicedSprite = serializedObject.FindProperty("_dicedSprite");
-        color = serializedObject.FindProperty("_color");
-        flipX = serializedObject.FindProperty("_flipX");
-        flipY = serializedObject.FindProperty("_flipY");
-        shareMaterial = serializedObject.FindProperty("_shareMaterial");
+        dicedSprite = serializedObject.FindProperty("dicedSprite");
+        color = serializedObject.FindProperty("color");
+        flipX = serializedObject.FindProperty("flipX");
+        flipY = serializedObject.FindProperty("flipY");
+        shareMaterial = serializedObject.FindProperty("shareMaterial");
         customMaterial = serializedObject.FindProperty("customMaterial");
     }
 

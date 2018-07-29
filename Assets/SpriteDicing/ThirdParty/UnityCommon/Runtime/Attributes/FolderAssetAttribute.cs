@@ -1,6 +1,4 @@
-﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
-
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEngine;
 
 namespace UnityCommon

@@ -16,35 +16,35 @@ public class DicedSprite : ScriptableObject
     /// <summary>
     /// Name of the diced sprite object.
     /// </summary>
-    public string Name { get { return name; } }
+    public string Name => name;
 
     /// <summary>
     /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
     /// </summary>
-    public Vector2 Pivot { get { return _pivot; } set { if (_pivot != value) { _pivot = value; HandlePivotChange(); } } }
+    public Vector2 Pivot { get { return pivot; } set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
 
     /// <summary>
     /// Reference to the atlas texture where the dices of the original sprite texture are stored.
     /// </summary>
-    public Texture2D AtlasTexture { get { return atlasTexture; } }
+    public Texture2D AtlasTexture => atlasTexture;
 
     /// <summary>
     /// UV rects to sample diced units on the atlas texture.
     /// </summary>
-    public List<Vector2> UVs { get { return uvs; } }
+    public List<Vector2> UVs => uvs;
 
     /// <summary>
     /// Vertice positions (in local 2D space) to generate diced sprite mesh.
     /// </summary>
-    public List<Vector2> Vertices { get { return vertices; } }
+    public List<Vector2> Vertices => vertices;
 
     [SerializeField, ReadOnly] private Texture2D atlasTexture;
     [SerializeField, ReadOnly] private List<Vector2> vertices;
     [SerializeField, ReadOnly] private List<Vector2> uvs;
     [SerializeField, ReadOnly] private List<int> triangles;
-    [SerializeField] private Vector2 _pivot;
+    [SerializeField] private Vector2 pivot;
 
-    private const int MESH_VERTICES_LIMIT = 65000; // Unity limitation.
+    private const int meshVerticesLimit = 65000; // Unity limitation.
 
     private void OnValidate ()
     {
@@ -93,10 +93,10 @@ public class DicedSprite : ScriptableObject
 
         mesh.Clear();
 
-        if (vertices.Count >= MESH_VERTICES_LIMIT)
+        if (vertices.Count >= meshVerticesLimit)
         {
             Debug.LogError(string.Format("Mesh can't have more than {0} vertices. " +
-                "Consider increasing Dice Unit Size of the Diced Sprite Atlas.", MESH_VERTICES_LIMIT));
+                "Consider increasing Dice Unit Size of the Diced Sprite Atlas.", meshVerticesLimit));
             return;
         }
 

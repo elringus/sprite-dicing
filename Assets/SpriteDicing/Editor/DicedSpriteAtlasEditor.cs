@@ -9,7 +9,7 @@ using UnityEngine;
 [CustomEditor(typeof(DicedSpriteAtlas)), CanEditMultipleObjects]
 public class DicedSpriteAtlasEditor : Editor
 {
-    protected DicedSpriteAtlas TargetAtlas { get { return target as DicedSpriteAtlas; } }
+    protected DicedSpriteAtlas TargetAtlas => target as DicedSpriteAtlas;
 
     private SerializedProperty atlasTextures;
     private SerializedProperty dicedSprites;

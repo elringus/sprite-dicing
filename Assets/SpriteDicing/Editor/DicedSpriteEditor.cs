@@ -5,7 +5,7 @@ using UnityEngine;
 [CustomEditor(typeof(DicedSprite)), CanEditMultipleObjects]
 public class DicedSpriteEditor : Editor
 {
-    protected DicedSprite TargetSprite { get { return target as DicedSprite; } }
+    protected DicedSprite TargetSprite => target as DicedSprite;
 
     private SerializedProperty pivot;
     private SerializedProperty atlasTexture;
@@ -17,7 +17,7 @@ public class DicedSpriteEditor : Editor
 
     private void OnEnable ()
     {
-        pivot = serializedObject.FindProperty("_pivot");
+        pivot = serializedObject.FindProperty("pivot");
         atlasTexture = serializedObject.FindProperty("atlasTexture");
     }
 

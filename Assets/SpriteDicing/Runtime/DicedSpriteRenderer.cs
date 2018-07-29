@@ -10,27 +10,27 @@ public class DicedSpriteRenderer : MonoBehaviour
     /// <summary>
     /// Diced sprite data used for rendering.
     /// </summary>
-    public DicedSprite DicedSprite { get { return _dicedSprite; } set { SetDicedSprite(value); } }
+    public DicedSprite DicedSprite { get { return dicedSprite; } set { SetDicedSprite(value); } }
 
     /// <summary>
     /// Sprite tint color.
     /// </summary>
-    public Color Color { get { return _color; } set { SetMaterialColor(value); } }
+    public Color Color { get { return color; } set { SetMaterialColor(value); } }
 
     /// <summary>
     /// Flip sprite by X-axis.
     /// </summary>
-    public bool FlipX { get { return _flipX; } set { SetMaterialFlip(value, FlipY); } }
+    public bool FlipX { get { return flipX; } set { SetMaterialFlip(value, FlipY); } }
 
     /// <summary>
     /// Flip sprite by Y-axis.
     /// </summary>
-    public bool FlipY { get { return _flipY; } set { SetMaterialFlip(FlipX, value); } }
+    public bool FlipY { get { return flipY; } set { SetMaterialFlip(FlipX, value); } }
 
     /// <summary>
     /// Renderer used to draw diced sprite generated mesh.
     /// </summary>
-    public MeshRenderer Renderer { get { return GetRenderer(); } }
+    public MeshRenderer Renderer => GetRenderer();
 
     /// <summary>
     /// Material used by the renderer. Will reference shared material in edit mode or when ShareMaterial is enabled.
@@ -40,7 +40,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     /// <summary>
     /// Whether to use shared material. Enable to allow batching.
     /// </summary>
-    public bool ShareMaterial { get { return _shareMaterial; } set { _shareMaterial = value; } }
+    public bool ShareMaterial { get { return shareMaterial; } set { shareMaterial = value; } }
 
     /// <summary>
     /// Generated diced sprite mesh. Will reference shared mesh in edit mode.
@@ -48,19 +48,19 @@ public class DicedSpriteRenderer : MonoBehaviour
     public Mesh Mesh { get { return GetMesh(); } }
 
     [Tooltip("Diced sprite data used for rendering.")]
-    [SerializeField] private DicedSprite _dicedSprite = null;
+    [SerializeField] private DicedSprite dicedSprite = null;
     [Tooltip("Sprite tint color.")]
-    [SerializeField] private Color _color = Color.white;
+    [SerializeField] private Color color = Color.white;
     [Tooltip("Flip sprite by X-axis.")]
-    [SerializeField] private bool _flipX = false;
+    [SerializeField] private bool flipX = false;
     [Tooltip("Flip sprite by Y-axis.")]
-    [SerializeField] private bool _flipY = false;
+    [SerializeField] private bool flipY = false;
     [Tooltip("Whether to use shared material. Enable to allow batching.")]
-    [SerializeField] private bool _shareMaterial = true;
+    [SerializeField] private bool shareMaterial = true;
     [Tooltip("Material to use for rendering. Default diced sprite material will be used if not provided.")]
     [SerializeField] private Material customMaterial = null;
 
-    private const string DEFAULT_SHADER_PATH = "SpriteDicing/Default";
+    private const string defaultShaderPath = "SpriteDicing/Default";
 
     private static Material defaultMaterial;
 
@@ -117,7 +117,7 @@ public class DicedSpriteRenderer : MonoBehaviour
         if (newDicedSprite) newDicedSprite.OnModified += SetDicedSprite;
         #endif
 
-        _dicedSprite = newDicedSprite;
+        dicedSprite = newDicedSprite;
 
         if (!DicedSprite)
         {
@@ -162,7 +162,7 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private void SetMaterialColor (Color newColor)
     {
-        _color = newColor;
+        color = newColor;
         var materialProperties = GetMaterialProperties();
         materialProperties.SetColor(colorPropertyId, newColor);
         Renderer.SetPropertyBlock(materialProperties);
@@ -170,8 +170,8 @@ public class DicedSpriteRenderer : MonoBehaviour
 
     private void SetMaterialFlip (bool flipX, bool flipY)
     {
-        _flipX = flipX;
-        _flipY = flipY;
+        this.flipX = flipX;
+        this.flipY = flipY;
         var materialProperties = GetMaterialProperties();
         materialProperties.SetVector(flipPropertyId, new Vector4(FlipX ? -1 : 1, FlipY ? -1 : 1));
         Renderer.SetPropertyBlock(materialProperties);
@@ -211,7 +211,7 @@ public class DicedSpriteRenderer : MonoBehaviour
     private void ValidateMaterial ()
     {
         if (!defaultMaterial)
-            defaultMaterial = new Material(Shader.Find(DEFAULT_SHADER_PATH));
+            defaultMaterial = new Material(Shader.Find(defaultShaderPath));
         if (customMaterial && Material != customMaterial)
             Material = customMaterial;
         else if (!customMaterial && Material != defaultMaterial)

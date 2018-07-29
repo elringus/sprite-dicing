@@ -1,6 +1,4 @@
-﻿// Copyright 2012-2018 Elringus (Artyom Sovetnikov). All Rights Reserved.
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;

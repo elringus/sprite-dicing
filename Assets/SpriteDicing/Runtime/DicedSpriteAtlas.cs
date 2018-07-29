@@ -5,23 +5,23 @@ using UnityEngine;
 /// <summary>
 /// Manages diced sprite data and atlas texture.
 /// </summary>
-[CreateAssetMenu(menuName = "Sprites/Diced Sprite Atlas")]
+[CreateAssetMenu(menuName = "Diced Sprite Atlas", order = 350)]
 public class DicedSpriteAtlas : ScriptableObject
 {
     /// <summary>
     /// Number of diced sprites stored in this atlas.
     /// </summary>
-    public int SpritesCount { get { return dicedSprites.Count; } }
+    public int SpritesCount => dicedSprites.Count;
 
     /// <summary>
     /// Number of textures used by this atlas.
     /// </summary>
-    public int TexturesCount { get { return atlasTextures.Count; } }
+    public int TexturesCount => atlasTextures.Count;
 
     /// <summary>
     /// Whether the atlas is built and ready to be used.
     /// </summary>
-    public bool IsBuilt { get { return TexturesCount > 0 && SpritesCount > 0; } }
+    public bool IsBuilt => TexturesCount > 0 && SpritesCount > 0;
 
     [SerializeField, ReadOnly] private List<Texture2D> atlasTextures = new List<Texture2D>();
     [SerializeField, ReadOnly] private List<DicedSprite> dicedSprites = new List<DicedSprite>();

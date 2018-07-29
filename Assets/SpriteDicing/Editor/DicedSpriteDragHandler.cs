@@ -4,7 +4,7 @@ using UnityEngine;
 [InitializeOnLoad]
 public class DicedSpriteDragHandler : Editor
 {
-    private const float SPAWN_POSITION_OFFSET = 10F;
+    private const float spawnPositionOffset = 10F;
 
     static DicedSpriteDragHandler ()
     {
@@ -44,7 +44,7 @@ public class DicedSpriteDragHandler : Editor
         var dicedSprite = DragAndDrop.objectReferences[0] as DicedSprite;
         var spriteGameObject = new GameObject(dicedSprite.Name);
         var spawnRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-        var spawnPosition = spawnRay.origin + spawnRay.direction * SPAWN_POSITION_OFFSET;
+        var spawnPosition = spawnRay.origin + spawnRay.direction * spawnPositionOffset;
         spriteGameObject.transform.position = spawnPosition;
         spriteGameObject.transform.rotation = Quaternion.LookRotation(spawnRay.direction);
         var dicedSpriteRenderer = spriteGameObject.AddComponent<DicedSpriteRenderer>();

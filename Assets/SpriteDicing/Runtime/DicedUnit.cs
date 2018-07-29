@@ -35,5 +35,5 @@ public class DicedUnit
     /// <summary>
     /// Unique hash based on the Colors array.
     /// </summary>
-    public int ColorsHashCode { get { return Colors.GetArrayHashCode(); } }
+    public int ColorsHashCode => Colors.GetArrayHashCode();
 }
