@@ -3,7 +3,7 @@
 namespace SpriteDicing
 {
     /// <summary>
-    /// Renders a <see cref="SpriteDicing.DicedSprite"/> via MeshRenderer using mesh generated with the sprite's data and atlas texture.
+    /// Renders a <see cref="SpriteDicing.DicedSprite"/> via <see cref="MeshRenderer"/> using mesh generated with the sprite's data and atlas texture.
     /// </summary>
     [AddComponentMenu("Rendering/Diced Sprite Renderer")]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer)), ExecuteInEditMode, DisallowMultipleComponent]
@@ -35,7 +35,7 @@ namespace SpriteDicing
         public MeshRenderer Renderer => GetRenderer();
 
         /// <summary>
-        /// Material used by the renderer. Will reference shared material in edit mode or when ShareMaterial is enabled.
+        /// Material used by the renderer. Will reference shared material in edit mode or when <see cref="ShareMaterial"/> is enabled.
         /// </summary>
         public Material Material { get { return GetMaterial(); } set { SetMaterial(value); } }
 
