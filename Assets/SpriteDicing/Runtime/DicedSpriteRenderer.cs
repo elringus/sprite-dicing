@@ -60,22 +60,19 @@ public class DicedSpriteRenderer : MonoBehaviour
     [Tooltip("Material to use for rendering. Default diced sprite material will be used if not provided.")]
     [SerializeField] private Material customMaterial = null;
 
-    private const string defaultShaderPath = "SpriteDicing/Default";
+    private const string defaultShaderPath = "Sprites/Default";
+    private static readonly int mainTexPropertyId = Shader.PropertyToID("_MainTex");
+    private static readonly int colorPropertyId = Shader.PropertyToID("_RendererColor");
+    private static readonly int flipPropertyId = Shader.PropertyToID("_Flip");
 
     private static Material defaultMaterial;
 
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     private MaterialPropertyBlock materialPropertiesCache;
-    private int mainTexPropertyId;
-    private int colorPropertyId;
-    private int flipPropertyId;
 
     private void Awake ()
     {
-        mainTexPropertyId = Shader.PropertyToID("_MainTex");
-        colorPropertyId = Shader.PropertyToID("_TintColor");
-        flipPropertyId = Shader.PropertyToID("_Flip");
         InitializeMeshFilter();
         InitializeMeshRenderer();
     }
