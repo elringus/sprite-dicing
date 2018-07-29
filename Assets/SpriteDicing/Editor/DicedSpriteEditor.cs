@@ -72,7 +72,7 @@ public class DicedSpriteEditor : Editor
         var x = Mathf.RoundToInt(spriteRect.size.x);
         var y = Mathf.RoundToInt(spriteRect.size.y);
 
-        return string.Format("Sprite Size: {0}x{1} | Dices Allocated: {2}", x, y, TargetSprite.Vertices.Count / 4f);
+        return $"Sprite Size: {x}x{y} | Dices Allocated: {TargetSprite.Vertices.Count / 4f}";
     }
 
     private void SpriteNameGUI ()

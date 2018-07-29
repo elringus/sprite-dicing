@@ -209,7 +209,7 @@ public class DicedSpriteAtlasEditor : Editor
                 var textureProgress = .5f * textureAssets.ProgressOf(textureAsset);
                 var unitProgress = (.5f / textureAssets.Count) * ((float)unitX / unitCountX);
                 var textureNumber = textureAssets.IndexOf(textureAsset) + 1;
-                var message = string.Format("Dicing texture '{0}' ({1}/{2})...", textureAsset.Name, textureNumber, textureAssets.Count);
+                var message = $"Dicing texture '{textureAsset.Name}' ({textureNumber}/{textureAssets.Count})...";
                 DisplayProgressBar(message, textureProgress + unitProgress);
 
                 var x = unitX * unitSize;
@@ -267,7 +267,7 @@ public class DicedSpriteAtlasEditor : Editor
         {
             atlasCount++;
 
-            var atlasTexture = TextureUtils.CreateTexture(atlasSizeLimit, name: string.Format("{0} {1:000}", target.name, atlasCount));
+            var atlasTexture = TextureUtils.CreateTexture(atlasSizeLimit, name: $"{target.name} {atlasCount:000}");
             var hashToUV = new Dictionary<int, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
             var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
             var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.

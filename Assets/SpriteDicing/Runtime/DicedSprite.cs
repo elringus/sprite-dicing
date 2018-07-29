@@ -53,7 +53,7 @@ public class DicedSprite : ScriptableObject
         onModifiedCalled = HandlePivotChange();
 
         if (!onModifiedCalled)
-            OnModified.SafeInvoke(this);
+            OnModified?.Invoke(this);
     }
 
     /// <summary>
@@ -95,8 +95,8 @@ public class DicedSprite : ScriptableObject
 
         if (vertices.Count >= meshVerticesLimit)
         {
-            Debug.LogError(string.Format("Mesh can't have more than {0} vertices. " +
-                "Consider increasing Dice Unit Size of the Diced Sprite Atlas.", meshVerticesLimit));
+            Debug.LogError($"Mesh can't have more than {meshVerticesLimit} vertices. " +
+                "Consider increasing Dice Unit Size of the Diced Sprite Atlas.");
             return;
         }
 
@@ -161,7 +161,7 @@ public class DicedSprite : ScriptableObject
             for (int i = 0; i < vertices.Count; i++)
                 vertices[i] -= spriteRect.min;
 
-        OnModified.SafeInvoke(this);
+        OnModified?.Invoke(this);
 
         var pivotX = spriteRect.min.x / spriteRect.size.x;
         var pivotY = spriteRect.min.y / spriteRect.size.y;
@@ -189,7 +189,7 @@ public class DicedSprite : ScriptableObject
         for (int i = 0; i < vertices.Count; i++)
             vertices[i] -= deltaPos;
 
-        OnModified.SafeInvoke(this);
+        OnModified?.Invoke(this);
         return true;
     }
 
