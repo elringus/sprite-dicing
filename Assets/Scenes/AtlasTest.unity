@@ -164,7 +164,7 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RenderingLayerMask: 4294967295
   m_Materials:
-  - {fileID: 731446885}
+  - {fileID: 1375686809}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -204,7 +204,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &731446885
+--- !u!21 &1375686809
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
@@ -369,7 +369,7 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RenderingLayerMask: 4294967295
   m_Materials:
-  - {fileID: 731446885}
+  - {fileID: 1375686809}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
