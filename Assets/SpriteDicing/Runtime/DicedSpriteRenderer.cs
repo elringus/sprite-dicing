@@ -66,6 +66,29 @@ namespace SpriteDicing
         private MeshRenderer meshRenderer;
         private MaterialPropertyBlock materialPropertiesCache;
 
+        /// <summary>
+        /// Assigns new diced sprite data.
+        /// </summary>
+        public void SetDicedSprite (DicedSprite newDicedSprite)
+        {
+            #if UNITY_EDITOR
+            // Reset sprite after it's data was modified (usually when rebuilding atlas).
+            if (DicedSprite) DicedSprite.OnModified -= SetDicedSprite;
+            if (newDicedSprite) newDicedSprite.OnModified += SetDicedSprite;
+            #endif
+
+            dicedSprite = newDicedSprite;
+
+            if (!DicedSprite)
+            {
+                if (Mesh.vertexCount > 0) Mesh.Clear();
+                return;
+            }
+
+            DicedSprite.FillMesh(Mesh);
+            SetMaterialMainTex(DicedSprite.AtlasTexture);
+        }
+
         private void Awake ()
         {
             InitializeMeshFilter();
@@ -96,29 +119,6 @@ namespace SpriteDicing
         private void OnDidApplyAnimationProperties ()
         {
             SetMaterialColor(Color);
-        }
-
-        /// <summary>
-        /// Assigns new diced sprite data.
-        /// </summary>
-        public void SetDicedSprite (DicedSprite newDicedSprite)
-        {
-            #if UNITY_EDITOR
-            // Reset sprite after it's data was modified (usually when rebuilding atlas).
-            if (DicedSprite) DicedSprite.OnModified -= SetDicedSprite;
-            if (newDicedSprite) newDicedSprite.OnModified += SetDicedSprite;
-            #endif
-
-            dicedSprite = newDicedSprite;
-
-            if (!DicedSprite)
-            {
-                if (Mesh.vertexCount > 0) Mesh.Clear();
-                return;
-            }
-
-            DicedSprite.FillMesh(Mesh);
-            SetMaterialMainTex(DicedSprite.AtlasTexture);
         }
 
         private void InitializeMeshFilter ()

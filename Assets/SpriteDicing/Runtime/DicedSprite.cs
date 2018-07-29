@@ -43,16 +43,6 @@ namespace SpriteDicing
 
         private const int meshVerticesLimit = 65000; // Unity limitation.
 
-        private void OnValidate ()
-        {
-            var onModifiedCalled = false;
-
-            onModifiedCalled = HandlePivotChange();
-
-            if (!onModifiedCalled)
-                OnModified?.Invoke(this);
-        }
-
         /// <summary>
         /// Creates instance of a diced sprite object.
         /// </summary>
@@ -114,6 +104,16 @@ namespace SpriteDicing
             var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
             var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
             return new Rect(minVertPos, spriteSize);
+        }
+
+        private void OnValidate ()
+        {
+            var onModifiedCalled = false;
+
+            onModifiedCalled = HandlePivotChange();
+
+            if (!onModifiedCalled)
+                OnModified?.Invoke(this);
         }
 
         private void AddDicedUnit (DicedUnit dicedUnit)
