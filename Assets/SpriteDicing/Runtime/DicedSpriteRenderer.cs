@@ -110,6 +110,8 @@ namespace SpriteDicing
 
         private void OnValidate ()
         {
+            if (!isActiveAndEnabled) return;
+
             ValidateMaterial();
             SetDicedSprite(DicedSprite);
             SetMaterialColor(Color);
