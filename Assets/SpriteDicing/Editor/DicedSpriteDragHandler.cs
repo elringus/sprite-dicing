@@ -1,53 +1,56 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[InitializeOnLoad]
-public class DicedSpriteDragHandler : Editor
+namespace SpriteDicing
 {
-    private const float spawnPositionOffset = 10F;
-
-    static DicedSpriteDragHandler ()
+    [InitializeOnLoad]
+    public class DicedSpriteDragHandler : Editor
     {
-        SceneView.onSceneGUIDelegate -= OnSceneGUI;
-        SceneView.onSceneGUIDelegate += OnSceneGUI;
-    }
+        private const float spawnPositionOffset = 10F;
 
-    private static void OnSceneGUI (SceneView sceneView)
-    {
-        if (!IsDicedSpriteDragged()) return;
-
-        switch (Event.current.type)
+        static DicedSpriteDragHandler ()
         {
-            case EventType.DragUpdated:
-                DragAndDrop.visualMode = DragAndDropVisualMode.Link;
-                Event.current.Use();
-                break;
-
-            case EventType.DragPerform:
-                SpawnDraggedSprite();
-                DragAndDrop.AcceptDrag();
-                Event.current.Use();
-                break;
-
-            default:
-                break;
+            SceneView.onSceneGUIDelegate -= OnSceneGUI;
+            SceneView.onSceneGUIDelegate += OnSceneGUI;
         }
-    }
 
-    private static bool IsDicedSpriteDragged ()
-    {
-        return DragAndDrop.objectReferences.Length == 1 && DragAndDrop.objectReferences[0] is DicedSprite;
-    }
+        private static void OnSceneGUI (SceneView sceneView)
+        {
+            if (!IsDicedSpriteDragged()) return;
 
-    private static void SpawnDraggedSprite ()
-    {
-        var dicedSprite = DragAndDrop.objectReferences[0] as DicedSprite;
-        var spriteGameObject = new GameObject(dicedSprite.Name);
-        var spawnRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-        var spawnPosition = spawnRay.origin + spawnRay.direction * spawnPositionOffset;
-        spriteGameObject.transform.position = spawnPosition;
-        spriteGameObject.transform.rotation = Quaternion.LookRotation(spawnRay.direction);
-        var dicedSpriteRenderer = spriteGameObject.AddComponent<DicedSpriteRenderer>();
-        dicedSpriteRenderer.SetDicedSprite(dicedSprite);
+            switch (Event.current.type)
+            {
+                case EventType.DragUpdated:
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Link;
+                    Event.current.Use();
+                    break;
+
+                case EventType.DragPerform:
+                    SpawnDraggedSprite();
+                    DragAndDrop.AcceptDrag();
+                    Event.current.Use();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private static bool IsDicedSpriteDragged ()
+        {
+            return DragAndDrop.objectReferences.Length == 1 && DragAndDrop.objectReferences[0] is DicedSprite;
+        }
+
+        private static void SpawnDraggedSprite ()
+        {
+            var dicedSprite = DragAndDrop.objectReferences[0] as DicedSprite;
+            var spriteGameObject = new GameObject(dicedSprite.Name);
+            var spawnRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+            var spawnPosition = spawnRay.origin + spawnRay.direction * spawnPositionOffset;
+            spriteGameObject.transform.position = spawnPosition;
+            spriteGameObject.transform.rotation = Quaternion.LookRotation(spawnRay.direction);
+            var dicedSpriteRenderer = spriteGameObject.AddComponent<DicedSpriteRenderer>();
+            dicedSpriteRenderer.SetDicedSprite(dicedSprite);
+        }
     }
 }

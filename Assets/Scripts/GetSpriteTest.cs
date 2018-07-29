@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using SpriteDicing;
+using UnityEngine;
 
 [RequireComponent(typeof(DicedSpriteRenderer))]
 public class GetSpriteTest : MonoBehaviour
