@@ -13,37 +13,30 @@ namespace SpriteDicing
         /// Diced sprite data used for rendering.
         /// </summary>
         public DicedSprite DicedSprite { get { return dicedSprite; } set { SetDicedSprite(value); } }
-
         /// <summary>
         /// Sprite tint color.
         /// </summary>
         public Color Color { get { return color; } set { SetMaterialColor(value); } }
-
         /// <summary>
         /// Flip sprite by X-axis.
         /// </summary>
         public bool FlipX { get { return flipX; } set { SetMaterialFlip(value, FlipY); } }
-
         /// <summary>
         /// Flip sprite by Y-axis.
         /// </summary>
         public bool FlipY { get { return flipY; } set { SetMaterialFlip(FlipX, value); } }
-
         /// <summary>
         /// Renderer used to draw diced sprite generated mesh.
         /// </summary>
         public MeshRenderer Renderer => GetRenderer();
-
         /// <summary>
         /// Material used by the renderer. Will reference shared material in edit mode or when <see cref="ShareMaterial"/> is enabled.
         /// </summary>
         public Material Material { get { return GetMaterial(); } set { SetMaterial(value); } }
-
         /// <summary>
         /// Whether to use shared material. Enable to allow batching.
         /// </summary>
         public bool ShareMaterial { get { return shareMaterial; } set { shareMaterial = value; } }
-
         /// <summary>
         /// Generated diced sprite mesh. Will reference shared mesh in editor mode.
         /// </summary>

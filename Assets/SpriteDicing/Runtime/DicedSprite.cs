@@ -14,27 +14,22 @@ namespace SpriteDicing
         /// Event invoked when sprite data has been modified.
         /// </summary>
         public event System.Action<DicedSprite> OnModified;
-
         /// <summary>
         /// Name of the diced sprite object.
         /// </summary>
         public string Name => name;
-
         /// <summary>
         /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
         /// </summary>
         public Vector2 Pivot { get { return pivot; } set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
-
         /// <summary>
         /// Reference to the atlas texture where the dices of the original sprite texture are stored.
         /// </summary>
         public Texture2D AtlasTexture => atlasTexture;
-
         /// <summary>
         /// UV rects to sample diced units on the atlas texture.
         /// </summary>
         public List<Vector2> UVs => uvs;
-
         /// <summary>
         /// Vertice positions (in local 2D space) to generate diced sprite mesh.
         /// </summary>

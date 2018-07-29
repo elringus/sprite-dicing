@@ -14,12 +14,10 @@ namespace SpriteDicing
         /// Number of diced sprites stored in this atlas.
         /// </summary>
         public int SpritesCount => dicedSprites.Count;
-
         /// <summary>
         /// Number of textures used by this atlas.
         /// </summary>
         public int TexturesCount => atlasTextures.Count;
-
         /// <summary>
         /// Whether the atlas is built and ready to be used.
         /// </summary>
