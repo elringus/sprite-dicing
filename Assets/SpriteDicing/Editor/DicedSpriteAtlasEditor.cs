@@ -221,7 +221,7 @@ namespace SpriteDicing
                         var pixelsRect = new Rect(x, y, unitSize, unitSize);
                         var paddedRect = pixelsRect.Crop(padding.intValue);
                         var colors = sourceTexture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
-                                                                          // Skip transparent units (no need to render them).
+                        // Skip transparent units (no need to render them).
                         if (colors.All(color => color.a == 0)) continue;
                         var paddedColors = sourceTexture.GetPixels(paddedRect);
                         var quadVerts = pixelsRect.Scale(1f / pixelsPerUnit.floatValue);
@@ -306,7 +306,7 @@ namespace SpriteDicing
                         }
 
                         int posX, posY; // Position of the new unit on the atlas texture.
-                                        // Find row positions that have enough room for more units until next power of two.
+                        // Find row positions that have enough room for more units until next power of two.
                         var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2);
                         if (suitableYToLastXEnumerable.Count() == 0) // When no suitable rows found.
                         {
