@@ -43,6 +43,8 @@ namespace SpriteDicing
         [SerializeField] private Object inputFolder;
         [SerializeField] private bool includeSubfolders;
         [SerializeField] private bool prependSubfolderNames;
+        [HideInInspector]
+        [SerializeField] private string generatedSpritesFolderGuid;
         #pragma warning restore 0169, 0414, 1635
         #endif
 
