@@ -108,6 +108,11 @@ namespace SpriteDicing
             Renderer.enabled = false;
         }
 
+        private void OnDestroy ()
+        {
+            if (DicedSprite) DicedSprite.OnModified -= SetDicedSprite;
+        }
+
         private void OnValidate ()
         {
             if (!isActiveAndEnabled) return;
