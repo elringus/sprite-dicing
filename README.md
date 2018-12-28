@@ -3,6 +3,8 @@ For Unity 2018.1 and later: [SpriteDicing.unitypackage](https://github.com/Elrin
 
 *[.NET 4.x scripting runtime](https://docs.unity3d.com/Manual/ScriptingRuntimeUpgrade.html) is required. Make sure to configure the project before importing the package.*
 
+Please be aware that you don't need to clone the whole repository in order to use the extension in your project. Either download package from the link above or extract `Assets/SpriteDicing` folder from the repository project – it contains all the required assets; other stuff is just for testing purposes.
+
 ## Description
 Sprite Dicing is an editor extension for [Unity game engine](https://unity3d.com/) which allows to split up a set of large sprite textures into small chunks, discard identical ones, bake them into atlas textures and then seamlessly reconstruct the original sprites at runtime for render. 
 
