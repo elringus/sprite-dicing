@@ -16,6 +16,8 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 ![](https://i.gyazo.com/7f79936fc714abcc342ae348478b9c8e.gif)
 
+By the way, in case you're developing a visual novel, [take a look at my visual novel engine](https://u3d.as/1pg9), which uses this extension.
+
 ## How to use
 1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atals` menu command, select it;
 2. Specify `Input Folder` — project directory, containing the source textures you wish to process. You can simply drag-drop a folder from the project hierarchy window into the field;
