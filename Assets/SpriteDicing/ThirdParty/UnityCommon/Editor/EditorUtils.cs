@@ -1,12 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace UnityCommon
 {
     public static class EditorUtils
     {
+        public static ScriptableObject LoadOrCreateSerializableAsset (string assetPath, Type assetType)
+        {
+            var existingAsset = AssetDatabase.LoadAssetAtPath(assetPath, assetType) as ScriptableObject;
+            if (existingAsset) return existingAsset;
+
+            var asset = ScriptableObject.CreateInstance(assetType);
+            CreateFolderAsset(Path.GetDirectoryName(assetPath));
+            AssetDatabase.CreateAsset(asset, assetPath);
+            AssetDatabase.SaveAssets();
+            return asset;
+        }
+
+        public static T LoadOrCreateSerializableAsset<T> (string assetPath) where T : ScriptableObject
+        {
+            var assetType = typeof(T);
+            return LoadOrCreateSerializableAsset(assetPath, assetType) as T;
+        }
+
         public static T CreateOrReplaceAsset<T> (this Object asset, string path) where T : Object
         {
             var existingAsset = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -35,6 +56,13 @@ namespace UnityCommon
             list.RemoveAll(item => !item || item == null);
 
             serializedProperty.serializedObject.CopyFromSerializedProperty(new SerializedObject(targetObject).FindProperty(serializedProperty.name));
+        }
+
+        public static SerializedProperty GetArrayElementAtIndexOrNull (this SerializedProperty serializedProperty, int index)
+        {
+            if (!serializedProperty.isArray) return null;
+            if (index < 0 || index >= serializedProperty.arraySize) return null;
+            return serializedProperty.GetArrayElementAtIndex(index);
         }
 
         public static Texture2D SaveAsPng (this Texture2D texture, string path, TextureImporterType textureType = TextureImporterType.Default,
@@ -81,9 +109,22 @@ namespace UnityCommon
             EditorGUI.showMixedValue = false;
         }
 
-        public static string ToRelativePath (string absolutePath)
+        /// <summary>
+        /// Creates a new folder in the project's `Assets` directory. 
+        /// Path should be relative to the project (starting with `Assets/`).
+        /// </summary>
+        public static void CreateFolderAsset (string assetPath)
         {
-            return "Assets" + absolutePath.Replace(Application.dataPath, string.Empty);
+            EnsureFolderIsCreatedRecursively(assetPath);
+        }
+
+        private static void EnsureFolderIsCreatedRecursively (string targetFolder)
+        {
+            if (!AssetDatabase.IsValidFolder(targetFolder))
+            {
+                EnsureFolderIsCreatedRecursively(Path.GetDirectoryName(targetFolder));
+                AssetDatabase.CreateFolder(Path.GetDirectoryName(targetFolder), Path.GetFileName(targetFolder));
+            }
         }
     }
 }

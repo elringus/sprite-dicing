@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace UnityCommon
 {
@@ -26,6 +27,11 @@ namespace UnityCommon
         public static bool IsIndexValid<T> (this T[] array, int index)
         {
             return array.Length > 0 && index >= 0 && index < array.Length;
+        }
+
+        public static bool IsIndexValid<T> (this List<T> list, int index)
+        {
+            return list.Count > 0 && index >= 0 && index < list.Count;
         }
 
         public static T[] Append<T> (this T[] array, T item)
@@ -75,6 +81,48 @@ namespace UnityCommon
             list[indexA] = list[indexB];
             list[indexB] = tmp;
             return list;
+        }
+
+        /// <summary>
+        /// Orders the elements of <paramref name="source"/> collection in a way that no element depends on any previous element.
+        /// </summary>
+        /// <param name="source">The collection to order.</param>
+        /// <param name="getDependencies">Function used to retrieve element's dependencies.</param>
+        /// <remarks>Based on: https://www.codeproject.com/Articles/869059/Topological-sorting-in-Csharp </remarks>
+        public static IList<T> TopologicalOrder<T> (this IEnumerable<T> source, Func<T, IEnumerable<T>> getDependencies)
+        {
+            var sorted = new List<T>();
+            var visited = new Dictionary<T, bool>();
+
+            foreach (var item in source)
+                Visit(item, getDependencies, sorted, visited);
+
+            return sorted;
+        }
+
+        private static void Visit<T> (T item, Func<T, IEnumerable<T>> getDependencies, List<T> sorted, Dictionary<T, bool> visited)
+        {
+            var inProcess = default(bool);
+            var alreadyVisited = visited.TryGetValue(item, out inProcess);
+
+            if (alreadyVisited)
+            {
+                if (inProcess) Debug.LogWarning($"Cyclic dependency found while performing topological ordering of {typeof(T).Name}.");
+            }
+            else
+            {
+                visited[item] = true;
+
+                var dependencies = getDependencies(item);
+                if (dependencies != null)
+                {
+                    foreach (var dependency in dependencies)
+                        Visit(dependency, getDependencies, sorted, visited);
+                }
+
+                visited[item] = false;
+                sorted.Add(item);
+            }
         }
     }
 

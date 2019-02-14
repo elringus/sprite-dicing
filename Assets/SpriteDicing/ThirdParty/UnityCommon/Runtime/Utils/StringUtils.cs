@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEngine;
 
 namespace UnityCommon
 {
@@ -10,71 +9,90 @@ namespace UnityCommon
         /// </summary>
         public static bool LEquals (this string content, string comparedString)
         {
-            Debug.Assert(content != null);
             return content.Equals(comparedString, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
-        /// More performant version of string.EndsWith method.
-        /// https://docs.unity3d.com/Manual/BestPracticeUnderstandingPerformanceInUnity5.html
+        /// Performs <see cref="string.Equals(string, string, StringComparison)"/> with <see cref="StringComparison.Ordinal"/>.
         /// </summary>
-        public static bool EndsWithFast (this string content, string match)
+        public static bool EqualsFast (this string content, string comparedString)
         {
-            int ap = content.Length - 1;
-            int bp = match.Length - 1;
-
-            while (ap >= 0 && bp >= 0 && content[ap] == match[bp])
-            {
-                ap--;
-                bp--;
-            }
-
-            return (bp < 0 && content.Length >= match.Length) || (ap < 0 && match.Length >= content.Length);
+            return content.Equals(comparedString, StringComparison.Ordinal);
         }
 
         /// <summary>
-        /// More performant version of string.StartsWith method.
-        /// https://docs.unity3d.com/Manual/BestPracticeUnderstandingPerformanceInUnity5.html
+        /// Performs <see cref="string.EndsWith(string, StringComparison)"/> with <see cref="StringComparison.Ordinal"/>.
+        /// </summary>
+        public static bool EndsWithFast (this string content, string match)
+        {
+            return content.EndsWith(match, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Performs <see cref="string.StartsWith(string, StringComparison)"/> with <see cref="StringComparison.Ordinal"/>.
         /// </summary>
         public static bool StartsWithFast (this string content, string match)
         {
-            int aLen = content.Length;
-            int bLen = match.Length;
-            int ap = 0, bp = 0;
+            return content.StartsWith(match, StringComparison.Ordinal);
+        }
 
-            while (ap < aLen && bp < bLen && content[ap] == match[bp])
-            {
-                ap++;
-                bp++;
-            }
+        /// <summary>
+        /// Performs <see cref="string.StartsWith(string)"/> and <see cref="string.EndsWith(string)"/> with the provided match.
+        /// </summary>
+        public static bool WrappedIn (this string content, string match, StringComparison comp = StringComparison.Ordinal)
+        {
+            return content.StartsWith(match, comp) && content.EndsWith(match, comp);
+        }
 
-            return (bp == bLen && aLen >= bLen) || (ap == aLen && bLen >= aLen);
+        /// <summary>
+        /// Attempts to extract a subset of the provided <paramref name="source"/> string, starting at
+        /// <paramref name="startIndex"/> and ending at <paramref name="endIndex"/>; returns <see langword="null"/> on fail.
+        /// </summary>
+        /// <param name="source">The string to extract the subset from.</param>
+        /// <param name="startIndex">Start index of the subset.</param>
+        /// <param name="endIndex">End index of the subset.</param>
+        /// <returns>The extracted subset string or <see langword="null"/> if failed.</returns>
+        public static string TrySubset (string source, int startIndex, int endIndex)
+        {
+            if (string.IsNullOrWhiteSpace(source)) return null;
+            if (startIndex < 0 || startIndex >= source.Length) return null;
+            if (endIndex < 0 || endIndex >= source.Length) return null;
+            if (endIndex - startIndex < 0) return null;
+
+            var length = endIndex - startIndex + 1;
+            return source.Substring(startIndex, length);
         }
 
         /// <summary>
         /// Attempts to extract content between the specified matches (on first occurence).
         /// </summary>
-        public static string GetBetween (this string content, string startMatchString, string endMatchString)
+        public static string GetBetween (this string content, string startMatch, string endMatch, StringComparison comp = StringComparison.Ordinal)
         {
-            Debug.Assert(content != null);
-            if (content.Contains(startMatchString) && content.Contains(endMatchString))
+            if (content.Contains(startMatch) && content.Contains(endMatch))
             {
-                var startIndex = content.IndexOf(startMatchString) + startMatchString.Length;
-                var endIndex = content.IndexOf(endMatchString, startIndex);
+                var startIndex = content.IndexOf(startMatch, comp) + startMatch.Length;
+                var endIndex = content.IndexOf(endMatch, startIndex, comp);
                 return content.Substring(startIndex, endIndex - startIndex);
             }
             else return null;
         }
 
         /// <summary>
+        /// Attempts to extract content wrapped in the specified match (on first occurence).
+        /// </summary>
+        public static string GetBetween (this string content, string match, StringComparison comp = StringComparison.Ordinal)
+        {
+            return content.GetBetween(match, match, comp);
+        }
+
+        /// <summary>
         /// Attempts to extract content before the specified match (on first occurence).
         /// </summary>
-        public static string GetBefore (this string content, string matchString)
+        public static string GetBefore (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
-            Debug.Assert(content != null);
             if (content.Contains(matchString))
             {
-                var endIndex = content.IndexOf(matchString);
+                var endIndex = content.IndexOf(matchString, comp);
                 return content.Substring(0, endIndex);
             }
             else return null;
@@ -83,12 +101,11 @@ namespace UnityCommon
         /// <summary>
         /// Attempts to extract content before the specified match (on last occurence).
         /// </summary>
-        public static string GetBeforeLast (this string content, string matchString)
+        public static string GetBeforeLast (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
-            Debug.Assert(content != null);
             if (content.Contains(matchString))
             {
-                var endIndex = content.LastIndexOf(matchString);
+                var endIndex = content.LastIndexOf(matchString, comp);
                 return content.Substring(0, endIndex);
             }
             else return null;
@@ -97,12 +114,11 @@ namespace UnityCommon
         /// <summary>
         /// Attempts to extract content after the specified match (on last occurence).
         /// </summary>
-        public static string GetAfter (this string content, string matchString)
+        public static string GetAfter (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
-            Debug.Assert(content != null);
             if (content.Contains(matchString))
             {
-                var startIndex = content.LastIndexOf(matchString) + matchString.Length;
+                var startIndex = content.LastIndexOf(matchString, comp) + matchString.Length;
                 if (content.Length <= startIndex) return string.Empty;
                 return content.Substring(startIndex);
             }
@@ -112,12 +128,11 @@ namespace UnityCommon
         /// <summary>
         /// Attempts to extract content after the specified match (on first occurence).
         /// </summary>
-        public static string GetAfterFirst (this string content, string matchString)
+        public static string GetAfterFirst (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
-            Debug.Assert(content != null);
             if (content.Contains(matchString))
             {
-                var startIndex = content.IndexOf(matchString) + matchString.Length;
+                var startIndex = content.IndexOf(matchString, comp) + matchString.Length;
                 if (content.Length <= startIndex) return string.Empty;
                 return content.Substring(startIndex);
             }
@@ -128,7 +143,7 @@ namespace UnityCommon
         /// Splits the string using new line symbol as a separator.
         /// Will split by all type of new lines, independant of environment.
         /// </summary>
-        public static string[] SplitByNewLine (this string content)
+        public static string[] SplitByNewLine (this string content, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
             if (string.IsNullOrEmpty(content)) return null;
 
@@ -137,7 +152,7 @@ namespace UnityCommon
             // "\r"     (\u000D)        Mac
             // Not using Environment.NewLine here, as content could've been produced 
             // in not the same environment we running the program in.
-            return content.Split(new string[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+            return content.Split(new string[] { "\r\n", "\n", "\r" }, splitOptions);
         }
 
         /// <summary>
@@ -163,7 +178,7 @@ namespace UnityCommon
         }
 
         /// <summary>
-        /// Performes <see cref="string.Trim"/> additionally removing any BOM and other service symbols.
+        /// Performs <see cref="string.Trim()"/> additionally removing any BOM and other service symbols.
         /// </summary>
         public static string TrimFull (this string source)
         {

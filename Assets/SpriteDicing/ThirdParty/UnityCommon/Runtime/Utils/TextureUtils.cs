@@ -50,11 +50,11 @@ namespace UnityCommon
         /// <summary>
         /// Read pixels from the texture, filling overbound regions with the provided color.
         /// </summary>
+        /// <param name="texture">The texture.</param>
         /// <param name="pixelsRect">Rect on the texture to read pixels from.</param>
-        /// <param name="padding">Additional padding (in pixels) over the rect bounds. Will be filled with overboundColor color.</param>
         /// <param name="overboundColor">If rect is outside of texture bounds, overbound regions will be filled with this color.</param>
         /// <returns>Flattened 2D array, where pixels are laid out left to right, bottom to top.</returns>
-        public static Color[] GetPixels (this Texture2D texture, Rect pixelsRect, Color overboundColor = default(Color))
+        public static Color[] GetPixels (this Texture2D texture, Rect pixelsRect, Color overboundColor = default)
         {
             var startX = Mathf.FloorToInt(pixelsRect.x);
             var startY = Mathf.FloorToInt(pixelsRect.y);

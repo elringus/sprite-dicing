@@ -12,6 +12,16 @@ namespace UnityCommon
             return angle;
         }
 
+        public static Vector3 ClampAngles (this Vector3 vector3)
+        {
+            return new Vector3(ClampAngle(vector3.x), ClampAngle(vector3.y), ClampAngle(vector3.z));
+        }
+
+        public static Vector3 ClampedEulerAngles (this Quaternion quaternion)
+        {
+            return quaternion.eulerAngles.ClampAngles();
+        }
+
         public static bool IsEven (this int intValue)
         {
             return intValue % 2 == 0;
