@@ -1,5 +1,4 @@
-﻿using UnityCommon;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace SpriteDicing
@@ -37,9 +36,9 @@ namespace SpriteDicing
                 rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent("Flip"));
                 rect.width = 25;
                 EditorGUIUtility.labelWidth = 50;
-                EditorUtils.ToggleLeftGUI(rect, flipX, new GUIContent("X"));
+                EditorUtilities.ToggleLeftGUI(rect, flipX, new GUIContent("X"));
                 rect.x += rect.width + 5;
-                EditorUtils.ToggleLeftGUI(rect, flipY, new GUIContent("Y"));
+                EditorUtilities.ToggleLeftGUI(rect, flipY, new GUIContent("Y"));
                 EditorGUIUtility.labelWidth = 0;
             }
             EditorGUILayout.PropertyField(customMaterial);

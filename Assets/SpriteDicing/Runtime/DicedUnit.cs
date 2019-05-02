@@ -1,5 +1,4 @@
-﻿using UnityCommon;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace SpriteDicing
 {

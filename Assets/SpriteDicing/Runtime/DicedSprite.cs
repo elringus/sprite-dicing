@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityCommon;
 using UnityEngine;
 
 namespace SpriteDicing
@@ -33,12 +32,12 @@ namespace SpriteDicing
         /// <summary>
         /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
         /// </summary>
-        public Vector2 Pivot { get { return pivot; } set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
+        public Vector2 Pivot { get => pivot; set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
 
-        [SerializeField, ReadOnly] private Texture2D atlasTexture;
-        [SerializeField, ReadOnly] private List<Vector2> vertices;
-        [SerializeField, ReadOnly] private List<Vector2> uvs;
-        [SerializeField, ReadOnly] private List<int> triangles;
+        [SerializeField] private Texture2D atlasTexture;
+        [SerializeField] private List<Vector2> vertices;
+        [SerializeField] private List<Vector2> uvs;
+        [SerializeField] private List<int> triangles;
         [SerializeField] private Vector2 pivot;
 
         private const int meshVerticesLimit = 65000; // Unity limitation.
@@ -52,7 +51,7 @@ namespace SpriteDicing
         /// <param name="pivot">Sprite pivot point in its local space.</param>
         /// <param name="keepOriginalPivot">Whether to preserve original sprite position by correcting its pivot.</param>
         public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits,
-            Vector2 pivot = default(Vector2), bool keepOriginalPivot = true)
+            Vector2 pivot = default, bool keepOriginalPivot = true)
         {
             var dicedSprite = ScriptableObject.CreateInstance<DicedSprite>();
 

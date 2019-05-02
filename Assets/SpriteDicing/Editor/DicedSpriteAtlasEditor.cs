@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityCommon;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,19 +27,22 @@ namespace SpriteDicing
         private SerializedProperty prependSubfolderNamesProperty;
         private SerializedProperty generatedSpritesFolderGuidProperty;
 
+        private static readonly int[] diceUnitSizeValues = new[] { 8, 16, 32, 64, 128, 256 };
+        private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+
         private GUIContent dataSizeValueContent;
-        private GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
-        private GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
-        private GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
-        private GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
-        private GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of the generated atlas texture.");
-        private GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
-        private GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
-        private GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
-        private GUIContent paddingContent = new GUIContent("Padding", "The pixel gap between adjacent diced units inside atlas. Increase to prevent texture bleeding artefacts when scaling or using mipmaps.");
-        private GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
-        private GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
-        private GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
+        private static readonly GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
+        private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
+        private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
+        private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
+        private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of the generated atlas texture.");
+        private static readonly GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
+        private static readonly GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
+        private static readonly GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
+        private static readonly GUIContent paddingContent = new GUIContent("Padding", "The pixel gap between adjacent diced units inside atlas. Increase to prevent texture bleeding artefacts when scaling or using mipmaps.");
+        private static readonly GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
+        private static readonly GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
+        private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
 
         private void OnEnable ()
         {
@@ -66,8 +68,10 @@ namespace SpriteDicing
         public override void OnInspectorGUI ()
         {
             serializedObject.Update();
+            EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.PropertyField(atlasTexturesProperty, true);
             EditorGUILayout.PropertyField(dicedSpritesProperty, true);
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(decoupleSpriteDataProperty, decoupleSpriteDataContent);
@@ -75,6 +79,7 @@ namespace SpriteDicing
             SizeGUI();
             pixelsPerUnitProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnitProperty.floatValue));
             EditorGUILayout.PropertyField(diceUnitSizeProperty, diceUnitSizeContent);
+            EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues);
             paddingProperty.intValue = EditorGUILayout.IntSlider(paddingContent, paddingProperty.intValue, 2, diceUnitSizeProperty.intValue / 2).ToNearestEven();
             InputFolderGUI();
             serializedObject.ApplyModifiedProperties();
@@ -123,7 +128,7 @@ namespace SpriteDicing
                 using (new EditorGUI.DisabledScope(keepOriginalPivotProperty.boolValue))
                     defaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivotProperty.vector2Value);
                 rect.x += rect.width + 5;
-                EditorUtils.ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
+                EditorUtilities.ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
             }
         }
 
@@ -138,13 +143,16 @@ namespace SpriteDicing
                 var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
                 EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
                 rect.x += rect.width + 5;
-                EditorUtils.ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
+                EditorUtilities.ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
             }
         }
 
         private void InputFolderGUI ()
         {
-            EditorGUILayout.PropertyField(inputFolderProperty, inputFolderContent);
+            var folderObject = EditorGUI.ObjectField(EditorGUILayout.GetControlRect(), inputFolderContent, inputFolderProperty.objectReferenceValue, typeof(DefaultAsset), false);
+            if (folderObject == null || AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(folderObject)))
+                inputFolderProperty.objectReferenceValue = folderObject;
+
             using (new EditorGUI.DisabledScope(!inputFolderProperty.objectReferenceValue))
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -153,10 +161,10 @@ namespace SpriteDicing
                     rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
                     rect.width = Mathf.Max(50, (rect.width - 4) / 2);
                     EditorGUIUtility.labelWidth = 50;
-                    EditorUtils.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
+                    EditorUtilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
                     rect.x += rect.width + 5;
                     using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
-                        EditorUtils.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
+                        EditorUtilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
                     EditorGUIUtility.labelWidth = 0;
                 }
                 using (new EditorGUILayout.HorizontalScope())
@@ -271,7 +279,7 @@ namespace SpriteDicing
             {
                 atlasCount++;
 
-                var atlasTexture = TextureUtils.CreateTexture(atlasSizeLimit, name: $"{target.name} {atlasCount:000}");
+                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, name: $"{target.name} {atlasCount:000}");
                 var hashToUV = new Dictionary<int, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
                 var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
                 var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
@@ -365,7 +373,7 @@ namespace SpriteDicing
                     var croppedWidth = xLimit;
                     var croppedHeight = forceSquare ? croppedWidth : yToLastXMap.Last().Key + paddedUnitSize;
                     var croppedPixels = atlasTexture.GetPixels(0, 0, croppedWidth, croppedHeight);
-                    atlasTexture = TextureUtils.CreateTexture(croppedWidth, croppedHeight, name: atlasTexture.name);
+                    atlasTexture = Utilities.CreateTexture(croppedWidth, croppedHeight, name: atlasTexture.name);
                     atlasTexture.SetPixels(croppedPixels);
 
                     // Correct UV rects after crop.

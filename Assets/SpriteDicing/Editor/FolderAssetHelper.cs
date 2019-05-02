@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityCommon
+namespace SpriteDicing
 {
     public struct FolderAsset<T>
     {

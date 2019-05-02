@@ -10,8 +10,8 @@ namespace SpriteDicing
 
         static DicedSpriteDragHandler ()
         {
-            SceneView.onSceneGUIDelegate -= OnSceneGUI;
-            SceneView.onSceneGUIDelegate += OnSceneGUI;
+            SceneView.duringSceneGui -= OnSceneGUI;
+            SceneView.duringSceneGui += OnSceneGUI;
         }
 
         private static void OnSceneGUI (SceneView sceneView)

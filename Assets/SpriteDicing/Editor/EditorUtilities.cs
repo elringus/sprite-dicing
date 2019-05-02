@@ -1,31 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-namespace UnityCommon
+namespace SpriteDicing
 {
-    public static class EditorUtils
+    public static class EditorUtilities
     {
-        public static ScriptableObject LoadOrCreateSerializableAsset (string assetPath, Type assetType)
+        public static void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
         {
-            var existingAsset = AssetDatabase.LoadAssetAtPath(assetPath, assetType) as ScriptableObject;
-            if (existingAsset) return existingAsset;
-
-            var asset = ScriptableObject.CreateInstance(assetType);
-            CreateFolderAsset(Path.GetDirectoryName(assetPath));
-            AssetDatabase.CreateAsset(asset, assetPath);
-            AssetDatabase.SaveAssets();
-            return asset;
-        }
-
-        public static T LoadOrCreateSerializableAsset<T> (string assetPath) where T : ScriptableObject
-        {
-            var assetType = typeof(T);
-            return LoadOrCreateSerializableAsset(assetPath, assetType) as T;
+            var toggleValue = property.boolValue;
+            EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var oldIndent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
+            EditorGUI.indentLevel = oldIndent;
+            if (EditorGUI.EndChangeCheck())
+                property.boolValue = property.hasMultipleDifferentValues ? true : !property.boolValue;
+            EditorGUI.showMixedValue = false;
         }
 
         public static T CreateOrReplaceAsset<T> (this Object asset, string path) where T : Object
@@ -58,14 +51,7 @@ namespace UnityCommon
             serializedProperty.serializedObject.CopyFromSerializedProperty(new SerializedObject(targetObject).FindProperty(serializedProperty.name));
         }
 
-        public static SerializedProperty GetArrayElementAtIndexOrNull (this SerializedProperty serializedProperty, int index)
-        {
-            if (!serializedProperty.isArray) return null;
-            if (index < 0 || index >= serializedProperty.arraySize) return null;
-            return serializedProperty.GetArrayElementAtIndex(index);
-        }
-
-        public static Texture2D SaveAsPng (this Texture2D texture, string path, TextureImporterType textureType = TextureImporterType.Default,
+        public static Texture2D SaveAsPng (this Texture2D texture, string path, TextureImporterType textureType = TextureImporterType.Default, 
             TextureImporterCompression compression = TextureImporterCompression.Uncompressed, bool generateMipmaps = false, bool destroyInitialTextureObject = true)
         {
             var wrapMode = texture.wrapMode;
@@ -93,38 +79,6 @@ namespace UnityCommon
                 Object.DestroyImmediate(texture);
 
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-
-        public static void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
-        {
-            var toggleValue = property.boolValue;
-            EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
-            EditorGUI.BeginChangeCheck();
-            var oldIndent = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = 0;
-            toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
-            EditorGUI.indentLevel = oldIndent;
-            if (EditorGUI.EndChangeCheck())
-                property.boolValue = property.hasMultipleDifferentValues ? true : !property.boolValue;
-            EditorGUI.showMixedValue = false;
-        }
-
-        /// <summary>
-        /// Creates a new folder in the project's `Assets` directory. 
-        /// Path should be relative to the project (starting with `Assets/`).
-        /// </summary>
-        public static void CreateFolderAsset (string assetPath)
-        {
-            EnsureFolderIsCreatedRecursively(assetPath);
-        }
-
-        private static void EnsureFolderIsCreatedRecursively (string targetFolder)
-        {
-            if (!AssetDatabase.IsValidFolder(targetFolder))
-            {
-                EnsureFolderIsCreatedRecursively(Path.GetDirectoryName(targetFolder));
-                AssetDatabase.CreateFolder(Path.GetDirectoryName(targetFolder), Path.GetFileName(targetFolder));
-            }
         }
     }
 }

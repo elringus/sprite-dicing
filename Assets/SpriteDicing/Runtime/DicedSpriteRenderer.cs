@@ -12,19 +12,19 @@ namespace SpriteDicing
         /// <summary>
         /// Diced sprite data used for rendering.
         /// </summary>
-        public DicedSprite DicedSprite { get { return dicedSprite; } set { SetDicedSprite(value); } }
+        public DicedSprite DicedSprite { get => dicedSprite; set => SetDicedSprite(value); }
         /// <summary>
         /// Sprite tint color.
         /// </summary>
-        public Color Color { get { return color; } set { SetMaterialColor(value); } }
+        public Color Color { get => color; set => SetMaterialColor(value); }
         /// <summary>
         /// Flip sprite by X-axis.
         /// </summary>
-        public bool FlipX { get { return flipX; } set { SetMaterialFlip(value, FlipY); } }
+        public bool FlipX { get => flipX; set => SetMaterialFlip(value, FlipY); }
         /// <summary>
         /// Flip sprite by Y-axis.
         /// </summary>
-        public bool FlipY { get { return flipY; } set { SetMaterialFlip(FlipX, value); } }
+        public bool FlipY { get => flipY; set => SetMaterialFlip(FlipX, value); }
         /// <summary>
         /// Renderer used to draw diced sprite generated mesh.
         /// </summary>
@@ -32,11 +32,11 @@ namespace SpriteDicing
         /// <summary>
         /// Material used by the renderer. Will reference shared material in edit mode or when <see cref="ShareMaterial"/> is enabled.
         /// </summary>
-        public Material Material { get { return GetMaterial(); } set { SetMaterial(value); } }
+        public Material Material { get => GetMaterial(); set => SetMaterial(value); }
         /// <summary>
         /// Whether to use shared material. Enable to allow batching.
         /// </summary>
-        public bool ShareMaterial { get { return shareMaterial; } set { shareMaterial = value; } }
+        public bool ShareMaterial { get => shareMaterial; set => shareMaterial = value; }
         /// <summary>
         /// Generated diced sprite mesh. Will reference shared mesh in editor mode.
         /// </summary>

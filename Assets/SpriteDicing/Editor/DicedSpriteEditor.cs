@@ -12,10 +12,10 @@ namespace SpriteDicing
         private SerializedProperty pivot;
         private SerializedProperty atlasTexture;
 
-        private GUIContent subAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Multi-editing is not supported.");
-        private GUIContent mainAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Raname asset object in the editor to change.");
-        private GUIContent pivotContent = new GUIContent("Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.");
-        private GUIContent atlasTextureContent = new GUIContent("Atlas Texture", "Reference to the atlas texture where the dices of the original sprite texture are stored.");
+        private static readonly GUIContent subAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Multi-editing is not supported.");
+        private static readonly GUIContent mainAssetNameContent = new GUIContent("Name", "Name of the diced sprite object. Used to find it among others in the parent atlas. Raname asset object in the editor to change.");
+        private static readonly GUIContent pivotContent = new GUIContent("Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.");
+        private static readonly GUIContent atlasTextureContent = new GUIContent("Atlas Texture", "Reference to the atlas texture where the dices of the original sprite texture are stored.");
 
         private void OnEnable ()
         {
@@ -41,7 +41,7 @@ namespace SpriteDicing
                 var spriteRect = TargetSprite.EvaluateSpriteRect();
                 var unitSize = (TargetSprite.Vertices[2].y - TargetSprite.Vertices[0].y);
                 var pivorCorrection = new Vector2(TargetSprite.Pivot.x * spriteRect.size.x, TargetSprite.Pivot.y * spriteRect.size.y);
-                var sizeCorrection = UnityCommon.MathUtils.MaxScaleKeepAspect(previewRect.size, spriteRect.size);
+                var sizeCorrection = Utilities.MaxScaleKeepAspect(previewRect.size, spriteRect.size);
                 var centerXCorrection = previewRect.center.x / sizeCorrection - (TargetSprite.Vertices.Average(v => v.x) + pivorCorrection.x);
 
                 // Iterate target sprite's quads (4 verts each).
