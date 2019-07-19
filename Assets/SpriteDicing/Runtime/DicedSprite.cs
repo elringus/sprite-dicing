@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using UnityEngine;
+using UnityEngine.Experimental.U2D;
+using UnityEngine.Rendering;
 
 namespace SpriteDicing
 {
@@ -50,7 +53,7 @@ namespace SpriteDicing
         /// <param name="dicedUnits">List of the diced units used to build this sprite.</param>
         /// <param name="pivot">Sprite pivot point in its local space.</param>
         /// <param name="keepOriginalPivot">Whether to preserve original sprite position by correcting its pivot.</param>
-        public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits,
+        public static Sprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits,
             Vector2 pivot = default, bool keepOriginalPivot = true)
         {
             var dicedSprite = ScriptableObject.CreateInstance<DicedSprite>();
@@ -67,7 +70,14 @@ namespace SpriteDicing
             var originalPivot = dicedSprite.TrimVertices();
             dicedSprite.Pivot = keepOriginalPivot ? originalPivot : pivot;
 
-            return dicedSprite;
+            var sprite = Sprite.Create(atlasTexture, dicedSprite.EvaluateSpriteRect(), dicedSprite.Pivot, 100);
+            sprite.name = name;
+            sprite.SetVertexCount(dicedSprite.Vertices.Count);
+            sprite.SetIndices(new NativeArray<ushort>(dicedSprite.triangles.Select(t => (ushort)t).ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(dicedSprite.vertices.Select(v => new Vector3(v.x, v.y, 0)).ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(dicedSprite.UVs.ToArray(), Allocator.Temp));
+
+            return sprite;
         }
 
         /// <summary>

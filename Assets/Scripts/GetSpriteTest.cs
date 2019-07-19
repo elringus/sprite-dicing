@@ -16,7 +16,7 @@ public class GetSpriteTest : MonoBehaviour
 
     private void OnEnable ()
     {
-        dicedSpriteRenderer.SetDicedSprite(Atlas.GetSprite(SpriteName));
+        //dicedSpriteRenderer.SetDicedSprite(Atlas.GetSprite(SpriteName));
     }
 
     private void OnDisable ()

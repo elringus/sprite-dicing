@@ -397,7 +397,7 @@ namespace SpriteDicing
         {
             DisplayProgressBar("Generating diced sprites data...", 1f);
 
-            // Generate diced sprites using diced units.
+            // Generate sprites using diced units.
             var newDicedSprites = dicedUnits.Select(nameToUnits => DicedSprite.CreateInstance(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture,
                 nameToUnits.Value, defaultPivotProperty.vector2Value, keepOriginalPivotProperty.boolValue)).ToList();
 
@@ -413,12 +413,12 @@ namespace SpriteDicing
                 }
 
                 // Update rebuilded sprites to preserve references and delete stale ones.
-                var spritesToAdd = new List<DicedSprite>(newDicedSprites);
+                var spritesToAdd = new List<Sprite>(newDicedSprites);
                 for (int i = dicedSpritesProperty.arraySize - 1; i >= 0; i--)
                 {
-                    var oldSprite = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as DicedSprite;
+                    var oldSprite = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                     if (!oldSprite) continue;
-                    var newSprite = spritesToAdd.Find(sprite => sprite.Name == oldSprite.Name);
+                    var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
                     if (newSprite)
                     {
                         EditorUtility.CopySerialized(newSprite, oldSprite);
