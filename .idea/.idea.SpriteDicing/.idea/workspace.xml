@@ -2,13 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a3e20510-a87d-4abd-a801-0c504289bc73" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/indexLayout.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/riderModule.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SpriteDicing/.idea/workspace.xml" afterDir="false" />
     </list>
+    <list id="cba0b431-423c-49f7-a480-05554cfa1717" name="Revert: Add image and fix size of things (22b1a4d7)" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,19 +16,58 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Assets/SpriteDicing/Editor/DicedSpriteAtlasEditor.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="585">
-              <caret line="99" column="26" lean-forward="true" selection-start-line="99" selection-start-column="26" selection-end-line="99" selection-end-column="26" />
+            <state relative-caret-position="-3055">
+              <caret line="233" column="68" lean-forward="true" selection-start-line="233" selection-start-column="68" selection-end-line="233" selection-end-column="68" />
               <folding>
-                <marker date="1563660085545" expanded="true" signature="6:90" ph="..." />
-                <marker date="1563660085545" expanded="true" signature="27687:27981" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="27687:28287" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="27687:29173" ph="{...}" />
-                <marker date="1563660085545" expanded="false" signature="27687:29391" ph="Atlas generation" />
-                <marker date="1563660085545" expanded="true" signature="27687:29397" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="27687:29399" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="27727:27903" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="28304:29163" ph="{...}" />
-                <marker date="1563660085545" expanded="true" signature="29255:29372" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="6:121" ph="..." />
+                <marker date="1563660271101" expanded="true" signature="145:27775" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="265:27773" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="3938:5241" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="5251:11083" ph="GUI" />
+                <marker date="1563660271101" expanded="true" signature="5309:6445" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="6498:6779" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="6834:7951" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="6926:7441" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="7018:7427" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="7985:8667" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="8066:8657" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="8700:9434" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="8781:9424" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="9474:11064" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="9952:11054" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="10032:10746" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="10825:11040" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="11093:27767" ph="Atlas generation" />
+                <marker date="1563660271101" expanded="true" signature="11152:11852" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="11969:15138" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="12371:15092" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="13005:13227" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="13473:15005" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="14073:14987" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="15332:24488" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="15550:15825" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="16377:16444" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="16959:17192" ph="/* Pack units with distinct (inside atlas group) colors to the atlas textures. ... */" />
+                <marker date="1563660271101" expanded="true" signature="17237:24452" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="18202:18551" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="18282:18531" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="18712:18916" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="18967:22816" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="19339:22584" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="19428:19760" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="20195:21394" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="20349:20548" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="20713:21020" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="21053:21368" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="21452:21900" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="23192:23909" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="24578:27549" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="25076:26663" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="25274:25554" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="25793:26357" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="26103:26279" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="26680:27539" ph="{...}" />
+                <marker date="1563660271101" expanded="true" signature="27631:27748" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -45,6 +80,13 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/SpriteDicing/Editor/DicedSpriteAtlasEditor.cs" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/Assets/SpriteDicing/Editor/DicedSpriteAtlasEditor.cs" />
+      </list>
+    </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="240" />
@@ -109,16 +151,26 @@
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="a3e20510-a87d-4abd-a801-0c504289bc73" name="Default Changelist" comment="" />
+      <changelist id="cba0b431-423c-49f7-a480-05554cfa1717" name="Revert: Add image and fix size of things (22b1a4d7)" comment="" />
       <created>1563659863447</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1563659863447</updated>
-      <workItem from="1563659892315" duration="207000" />
+      <workItem from="1563659892315" duration="509000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="213000" />
+    <option name="totallyTimeSpent" value="509000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -172,19 +224,58 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/Assets/SpriteDicing/Editor/DicedSpriteAtlasEditor.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="14" column="25" selection-start-line="14" selection-start-column="25" selection-end-line="14" selection-end-column="25" />
+        <state relative-caret-position="-3055">
+          <caret line="233" column="68" lean-forward="true" selection-start-line="233" selection-start-column="68" selection-end-line="233" selection-end-column="68" />
           <folding>
-            <marker date="1563660085545" expanded="true" signature="6:90" ph="..." />
-            <marker date="1563660085545" expanded="true" signature="27687:27981" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="27687:28287" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="27687:29173" ph="{...}" />
-            <marker date="1563660085545" expanded="false" signature="27687:29391" ph="Atlas generation" />
-            <marker date="1563660085545" expanded="true" signature="27687:29397" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="27687:29399" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="27727:27903" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="28304:29163" ph="{...}" />
-            <marker date="1563660085545" expanded="true" signature="29255:29372" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="6:121" ph="..." />
+            <marker date="1563660271101" expanded="true" signature="145:27775" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="265:27773" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="3938:5241" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="5251:11083" ph="GUI" />
+            <marker date="1563660271101" expanded="true" signature="5309:6445" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="6498:6779" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="6834:7951" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="6926:7441" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="7018:7427" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="7985:8667" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="8066:8657" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="8700:9434" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="8781:9424" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="9474:11064" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="9952:11054" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="10032:10746" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="10825:11040" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="11093:27767" ph="Atlas generation" />
+            <marker date="1563660271101" expanded="true" signature="11152:11852" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="11969:15138" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="12371:15092" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="13005:13227" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="13473:15005" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="14073:14987" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="15332:24488" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="15550:15825" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="16377:16444" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="16959:17192" ph="/* Pack units with distinct (inside atlas group) colors to the atlas textures. ... */" />
+            <marker date="1563660271101" expanded="true" signature="17237:24452" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="18202:18551" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="18282:18531" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="18712:18916" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="18967:22816" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="19339:22584" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="19428:19760" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="20195:21394" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="20349:20548" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="20713:21020" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="21053:21368" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="21452:21900" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="23192:23909" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="24578:27549" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="25076:26663" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="25274:25554" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="25793:26357" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="26103:26279" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="26680:27539" ph="{...}" />
+            <marker date="1563660271101" expanded="true" signature="27631:27748" ph="{...}" />
           </folding>
         </state>
       </provider>
