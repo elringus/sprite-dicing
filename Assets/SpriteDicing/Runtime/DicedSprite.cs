@@ -36,6 +36,10 @@ namespace SpriteDicing
         /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
         /// </summary>
         public Vector2 Pivot { get => pivot; set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
+        
+        public List<int> TrianglesData => triangles;
+        public List<Vector2> VerticesData => vertices;
+        public List<Vector2> UVsData => uvs;
 
         [SerializeField] private Texture2D atlasTexture;
         [SerializeField] private List<Vector2> vertices;
