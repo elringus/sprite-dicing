@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Experimental.U2D;
-using UnityEngine.Rendering;
 
 namespace SpriteDicing
 {
@@ -41,11 +38,14 @@ namespace SpriteDicing
         public List<Vector2> VerticesData => vertices;
         public List<Vector2> UVsData => uvs;
 
+        public Vector2 SpriteSizeVector;
+
         [SerializeField] private Texture2D atlasTexture;
         [SerializeField] private List<Vector2> vertices;
         [SerializeField] private List<Vector2> uvs;
         [SerializeField] private List<int> triangles;
         [SerializeField] private Vector2 pivot;
+        [SerializeField] private Vector2 originalSize;
 
         private const int meshVerticesLimit = 65000; // Unity limitation.
 
@@ -57,16 +57,18 @@ namespace SpriteDicing
         /// <param name="dicedUnits">List of the diced units used to build this sprite.</param>
         /// <param name="pivot">Sprite pivot point in its local space.</param>
         /// <param name="keepOriginalPivot">Whether to preserve original sprite position by correcting its pivot.</param>
-        public static Sprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits,
+        public static DicedSprite CreateInstance (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits,
             Vector2 pivot = default, bool keepOriginalPivot = true)
         {
             var dicedSprite = ScriptableObject.CreateInstance<DicedSprite>();
-
+            
             dicedSprite.atlasTexture = atlasTexture;
             dicedSprite.name = name;
             dicedSprite.vertices = new List<Vector2>();
             dicedSprite.uvs = new List<Vector2>();
             dicedSprite.triangles = new List<int>();
+
+            
 
             foreach (var dicedUnit in dicedUnits)
                 dicedSprite.AddDicedUnit(dicedUnit);
@@ -83,7 +85,8 @@ namespace SpriteDicing
 
             return sprite;
         }
-
+        
+        
         /// <summary>
         /// Populates provided mesh with the data to construct sprite's shape and map atlas texture UVs.
         /// </summary>
@@ -141,6 +144,7 @@ namespace SpriteDicing
 
         private void AddDicedUnit (DicedUnit dicedUnit)
         {
+            SpriteSizeVector = dicedUnit.OriginalSpriteSize;
             AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, dicedUnit.QuadUVs.min, dicedUnit.QuadUVs.max);
         }
 

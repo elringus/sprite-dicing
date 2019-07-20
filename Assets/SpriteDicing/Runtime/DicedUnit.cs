@@ -32,5 +32,7 @@ namespace SpriteDicing
         /// Unique hash based on the Colors array.
         /// </summary>
         public int ColorsHashCode => Colors.GetArrayHashCode();
+
+        public Vector2 OriginalSpriteSize;
     }
 }

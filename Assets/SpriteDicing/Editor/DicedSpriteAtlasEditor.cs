@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -195,6 +196,8 @@ namespace SpriteDicing
 
         private Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
         {
+            
+           
             // Texture name -> units diced off the texture.
             var nameToUnitsMap = new Dictionary<string, List<DicedUnit>>();
             var unitSize = diceUnitSizeProperty.intValue;
@@ -212,11 +215,21 @@ namespace SpriteDicing
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
                 var textureImporter = textureAsset.Importer as TextureImporter;
+                var textureWidth = 0;
+                var textureHeight = 0;
                 if (!textureImporter.isReadable || textureImporter.crunchedCompression)
                 {
                     textureImporter.isReadable = true;
                     textureImporter.crunchedCompression = false;
                     AssetDatabase.ImportAsset(textureAsset.Path);
+                    object[] args = new object[2] { 0, 0 };
+                    MethodInfo mi = typeof(TextureImporter).GetMethod("GetWidthAndHeight", BindingFlags.NonPublic | BindingFlags.Instance);
+                    mi.Invoke(textureAsset.Importer, args);
+ 
+                    textureWidth = (int)args[0];
+                    textureHeight = (int)args[1];
+                    if (minimunSizeAtlas.x < textureWidth) minimunSizeAtlas.x = textureWidth;
+                    if (minimunSizeAtlas.y < textureHeight) minimunSizeAtlas.y = textureHeight;
                 }
 
                 var unitCountX = Mathf.CeilToInt((float)sourceTexture.width / unitSize);
@@ -241,7 +254,7 @@ namespace SpriteDicing
                         if (colors.All(color => color.a == 0)) continue;
                         var paddedColors = sourceTexture.GetPixels(paddedRect);
                         var quadVerts = pixelsRect.Scale(1f / pixelsPerUnitProperty.floatValue);
-                        var dicedUnit = new DicedUnit() { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
+                        var dicedUnit = new DicedUnit() { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors, OriginalSpriteSize= new Vector2(textureWidth,textureHeight ) };
                         nameToUnits.Value.Add(dicedUnit);
                     }
                 }
@@ -399,6 +412,8 @@ namespace SpriteDicing
                 atlasTexture.alphaIsTransparency = true;
                 atlasTexture.Apply();
                 var savedTexture = atlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
+                SetTextureImporterFormat(savedTexture, true);
+                //savedTexture.Resize(Mathf.RoundToInt(savedTexture.width * 2f), Mathf.RoundToInt(savedTexture.height * 2f));
                 atlasTexturesProperty.arraySize = Mathf.Max(atlasTexturesProperty.arraySize, atlasCount);
                 atlasTexturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
                 packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
@@ -406,12 +421,32 @@ namespace SpriteDicing
 
             return true;
         }
+        
+        public static void SetTextureImporterFormat( Texture2D texture, bool isReadable)
+        {
+            if ( null == texture ) return;
+
+            string assetPath = AssetDatabase.GetAssetPath( texture );
+            var tImporter = AssetImporter.GetAtPath( assetPath ) as TextureImporter;
+            if ( tImporter != null )
+            {
+                
+                tImporter.textureType = TextureImporterType.Default;
+                tImporter.maxTextureSize = 8192;
+
+                tImporter.isReadable = isReadable;
+
+                AssetDatabase.ImportAsset( assetPath );
+                AssetDatabase.Refresh();
+            }
+            
+        }
 
         private void CreateDicedSprites (Dictionary<string, List<DicedUnit>> dicedUnits)
         {
             DisplayProgressBar("Generating diced sprites data...", 1f);
 
-            // Generate sprites using diced units.
+            // Generate diced sprites using diced units.
             var newDicedSprites = dicedUnits.Select(nameToUnits => DicedSprite.CreateInstance(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture,
                 nameToUnits.Value, defaultPivotProperty.vector2Value, keepOriginalPivotProperty.boolValue)).ToList();
 
@@ -427,12 +462,12 @@ namespace SpriteDicing
                 }
 
                 // Update rebuilded sprites to preserve references and delete stale ones.
-                var spritesToAdd = new List<Sprite>(newDicedSprites);
+                var spritesToAdd = new List<DicedSprite>(newDicedSprites);
                 for (int i = dicedSpritesProperty.arraySize - 1; i >= 0; i--)
                 {
-                    var oldSprite = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+                    var oldSprite = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as DicedSprite;
                     if (!oldSprite) continue;
-                    var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
+                    var newSprite = spritesToAdd.Find(sprite => sprite.Name == oldSprite.Name);
                     if (newSprite)
                     {
                         EditorUtility.CopySerialized(newSprite, oldSprite);

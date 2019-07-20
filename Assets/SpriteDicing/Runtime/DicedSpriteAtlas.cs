@@ -23,7 +23,7 @@ namespace SpriteDicing
         public bool IsBuilt => TexturesCount > 0 && SpritesCount > 0;
 
         [SerializeField] private List<Texture2D> atlasTextures = new List<Texture2D>();
-        [SerializeField] private List<Sprite> dicedSprites = new List<Sprite>();
+        [SerializeField] private List<DicedSprite> dicedSprites = new List<DicedSprite>();
 
         #if UNITY_EDITOR
         // Editor-only data to track source sprite textures and store build configuration.
@@ -50,6 +50,6 @@ namespace SpriteDicing
         /// </summary>
         /// <param name="spriteName">Name of the sprite to retrieve.</param>
         /// <returns>Diced sprite data or null if not found.</returns>
-        public Sprite GetSprite (string spriteName) => dicedSprites.Find(sprite => sprite.name.Equals(spriteName));
+        public DicedSprite GetSprite (string spriteName) => dicedSprites.Find(sprite => sprite.Name.Equals(spriteName));
     }
 }

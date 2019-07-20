@@ -1,16 +1,16 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.U2D;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 namespace SpriteDicing.Runtime
 {
-    [RequireComponent(typeof(SpriteRenderer))]
-    public class SpriteRenderedDiced : MonoBehaviour
+    [RequireComponent(typeof(Image))]
+    public class DicedImage : MonoBehaviour
     {
-        [SerializeField]private SpriteRenderer spriteRenderer;
+        [SerializeField]private Image imageComponent;
         public DicedSprite dicedSprite;
     
         // Start is called before the first frame update
@@ -21,15 +21,12 @@ namespace SpriteDicing.Runtime
 
         private void RenderSpriteMesh()
         {
-            if(spriteRenderer == null)
-                spriteRenderer = GetComponent(typeof(SpriteRenderer)) as SpriteRenderer;
+            if(imageComponent == null)
+                imageComponent = GetComponent(typeof(Image)) as Image;
 
             if (dicedSprite == null) return;
-            print(dicedSprite.EvaluateSpriteRect(100f));
-            print(dicedSprite.AtlasTexture.height);
-            print(dicedSprite.AtlasTexture.width);
             var spriteGenerated =
-                Sprite.Create(dicedSprite.AtlasTexture, dicedSprite.EvaluateSpriteRect(100f), new Vector2(0.5f, 0.5f), 100);
+                Sprite.Create(dicedSprite.AtlasTexture, dicedSprite.EvaluateSpriteRect(100f), new Vector2(0.5f, 0.5f) , 100f);
             spriteGenerated.name = name;
             spriteGenerated.SetVertexCount(dicedSprite.Vertices.Count);
             spriteGenerated.SetIndices(new NativeArray<ushort>(dicedSprite.TrianglesData.Select(t => (ushort) t).ToArray(),
@@ -39,10 +36,10 @@ namespace SpriteDicing.Runtime
                     Allocator.Temp));
             spriteGenerated.SetVertexAttribute(VertexAttribute.TexCoord0,
                 new NativeArray<Vector2>(dicedSprite.UVsData.ToArray(), Allocator.Temp));
-            spriteRenderer.sprite = spriteGenerated;
+            if (imageComponent != null) imageComponent.sprite = spriteGenerated;
         }
 
-        private void OnEnable()
+        private void OnValidate()
         {
             RenderSpriteMesh();
         }
