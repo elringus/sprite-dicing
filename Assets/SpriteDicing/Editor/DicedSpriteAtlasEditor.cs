@@ -11,6 +11,8 @@ namespace SpriteDicing
     public class DicedSpriteAtlasEditor : Editor
     {
         protected DicedSpriteAtlas TargetAtlas => target as DicedSpriteAtlas;
+        private int minWidth;
+        private int minHeight;
 
         private SerializedProperty atlasTexturesProperty;
         private SerializedProperty dicedSpritesProperty;
@@ -197,12 +199,16 @@ namespace SpriteDicing
             var nameToUnitsMap = new Dictionary<string, List<DicedUnit>>();
             var unitSize = diceUnitSizeProperty.intValue;
 
+            minWidth = textureAssets.Max(x => x.Object.width);
+            minHeight = textureAssets.Max(x => x.Object.height);
+            
             foreach (var textureAsset in textureAssets)
             {
                 var sourceTexture = textureAsset.Object;
                 var key = nameToUnitsMap.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid().ToString() : textureAsset.Name;
                 var value = new List<DicedUnit>();
                 var nameToUnits = new KeyValuePair<string, List<DicedUnit>>(key, value);
+                
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
                 var textureImporter = textureAsset.Importer as TextureImporter;
@@ -267,6 +273,11 @@ namespace SpriteDicing
             var forceSquare = this.forceSquareProperty.boolValue;
             var atlasSizeLimit = this.atlasSizeLimitProperty.intValue;
             var unitsPerAtlasLimit = Mathf.Pow(atlasSizeLimit / paddedUnitSize, 2);
+
+            if (atlasSizeLimit < minHeight || atlasSizeLimit < minWidth)
+            {
+                atlasSizeLimit = 8196;
+            }
 
             // Group name->units to name->hash->units map.
             var unitsToPackMap = dicedUnits.Select(nameToUnits => new KeyValuePair<string, Dictionary<int, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
@@ -367,7 +378,10 @@ namespace SpriteDicing
                 }
 
                 // Crop unused atlas texture space.
-                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
+                if (xLimit < minWidth) xLimit = minWidth;
+                var yLimit = yToLastXMap.Last().Key + paddedUnitSize;
+                if (yLimit < minHeight) yLimit = minHeight;
+                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yLimit < atlasSizeLimit);
                 if (needToCrop)
                 {
                     var croppedWidth = xLimit;

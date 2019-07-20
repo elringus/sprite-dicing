@@ -74,7 +74,7 @@ namespace SpriteDicing
             var originalPivot = dicedSprite.TrimVertices();
             dicedSprite.Pivot = keepOriginalPivot ? originalPivot : pivot;
 
-            var sprite = Sprite.Create(atlasTexture, dicedSprite.EvaluateSpriteRect(), dicedSprite.Pivot, 100);
+            var sprite = Sprite.Create(atlasTexture, dicedSprite.EvaluateSpriteRectSize(), dicedSprite.Pivot, 100);
             sprite.name = name;
             sprite.SetVertexCount(dicedSprite.Vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(dicedSprite.triangles.Select(t => (ushort)t).ToArray(), Allocator.Temp));
@@ -117,6 +117,16 @@ namespace SpriteDicing
             var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
             var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
             return new Rect(minVertPos, spriteSize);
+        }
+        
+        public Rect EvaluateSpriteRectSize ()
+        {
+            var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
+            var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
+            var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
+            var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
+            var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
+            return new Rect(Vector2.zero, spriteSize * 100f);
         }
 
         private void OnValidate ()
