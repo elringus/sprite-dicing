@@ -36,6 +36,10 @@ namespace SpriteDicing
         /// Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.
         /// </summary>
         public Vector2 Pivot { get => pivot; set { if (pivot != value) { pivot = value; HandlePivotChange(); } } }
+        
+        public List<int> TrianglesData => triangles;
+        public List<Vector2> VerticesData => vertices;
+        public List<Vector2> UVsData => uvs;
 
         [SerializeField] private Texture2D atlasTexture;
         [SerializeField] private List<Vector2> vertices;
@@ -70,12 +74,12 @@ namespace SpriteDicing
             var originalPivot = dicedSprite.TrimVertices();
             dicedSprite.Pivot = keepOriginalPivot ? originalPivot : pivot;
 
-            var sprite = Sprite.Create(atlasTexture, dicedSprite.EvaluateSpriteRect(), dicedSprite.Pivot, 100);
+            var sprite = Sprite.Create(atlasTexture, dicedSprite.EvaluateSpriteRectSize(), dicedSprite.Pivot, 100);
             sprite.name = name;
             sprite.SetVertexCount(dicedSprite.Vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(dicedSprite.triangles.Select(t => (ushort)t).ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(dicedSprite.vertices.Select(v => new Vector3(v.x, v.y, 0)).ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(dicedSprite.UVs.ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(UnityEngine.Rendering.VertexAttribute.Position, new NativeArray<Vector3>(dicedSprite.vertices.Select(v => new Vector3(v.x, v.y, 0)).ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(UnityEngine.Rendering.VertexAttribute.TexCoord0, new NativeArray<Vector2>(dicedSprite.UVs.ToArray(), Allocator.Temp));
 
             return sprite;
         }
@@ -113,6 +117,16 @@ namespace SpriteDicing
             var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
             var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
             return new Rect(minVertPos, spriteSize);
+        }
+        
+        public Rect EvaluateSpriteRectSize ()
+        {
+            var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
+            var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
+            var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
+            var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
+            var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
+            return new Rect(Vector2.zero, spriteSize * 100f);
         }
 
         private void OnValidate ()

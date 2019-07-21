@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\gilbe\.Rider2019.1\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\gilbe\.Rider2019.1\system\resharper-host\local\Transient\ReSharperHost\v191\SolutionCaches\_SpriteDicing.-2012666704.00" t="ExcludeRecursive" />
+    <e p="C:\Users\gilbe\Documents\Git Repos\GilbertoBitt\SpriteDicing" t="IncludeRecursive">
+      <e p="Assembly-CSharp-Editor.csproj" t="IncludeRecursive" />
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets" t="Include">
+        <e p="Editor" t="Include">
+          <e p="PackageExporter.cs" t="Include" />
+        </e>
+        <e p="Scripts" t="Include">
+          <e p="GetSpriteTest.cs" t="Include" />
+          <e p="SceneSwitcher.cs" t="Include" />
+        </e>
+        <e p="SpriteDicing" t="Include">
+          <e p="Editor" t="Include">
+            <e p="DicedSpriteAtlasEditor.cs" t="Include" />
+            <e p="DicedSpriteDragHandler.cs" t="Include" />
+            <e p="DicedSpriteEditor.cs" t="Include" />
+            <e p="DicedSpriteRendererEditor.cs" t="Include" />
+            <e p="EditorUtilities.cs" t="Include" />
+            <e p="FolderAssetHelper.cs" t="Include" />
+          </e>
+          <e p="Runtime" t="Include">
+            <e p="DicedSprite.cs" t="Include" />
+            <e p="DicedSpriteAtlas.cs" t="Include" />
+            <e p="DicedSpriteRenderer.cs" t="Include" />
+            <e p="DicedUnit.cs" t="Include" />
+            <e p="SpriteRenderedDiced.cs" t="Include" />
+            <e p="Utilities.cs" t="Include" />
+          </e>
+        </e>
+      </e>
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="Packages" t="ExcludeRecursive" />
+      <e p="SpriteDicing.sln" t="IncludeFlat" />
+      <e p="Temp\bin" t="ExcludeRecursive" />
+    </e>
+  </component>
+</project>
