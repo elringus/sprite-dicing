@@ -23,13 +23,17 @@ namespace UnityCommon
         private static string PackageName { get { return PlayerPrefs.GetString(prefsPrefix + "PackageName"); } set { PlayerPrefs.SetString(prefsPrefix + "PackageName", value); } }
         private static string Copyright { get { return PlayerPrefs.GetString(prefsPrefix + "Copyright"); } set { PlayerPrefs.SetString(prefsPrefix + "Copyright", value); } }
         private static string LicenseFilePath { get { return PlayerPrefs.GetString(prefsPrefix + "LicenseFilePath"); } set { PlayerPrefs.SetString(prefsPrefix + "LicenseFilePath", value); } }
-        private static string LicenseAssetPath { get { return AssetsPath + "/" + defaultLicenseFileName + ".txt"; } }
+        private static string LicenseAssetPath { get { return AssetsPath + "/" + defaultLicenseFileName + ".md"; } }
         private static string AssetsPath { get { return "Assets/" + PackageName; } }
         private static string OutputPath { get { return PlayerPrefs.GetString(prefsPrefix + "OutputPath"); } set { PlayerPrefs.SetString(prefsPrefix + "OutputPath", value); } }
         private static string OutputFileName { get { return PackageName; } }
         private static string IgnoredAssetGUIds { get { return PlayerPrefs.GetString(prefsPrefix + "IgnoredAssetGUIds"); } set { PlayerPrefs.SetString(prefsPrefix + "IgnoredAssetGUIds", value); } }
         private static bool IsAnyPathsIgnored { get { return !string.IsNullOrEmpty(IgnoredAssetGUIds); } }
         private static bool IsReadyToExport { get { return !string.IsNullOrEmpty(OutputPath) && !string.IsNullOrEmpty(OutputFileName); } }
+        private static bool ExportAsUnityPackage { get { return PlayerPrefs.GetInt(prefsPrefix + "ExportAsUnityPackage", 1) == 1; } set { PlayerPrefs.SetInt(prefsPrefix + "ExportAsUnityPackage", value ? 1 : 0); } }
+        private static bool PublishToGit { get { return PlayerPrefs.GetInt(prefsPrefix + "PublishToGit", 0) == 1; } set { PlayerPrefs.SetInt(prefsPrefix + "PublishToGit", value ? 1 : 0); } }
+        private static string GitShellPath { get { return PlayerPrefs.GetString(prefsPrefix + "GitShellPath"); } set { PlayerPrefs.SetString(prefsPrefix + "GitShellPath", value); } }
+        private static string GitScriptPath { get { return PlayerPrefs.GetString(prefsPrefix + "GitScriptPath"); } set { PlayerPrefs.SetString(prefsPrefix + "GitScriptPath", value); } }
 
         private const string prefsPrefix = "PackageExporter.";
         private const string autoRefreshKey = "kAutoRefresh";
@@ -61,7 +65,7 @@ namespace UnityCommon
             RenderGUI();
         }
 
-        #if UNITY_2019_1_OR_NEWER
+#if UNITY_2019_1_OR_NEWER
         [SettingsProvider]
         internal static SettingsProvider CreateProjectSettingsProvider ()
         {
@@ -70,7 +74,7 @@ namespace UnityCommon
             provider.guiHandler += id => RenderGUI();
             return provider;
         }
-        #elif UNITY_2018_3_OR_NEWER
+#elif UNITY_2018_3_OR_NEWER
         [SettingsProvider]
         internal static SettingsProvider CreateProjectSettingsProvider ()
         {
@@ -79,14 +83,14 @@ namespace UnityCommon
             provider.guiHandler += id => RenderGUI();
             return provider;
         }
-        #else
+#else
         [MenuItem("Edit/Project Settings/Package Exporter")]
         private static void OpenSettingsWindow ()
         {
             var window = GetWindow<PackageExporter>();
             window.Show();
         }
-        #endif
+#endif
 
         private static void Initialize ()
         {
@@ -117,6 +121,23 @@ namespace UnityCommon
                 OutputPath = EditorGUILayout.TextField("Output Path", OutputPath);
                 if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(65)))
                     OutputPath = EditorUtility.OpenFolderPanel("Output Path", "", "");
+            }
+            ExportAsUnityPackage = EditorGUILayout.Toggle("Export As Unity Package", ExportAsUnityPackage);
+            PublishToGit = EditorGUILayout.Toggle("Publish To Git", PublishToGit);
+            if (PublishToGit)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GitShellPath = EditorGUILayout.TextField("Git Shell Path", GitShellPath);
+                    if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(65)))
+                        GitShellPath = EditorUtility.OpenFilePanelWithFilters("Git Shell Path", "", new[] { "Executable", "exe" });
+                }
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GitScriptPath = EditorGUILayout.TextField("Git Script Path", GitScriptPath);
+                    if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(65)))
+                        GitScriptPath = EditorUtility.OpenFilePanelWithFilters("Git Script Path", "", new[] { "Shell", "sh" });
+                }
             }
             EditorGUILayout.Space();
 
@@ -195,7 +216,7 @@ namespace UnityCommon
             var needToAddLicense = File.Exists(LicenseFilePath);
             if (needToAddLicense)
             {
-                File.Copy(LicenseFilePath, LicenseAssetPath);
+                File.Copy(LicenseFilePath, LicenseAssetPath, true);
                 AssetDatabase.ImportAsset(LicenseAssetPath, ImportAssetOptions.ForceSynchronousImport);
             }
 
@@ -229,7 +250,42 @@ namespace UnityCommon
 
             // Export the package.
             DisplayProgressBar("Writing package file...", .5f);
-            AssetDatabase.ExportPackage(AssetsPath, OutputPath + "/" + OutputFileName + ".unitypackage", ExportPackageOptions.Recurse);
+            if (ExportAsUnityPackage)
+                AssetDatabase.ExportPackage(AssetsPath, OutputPath + "/" + OutputFileName + ".unitypackage", ExportPackageOptions.Recurse);
+            else
+            {
+                try
+                {
+                    var sourcePath = Path.Combine(Application.dataPath, PackageName).Replace("\\", "/");
+                    var destPath = Path.Combine(OutputPath, OutputFileName).Replace("\\", "/"); ;
+                    var sourceDir = new DirectoryInfo(sourcePath);
+
+                    var hiddenFolders = sourceDir.GetDirectories("*", SearchOption.AllDirectories)
+                        .Where(d => (d.Attributes & FileAttributes.Hidden) != 0)
+                        .Select(d => d.FullName).ToList();
+                    var packageFiles = sourceDir.GetFiles("*.*", SearchOption.AllDirectories)
+                        .Where(f => (f.Attributes & FileAttributes.Hidden) == 0 &&
+                        !hiddenFolders.Any(d => f.FullName.StartsWith(d))).ToList();
+
+                    foreach (var packageFile in packageFiles)
+                    {
+                        var sourceFilePath = packageFile.FullName.Replace("\\", "/");
+                        var destFilePath = sourceFilePath.Replace(sourcePath, destPath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
+                        File.Copy(sourceFilePath, destFilePath, true);
+                    }
+                }
+                catch (Exception e) { Debug.LogError(e.Message); }
+            }
+
+            // Publish GitHub branch.
+            if (PublishToGit)
+            {
+                using (var proccess = System.Diagnostics.Process.Start(GitShellPath, $"\"{GitScriptPath}\""))
+                {
+                    proccess.WaitForExit();
+                }
+            }
 
             // Restore modified scripts.
             DisplayProgressBar("Restoring modified scripts...", .75f);

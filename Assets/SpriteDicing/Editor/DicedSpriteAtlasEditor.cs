@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.U2D;
+using UnityEngine.Rendering;
 
 namespace SpriteDicing
 {
@@ -11,11 +14,9 @@ namespace SpriteDicing
     public class DicedSpriteAtlasEditor : Editor
     {
         protected DicedSpriteAtlas TargetAtlas => target as DicedSpriteAtlas;
-        private int minWidth;
-        private int minHeight;
 
-        private SerializedProperty atlasTexturesProperty;
-        private SerializedProperty dicedSpritesProperty;
+        private SerializedProperty texturesProperty;
+        private SerializedProperty spritesProperty;
         private SerializedProperty defaultPivotProperty;
         private SerializedProperty keepOriginalPivotProperty;
         private SerializedProperty decoupleSpriteDataProperty;
@@ -48,8 +49,8 @@ namespace SpriteDicing
 
         private void OnEnable ()
         {
-            atlasTexturesProperty = serializedObject.FindProperty("atlasTextures");
-            dicedSpritesProperty = serializedObject.FindProperty("dicedSprites");
+            texturesProperty = serializedObject.FindProperty("textures");
+            spritesProperty = serializedObject.FindProperty("sprites");
             defaultPivotProperty = serializedObject.FindProperty("defaultPivot");
             keepOriginalPivotProperty = serializedObject.FindProperty("keepOriginalPivot");
             decoupleSpriteDataProperty = serializedObject.FindProperty("decoupleSpriteData");
@@ -71,8 +72,8 @@ namespace SpriteDicing
         {
             serializedObject.Update();
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.PropertyField(atlasTexturesProperty, true);
-            EditorGUILayout.PropertyField(dicedSpritesProperty, true);
+            EditorGUILayout.PropertyField(texturesProperty, true);
+            EditorGUILayout.PropertyField(spritesProperty, true);
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
             EditorGUILayout.Space();
@@ -89,7 +90,7 @@ namespace SpriteDicing
 
         private GUIContent GetBuildButtonContent ()
         {
-            var name = (target as DicedSpriteAtlas).IsBuilt ? "Rebuild Atlas" : "Build Atlas";
+            var name = TargetAtlas.SpritesCount > 0 ? "Rebuild Atlas" : "Build Atlas";
             var tooltip = inputFolderProperty.objectReferenceValue ? "" : "Select input directory to build atlas.";
             return new GUIContent(name, tooltip);
         }
@@ -100,9 +101,9 @@ namespace SpriteDicing
 
             if (decoupleSpriteDataProperty.boolValue)
             {
-                for (int i = dicedSpritesProperty.arraySize - 1; i >= 0; i--)
+                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
                 {
-                    var spriteData = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                    var spriteData = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
                     if (!spriteData) continue;
                     var spritePath = AssetDatabase.GetAssetPath(spriteData);
                     var spriteFullPath = Path.GetFullPath(spritePath);
@@ -130,7 +131,7 @@ namespace SpriteDicing
                 using (new EditorGUI.DisabledScope(keepOriginalPivotProperty.boolValue))
                     defaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivotProperty.vector2Value);
                 rect.x += rect.width + 5;
-                EditorUtilities.ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
+                Utilities.ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
             }
         }
 
@@ -145,7 +146,7 @@ namespace SpriteDicing
                 var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
                 EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
                 rect.x += rect.width + 5;
-                EditorUtilities.ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
+                Utilities.ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
             }
         }
 
@@ -163,10 +164,10 @@ namespace SpriteDicing
                     rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
                     rect.width = Mathf.Max(50, (rect.width - 4) / 2);
                     EditorGUIUtility.labelWidth = 50;
-                    EditorUtilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
+                    Utilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
                     rect.x += rect.width + 5;
                     using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
-                        EditorUtilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
+                        Utilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
                     EditorGUIUtility.labelWidth = 0;
                 }
                 using (new EditorGUILayout.HorizontalScope())
@@ -187,7 +188,7 @@ namespace SpriteDicing
             var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfoldersProperty.boolValue, prependSubfolderNamesProperty.boolValue);
             var dicedUnits = DiceSourceTextures(textureAssets);
             if (!CreateAtlasTextures(dicedUnits)) { EditorUtility.ClearProgressBar(); return; }
-            CreateDicedSprites(dicedUnits);
+            CreateSprites(dicedUnits);
             dataSizeValueContent = GetDataSizeValueContent();
             AssetDatabase.SaveAssets();
             EditorUtility.ClearProgressBar();
@@ -199,16 +200,12 @@ namespace SpriteDicing
             var nameToUnitsMap = new Dictionary<string, List<DicedUnit>>();
             var unitSize = diceUnitSizeProperty.intValue;
 
-            minWidth = textureAssets.Max(x => x.Object.width);
-            minHeight = textureAssets.Max(x => x.Object.height);
-            
             foreach (var textureAsset in textureAssets)
             {
                 var sourceTexture = textureAsset.Object;
                 var key = nameToUnitsMap.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid().ToString() : textureAsset.Name;
                 var value = new List<DicedUnit>();
                 var nameToUnits = new KeyValuePair<string, List<DicedUnit>>(key, value);
-                
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
                 var textureImporter = textureAsset.Importer as TextureImporter;
@@ -258,13 +255,13 @@ namespace SpriteDicing
             DisplayProgressBar("Processing diced textures...", .5f);
 
             // Delete any previously generated atlas textures.
-            for (int i = atlasTexturesProperty.arraySize - 1; i >= 0; i--)
+            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
             {
-                var unusedTexture = atlasTexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                var unusedTexture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(unusedTexture));
                 DestroyImmediate(unusedTexture, true);
             }
-            atlasTexturesProperty.arraySize = 0;
+            texturesProperty.arraySize = 0;
 
             var atlasCount = 0;
             var unitSize = diceUnitSizeProperty.intValue;
@@ -273,11 +270,6 @@ namespace SpriteDicing
             var forceSquare = this.forceSquareProperty.boolValue;
             var atlasSizeLimit = this.atlasSizeLimitProperty.intValue;
             var unitsPerAtlasLimit = Mathf.Pow(atlasSizeLimit / paddedUnitSize, 2);
-
-            if (atlasSizeLimit < minHeight || atlasSizeLimit < minWidth)
-            {
-                atlasSizeLimit = 8196;
-            }
 
             // Group name->units to name->hash->units map.
             var unitsToPackMap = dicedUnits.Select(nameToUnits => new KeyValuePair<string, Dictionary<int, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
@@ -297,12 +289,13 @@ namespace SpriteDicing
                 var packedUnits = new List<DicedUnit>(); // List of the units packed to the current atlas.
 
                 // Find units that can be packed to the current atlas (respecting atlas size limit and remaining free space).
-                Func<KeyValuePair<string, Dictionary<int, List<DicedUnit>>>> findSuitableUnitsToPack = () => {
+                KeyValuePair<string, Dictionary<int, List<DicedUnit>>> findSuitableUnitsToPack ()
+                {
                     return unitsToPackMap.FirstOrDefault(nameToHashToUnits => {
                         var unitsToPackCount = nameToHashToUnits.Value.Count(hashToUnits => !hashToUV.ContainsKey(hashToUnits.Key));
                         return hashToUV.Keys.Count + unitsToPackCount <= unitsPerAtlasLimit;
                     });
-                };
+                }
 
                 var suitableUnits = findSuitableUnitsToPack();
                 if (suitableUnits.Key == null) // None of the source textures fit atlas limit. 
@@ -378,10 +371,7 @@ namespace SpriteDicing
                 }
 
                 // Crop unused atlas texture space.
-                if (xLimit < minWidth) xLimit = minWidth;
-                var yLimit = yToLastXMap.Last().Key + paddedUnitSize;
-                if (yLimit < minHeight) yLimit = minHeight;
-                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yLimit < atlasSizeLimit);
+                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
                 if (needToCrop)
                 {
                     var croppedWidth = xLimit;
@@ -399,21 +389,21 @@ namespace SpriteDicing
                 atlasTexture.alphaIsTransparency = true;
                 atlasTexture.Apply();
                 var savedTexture = atlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
-                atlasTexturesProperty.arraySize = Mathf.Max(atlasTexturesProperty.arraySize, atlasCount);
-                atlasTexturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
+                texturesProperty.arraySize = Mathf.Max(texturesProperty.arraySize, atlasCount);
+                texturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
                 packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
             }
 
             return true;
         }
 
-        private void CreateDicedSprites (Dictionary<string, List<DicedUnit>> dicedUnits)
+        private void CreateSprites (Dictionary<string, List<DicedUnit>> dicedUnits)
         {
-            DisplayProgressBar("Generating diced sprites data...", 1f);
+            DisplayProgressBar("Generating sprite assets...", 1f);
 
             // Generate sprites using diced units.
-            var newDicedSprites = dicedUnits.Select(nameToUnits => DicedSprite.CreateInstance(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture,
-                nameToUnits.Value, defaultPivotProperty.vector2Value, keepOriginalPivotProperty.boolValue)).ToList();
+            var newSprites = dicedUnits.Select(nameToUnits => 
+                CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value)).ToList();
 
             // Save generated sprites.
             if (!decoupleSpriteDataProperty.boolValue)
@@ -427,10 +417,10 @@ namespace SpriteDicing
                 }
 
                 // Update rebuilded sprites to preserve references and delete stale ones.
-                var spritesToAdd = new List<Sprite>(newDicedSprites);
-                for (int i = dicedSpritesProperty.arraySize - 1; i >= 0; i--)
+                var spritesToAdd = new List<Sprite>(newSprites);
+                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
                 {
-                    var oldSprite = dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+                    var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                     if (!oldSprite) continue;
                     var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
                     if (newSprite)
@@ -447,23 +437,101 @@ namespace SpriteDicing
                 AssetDatabase.Refresh();
                 AssetDatabase.SaveAssets();
 
-                dicedSpritesProperty.SetListValues(spritesToAdd, false);
+                spritesProperty.SetListValues(spritesToAdd, false);
             }
             else
             {
                 // Delete sprites stored in atlas asset (in case they were previously added).
-                for (int i = dicedSpritesProperty.arraySize - 1; i >= 0; i--)
-                    DestroyImmediate(dicedSpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue, true);
+                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+                    DestroyImmediate(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue, true);
                 AssetDatabase.Refresh();
                 AssetDatabase.SaveAssets();
 
                 var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
                 var dicedSpritesFolder = new FolderAssetHelper(folderPath);
-                var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(newDicedSprites);
+                var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(newSprites);
 
                 generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
-                dicedSpritesProperty.SetListValues(savedDicedSprites);
+                spritesProperty.SetListValues(savedDicedSprites);
             }
+        }
+
+        private Sprite CreateSprite (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits)
+        {
+            var vertices = new List<Vector2>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<ushort>();
+
+            #region Functions
+
+            void AddDicedUnit (DicedUnit dicedUnit) => AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, dicedUnit.QuadUVs.min, dicedUnit.QuadUVs.max);
+
+            void AddQuad (Vector2 posMin, Vector2 posMax, Vector2 uvMin, Vector2 uvMax)
+            {
+                var startIndex = vertices.Count;
+
+                AddVertice(new Vector2(posMin.x, posMin.y), new Vector2(uvMin.x, uvMin.y));
+                AddVertice(new Vector2(posMin.x, posMax.y), new Vector2(uvMin.x, uvMax.y));
+                AddVertice(new Vector2(posMax.x, posMax.y), new Vector2(uvMax.x, uvMax.y));
+                AddVertice(new Vector2(posMax.x, posMin.y), new Vector2(uvMax.x, uvMin.y));
+
+                AddTriangle(startIndex, startIndex + 1, startIndex + 2);
+                AddTriangle(startIndex + 2, startIndex + 3, startIndex);
+            }
+
+            void AddVertice (Vector2 position, Vector2 uv)
+            {
+                vertices.Add(position);
+                uvs.Add(uv);
+            }
+
+            void AddTriangle (int idx0, int idx1, int idx2)
+            {
+                triangles.Add((ushort)idx0);
+                triangles.Add((ushort)idx1);
+                triangles.Add((ushort)idx2);
+            }
+
+            // Reposition the vertices so that they start at the local origin (0, 0).
+            Vector2 TrimVertices (Rect rect)
+            {
+                if (rect.min.x > 0 || rect.min.y > 0)
+                    for (int i = 0; i < vertices.Count; i++)
+                        vertices[i] -= rect.min;
+
+                var pivotX = rect.min.x / rect.size.x;
+                var pivotY = rect.min.y / rect.size.y;
+                return new Vector2(-pivotX, -pivotY);
+            }
+
+            // Evaluate sprite rectangle using vertex data.
+            Rect EvaluateSpriteRect ()
+            {
+                var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
+                var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
+                var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
+                var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
+                var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
+                return new Rect(minVertPos, spriteSize);
+            }
+
+            #endregion
+
+            foreach (var dicedUnit in dicedUnits)
+                AddDicedUnit(dicedUnit);
+
+            var spriteRect = EvaluateSpriteRect();
+            var originalPivot = TrimVertices(spriteRect);
+            var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
+
+            var sprite = Sprite.Create(atlasTexture, spriteRect, pivot, pixelsPerUnitProperty.floatValue);
+            sprite.name = name;
+            sprite.SetVertexCount(vertices.Count);
+            sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.Select(v => new Vector3(v.x, v.y)).ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
+
+            return sprite;
         }
 
         private static void DisplayProgressBar (string activity, float progress)

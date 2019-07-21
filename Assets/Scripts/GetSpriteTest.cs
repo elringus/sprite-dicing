@@ -1,26 +1,26 @@
 ﻿using SpriteDicing;
 using UnityEngine;
 
-[RequireComponent(typeof(DicedSpriteRenderer))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class GetSpriteTest : MonoBehaviour
 {
     public DicedSpriteAtlas Atlas;
     public string SpriteName;
 
-    private DicedSpriteRenderer dicedSpriteRenderer;
+    private SpriteRenderer spriteRenderer;
 
     private void Awake ()
     {
-        dicedSpriteRenderer = GetComponent<DicedSpriteRenderer>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void OnEnable ()
     {
-        //dicedSpriteRenderer.SetDicedSprite(Atlas.GetSprite(SpriteName));
+        spriteRenderer.sprite = Atlas.GetSprite(SpriteName);
     }
 
     private void OnDisable ()
     {
-        dicedSpriteRenderer.SetDicedSprite(null);
+        spriteRenderer.sprite = null;
     }
 }
