@@ -1,7 +1,6 @@
 ## Installation
 
-Either download and import a [standalone Unity package](https://github.com/Elringus/SpriteDicing
-/releases/download/v0.3-alpha/SpriteDicing.unitypackage) or add `"com.elringus.spritedicing": "https://github.com/Elringus/SpriteDicing.git#package"` as a dependency for your project's `Packages/manifest.json` ([guide](https://docs.unity3d.com/Manual/upm-git.html)).
+Either download and import a [standalone Unity package](https://github.com/Elringus/SpriteDicing/releases/download/v0.3-alpha/SpriteDicing.unitypackage) or add `"com.elringus.spritedicing": "https://github.com/Elringus/SpriteDicing.git#package"` as a dependency for your project's `Packages/manifest.json` ([guide](https://docs.unity3d.com/Manual/upm-git.html)).
 
 ## Description
 
