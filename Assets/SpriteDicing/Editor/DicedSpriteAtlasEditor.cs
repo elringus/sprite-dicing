@@ -520,7 +520,7 @@ namespace SpriteDicing
             foreach (var dicedUnit in dicedUnits)
                 AddDicedUnit(dicedUnit);
 
-            var spriteRect = EvaluateSpriteRect();
+            var spriteRect = EvaluateSpriteRect().Scale(pixelsPerUnitProperty.floatValue);
             var originalPivot = TrimVertices(spriteRect);
             var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
 
