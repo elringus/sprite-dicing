@@ -1,11 +1,10 @@
-## Download package
-For Unity 2018.1 and later: [SpriteDicing.unitypackage](https://github.com/Elringus/SpriteDicing/releases/download/v0.1-alpha/SpriteDicing.unitypackage). Check [releases](https://github.com/Elringus/SpriteDicing/releases) for previous versions support.
+## Installation
 
-Please be aware that you don't need to clone the whole repository in order to use the extension in your project. Either download package from the link above or extract `Assets/SpriteDicing` folder from the repository project – it contains all the required assets; other stuff is just for testing purposes.
-
-*[.NET 4.x scripting runtime](https://docs.unity3d.com/Manual/ScriptingRuntimeUpgrade.html) is required. Make sure to configure the project before importing the package.*
+Either download and import a [standalone Unity package](https://github.com/Elringus/SpriteDicing
+/releases/download/v0.3-alpha/SpriteDicing.unitypackage) or add `"com.elringus.spritedicing": "https://github.com/Elringus/SpriteDicing.git#package"` as a dependency for your project's `Packages/manifest.json` ([guide](https://docs.unity3d.com/Manual/upm-git.html)).
 
 ## Description
+
 Sprite Dicing is an editor extension for [Unity game engine](https://unity3d.com/) which allows to split up a set of large sprite textures into small chunks, discard identical ones, bake them into atlas textures and then seamlessly reconstruct the original sprites at runtime for render. 
 
 This technique allows to significantly reduce build size, in cases when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where you have multiple textures per character, each portraying a different emotion; most of the textures space will be occupied with the identical data, and only a small area will vary:
@@ -19,6 +18,7 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 By the way, in case you're developing a visual novel, [take a look at my visual novel engine](https://u3d.as/1pg9), which uses this extension.
 
 ## How to use
+
 1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atals` menu command, select it;
 2. Specify `Input Folder` — project directory, containing the source textures you wish to process. You can simply drag-drop a folder from the project hierarchy window into the field;
 3. Press `Build Atlas` button and wait for the generation procedure to finish;
