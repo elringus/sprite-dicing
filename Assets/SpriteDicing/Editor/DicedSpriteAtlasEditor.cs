@@ -528,7 +528,7 @@ namespace SpriteDicing
 
             // Public sprite ctor won't allow using a rect that is larger than the atlas texture.
             var sprite = typeof(Sprite).GetMethod("CreateSpriteWithoutTextureScripting", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { spriteRect, pivot, ppu, atlasTexture }) as Sprite;
+                .Invoke(null, new object[] { spriteRect, Vector2.zero, ppu, atlasTexture }) as Sprite;
             sprite.name = name;
             sprite.SetVertexCount(vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
