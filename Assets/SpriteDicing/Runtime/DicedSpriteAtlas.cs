@@ -51,5 +51,9 @@ namespace SpriteDicing
         /// <param name="spriteName">Name of the sprite to retrieve.</param>
         /// <returns>Diced sprite data or null if not found.</returns>
         public DicedSprite GetSprite (string spriteName) => dicedSprites.Find(sprite => sprite.Name.Equals(spriteName));
+        /// <summary>
+        /// Retrieves all the generated diced sprites data contained in the atlas.
+        /// </summary>
+        public List<DicedSprite> GetAllSprites () => new List<DicedSprite>(dicedSprites);
     }
 }
