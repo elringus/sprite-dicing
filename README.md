@@ -1,3 +1,5 @@
+This project is a part of **Naninovel** — visual novel engine extension for Unity. [Check it out on the Asset Store!](https://u3d.as/1pg9)
+
 ## Installation
 
 Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package via the following git URL: `https://github.com/Elringus/SpriteDicing.git#package` or download and import [SpriteDicing.unitypackage](https://github.com/Elringus/SpriteDicing/raw/master/SpriteDicing.unitypackage) manually.
@@ -15,8 +17,6 @@ This technique allows to significantly reduce build size, in cases when multiple
 These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique chunks, having the size of just **2.4MB**. We can now discard the original five textures and use the atlas to render the original sprites, effectively compressing source textures data by **86.3%**:
 
 ![](https://i.gyazo.com/7f79936fc714abcc342ae348478b9c8e.gif)
-
-By the way, in case you're developing a visual novel, [take a look at my visual novel engine](https://u3d.as/1pg9), which uses this extension.
 
 ## How to use
 
