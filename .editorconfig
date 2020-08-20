@@ -1,0 +1,17 @@
+# https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference?view=vs-2017
+
+###############################
+# Core EditorConfig Options   #
+###############################
+root = true
+
+###############################
+# File Formatting Options     #
+###############################
+[*.cs]
+indent_style = space
+indent_size = 4
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
