@@ -183,15 +183,18 @@ namespace SpriteDicing
         #region Atlas generation
         private void BuildAtlas ()
         {
-            DisplayProgressBar("Loading source textures...", .0f);
-            var inputFolderHelper = new FolderAssetHelper(inputFolderProperty.objectReferenceValue);
-            var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfoldersProperty.boolValue, prependSubfolderNamesProperty.boolValue);
-            var dicedUnits = DiceSourceTextures(textureAssets);
-            if (!CreateAtlasTextures(dicedUnits)) { EditorUtility.ClearProgressBar(); return; }
-            CreateSprites(dicedUnits);
-            dataSizeValueContent = GetDataSizeValueContent();
-            AssetDatabase.SaveAssets();
-            EditorUtility.ClearProgressBar();
+            try
+            {
+                DisplayProgressBar("Loading source textures...", .0f);
+                var inputFolderHelper = new FolderAssetHelper(inputFolderProperty.objectReferenceValue);
+                var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfoldersProperty.boolValue, prependSubfolderNamesProperty.boolValue);
+                var dicedUnits = DiceSourceTextures(textureAssets);
+                if (!CreateAtlasTextures(dicedUnits)) { EditorUtility.ClearProgressBar(); return; }
+                CreateSprites(dicedUnits);
+                dataSizeValueContent = GetDataSizeValueContent();
+                AssetDatabase.SaveAssets();
+            }
+            finally { EditorUtility.ClearProgressBar(); }
         }
 
         private Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
@@ -461,7 +464,27 @@ namespace SpriteDicing
             var uvs = new List<Vector2>();
             var triangles = new List<ushort>();
 
-            #region Functions
+            foreach (var dicedUnit in dicedUnits)
+                AddDicedUnit(dicedUnit);
+
+            var ppu = pixelsPerUnitProperty.floatValue;
+            var spriteRect = EvaluateSpriteRect().Scale(ppu);
+            var originalPivot = TrimVertices(spriteRect);
+            var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
+
+            // Public sprite ctor won't allow using a rect that is larger than the texture.
+            // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
+            var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
+                .Invoke(null, new object[] { atlasTexture, spriteRect, pivot, ppu, (uint)0, SpriteMeshType.FullRect, Vector4.zero, false }) as Sprite;
+            sprite.name = name;
+            sprite.SetVertexCount(vertices.Count);
+            sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.Select(v => new Vector3(v.x, v.y)).ToArray(), Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
+
+            return sprite;
+
+            #region Local functions
 
             void AddDicedUnit (DicedUnit dicedUnit) => AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, dicedUnit.QuadUVs.min, dicedUnit.QuadUVs.max);
 
@@ -515,25 +538,6 @@ namespace SpriteDicing
             }
 
             #endregion
-
-            foreach (var dicedUnit in dicedUnits)
-                AddDicedUnit(dicedUnit);
-
-            var ppu = pixelsPerUnitProperty.floatValue;
-            var spriteRect = EvaluateSpriteRect().Scale(ppu);
-            var originalPivot = TrimVertices(spriteRect);
-            var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
-
-            // Public sprite ctor won't allow using a rect that is larger than the atlas texture.
-            var sprite = typeof(Sprite).GetMethod("CreateSpriteWithoutTextureScripting", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { spriteRect, pivot, ppu, atlasTexture }) as Sprite;
-            sprite.name = name;
-            sprite.SetVertexCount(vertices.Count);
-            sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.Select(v => new Vector3(v.x, v.y)).ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
-
-            return sprite;
         }
 
         private static void DisplayProgressBar (string activity, float progress)
