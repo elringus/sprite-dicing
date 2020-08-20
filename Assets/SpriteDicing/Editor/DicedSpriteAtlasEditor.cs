@@ -252,10 +252,10 @@ namespace SpriteDicing
                     {
                         var y = unitY * unitSize;
                         var pixelsRect = new Rect(x, y, unitSize, unitSize);
-                        var paddedRect = pixelsRect.Crop(padding);
                         var colors = sourceTexture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
                         // Skip transparent units (no need to render them).
                         if (colors.All(color => color.a == 0)) continue;
+                        var paddedRect = pixelsRect.Crop(padding);
                         var paddedColors = sourceTexture.GetPixels(paddedRect);
                         var quadVerts = pixelsRect.Scale(1f / ppu);
                         var dicedUnit = new DicedUnit { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
