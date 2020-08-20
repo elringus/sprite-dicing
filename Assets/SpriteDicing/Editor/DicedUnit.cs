@@ -3,7 +3,7 @@
 namespace SpriteDicing
 {
     /// <summary>
-    /// Represents a single piece diced off a sprite texture.
+    /// Represents a single piece diced of a sprite texture.
     /// </summary>
     public class DicedUnit
     {

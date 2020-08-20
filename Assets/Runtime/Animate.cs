@@ -1,8 +1,8 @@
-﻿using SpriteDicing;
+using SpriteDicing;
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(DicedSpriteRenderer))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class Animate : MonoBehaviour
 {
     public DicedSpriteAtlas Atlas;
@@ -10,13 +10,13 @@ public class Animate : MonoBehaviour
 
     private IEnumerator Start ()
     {
-        var renderer = GetComponent<DicedSpriteRenderer>();
+        var renderer = GetComponent<SpriteRenderer>();
         var waitForSeconds = new WaitForSeconds(Delay);
         var sprites = Atlas.GetAllSprites();
 
         foreach (var sprite in sprites)
         {
-            renderer.DicedSprite = sprite;
+            renderer.sprite = sprite;
             yield return waitForSeconds;
         }
     }
