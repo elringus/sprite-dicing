@@ -295,7 +295,7 @@ namespace SpriteDicing
                 .ToDictionary(nameToHashToUnits => nameToHashToUnits.Key, nameToHashToUnits => nameToHashToUnits.Value);
 
             // Pack units with distinct (inside atlas group) colors to the atlas textures.
-            // Insure sprites integrity (units belonging to one sprite should be in a common atlas) and atlas size limit (distinct units per atlas count).
+            // Ensure sprites integrity (units belonging to one sprite should be in a common atlas) and atlas size limit (distinct units per atlas count).
             while (unitsToPackMap.Count > 0)
             {
                 atlasCount++;
