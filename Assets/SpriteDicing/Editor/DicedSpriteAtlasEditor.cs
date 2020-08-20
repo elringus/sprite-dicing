@@ -475,7 +475,8 @@ namespace SpriteDicing
             // Public sprite ctor won't allow using a rect that is larger than the texture.
             // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
             var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
-                .Invoke(null, new object[] { atlasTexture, spriteRect, pivot, ppu, (uint)0, SpriteMeshType.FullRect, Vector4.zero, false }) as Sprite;
+                // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
+                .Invoke(null, new object[] { atlasTexture, spriteRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
             sprite.name = name;
             sprite.SetVertexCount(vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
