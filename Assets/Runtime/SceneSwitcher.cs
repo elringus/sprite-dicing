@@ -1,6 +1,6 @@
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using SpriteDicing;
 
 public class SceneSwitcher : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class SceneSwitcher : MonoBehaviour
         for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
         {
             var yPos = Screen.height - (buttonHeight + (buttonHeight * i));
-            var scene = SceneUtility.GetScenePathByBuildIndex(i).GetAfter("/").GetBefore(".");
+            var scene = Path.GetFileNameWithoutExtension(SceneUtility.GetScenePathByBuildIndex(i));
             if (GUI.Button(new Rect(0, yPos, buttonWidth, buttonHeight), scene)) SceneManager.LoadScene(i);
         }
     }
