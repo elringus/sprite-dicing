@@ -16,6 +16,21 @@ namespace SpriteDicing
     {
         protected DicedSpriteAtlas TargetAtlas => target as DicedSpriteAtlas;
 
+        private static readonly GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
+        private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
+        private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
+        private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
+        private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of the generated atlas texture.");
+        private static readonly GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
+        private static readonly GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
+        private static readonly GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
+        private static readonly GUIContent paddingContent = new GUIContent("Padding", "The pixel gap between adjacent diced units inside atlas. Increase to prevent texture bleeding artefacts when scaling or using mipmaps.");
+        private static readonly GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
+        private static readonly GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
+        private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
+        private static readonly int[] diceUnitSizeValues = new[] { 8, 16, 32, 64, 128, 256 };
+        private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+
         private SerializedProperty texturesProperty;
         private SerializedProperty spritesProperty;
         private SerializedProperty defaultPivotProperty;
@@ -30,23 +45,7 @@ namespace SpriteDicing
         private SerializedProperty includeSubfoldersProperty;
         private SerializedProperty prependSubfolderNamesProperty;
         private SerializedProperty generatedSpritesFolderGuidProperty;
-
-        private static readonly int[] diceUnitSizeValues = new[] { 8, 16, 32, 64, 128, 256 };
-        private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
-
         private GUIContent dataSizeValueContent;
-        private static readonly GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
-        private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
-        private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
-        private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
-        private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of the generated atlas texture.");
-        private static readonly GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
-        private static readonly GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
-        private static readonly GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
-        private static readonly GUIContent paddingContent = new GUIContent("Padding", "The pixel gap between adjacent diced units inside atlas. Increase to prevent texture bleeding artefacts when scaling or using mipmaps.");
-        private static readonly GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
-        private static readonly GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
-        private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
 
         private void OnEnable ()
         {
@@ -183,25 +182,43 @@ namespace SpriteDicing
         #region Atlas generation
         private void BuildAtlas ()
         {
+            var atlasAssetPath = AssetDatabase.GetAssetPath(target);
+            var unitSize = diceUnitSizeProperty.intValue;
+            var padding = paddingProperty.intValue;
+            var ppu = pixelsPerUnitProperty.floatValue;
+            var forceSquare = forceSquareProperty.boolValue;
+            var atlasSizeLimit = atlasSizeLimitProperty.intValue;
+            var includeSubfolder = includeSubfoldersProperty.boolValue;
+            var prependSubfolderNames = prependSubfolderNamesProperty.boolValue;
+            var inputFolder = inputFolderProperty.objectReferenceValue;
+            var keepOriginalPivot = keepOriginalPivotProperty.boolValue;
+            var defaultPivot = defaultPivotProperty.vector2Value;
+            var decoupleSpriteData = decoupleSpriteDataProperty.boolValue;
+
             try
             {
                 DisplayProgressBar("Loading source textures...", .0f);
-                var inputFolderHelper = new FolderAssetHelper(inputFolderProperty.objectReferenceValue);
-                var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfoldersProperty.boolValue, prependSubfolderNamesProperty.boolValue);
-                var dicedUnits = DiceSourceTextures(textureAssets);
-                if (!CreateAtlasTextures(dicedUnits)) { EditorUtility.ClearProgressBar(); return; }
-                CreateSprites(dicedUnits);
+                var inputFolderHelper = new FolderAssetHelper(inputFolder);
+                var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolder, prependSubfolderNames);
+                var dicedUnits = DiceSourceTextures(textureAssets, unitSize, padding, ppu);
+                if (!CreateAtlasTextures(dicedUnits, unitSize, padding, forceSquare, atlasSizeLimit, texturesProperty, atlasAssetPath))
+                {
+                    EditorUtility.ClearProgressBar();
+                    return;
+                }
+                DisplayProgressBar("Generating sprite assets...", 1f);
+                var sprites = dicedUnits.Select(nameToUnits => CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value, ppu, keepOriginalPivot, defaultPivot)).ToList();
+                SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
                 dataSizeValueContent = GetDataSizeValueContent();
                 AssetDatabase.SaveAssets();
             }
             finally { EditorUtility.ClearProgressBar(); }
         }
 
-        private Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets)
+        private static Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets, int unitSize, int padding, float ppu)
         {
             // Texture name -> units diced off the texture.
             var nameToUnitsMap = new Dictionary<string, List<DicedUnit>>();
-            var unitSize = diceUnitSizeProperty.intValue;
 
             foreach (var textureAsset in textureAssets)
             {
@@ -235,12 +252,12 @@ namespace SpriteDicing
                     {
                         var y = unitY * unitSize;
                         var pixelsRect = new Rect(x, y, unitSize, unitSize);
-                        var paddedRect = pixelsRect.Crop(paddingProperty.intValue);
+                        var paddedRect = pixelsRect.Crop(padding);
                         var colors = sourceTexture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
                         // Skip transparent units (no need to render them).
                         if (colors.All(color => color.a == 0)) continue;
                         var paddedColors = sourceTexture.GetPixels(paddedRect);
-                        var quadVerts = pixelsRect.Scale(1f / pixelsPerUnitProperty.floatValue);
+                        var quadVerts = pixelsRect.Scale(1f / ppu);
                         var dicedUnit = new DicedUnit { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
                         nameToUnits.Value.Add(dicedUnit);
                     }
@@ -252,9 +269,12 @@ namespace SpriteDicing
             return nameToUnitsMap;
         }
 
-        private bool CreateAtlasTextures (Dictionary<string, List<DicedUnit>> dicedUnits)
+        private static bool CreateAtlasTextures (Dictionary<string, List<DicedUnit>> dicedUnits, int unitSize, int padding,
+            bool forceSquare, int atlasSizeLimit, SerializedProperty texturesProperty, string atlasAssetPath)
         {
             DisplayProgressBar("Processing diced textures...", .5f);
+
+            var atlasName = Path.GetFileNameWithoutExtension(atlasAssetPath);
 
             // Delete any previously generated atlas textures.
             for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
@@ -266,11 +286,7 @@ namespace SpriteDicing
             texturesProperty.arraySize = 0;
 
             var atlasCount = 0;
-            var unitSize = diceUnitSizeProperty.intValue;
-            var paddingSize = paddingProperty.intValue;
-            var paddedUnitSize = unitSize + paddingSize * 2;
-            var forceSquare = forceSquareProperty.boolValue;
-            var atlasSizeLimit = atlasSizeLimitProperty.intValue;
+            var paddedUnitSize = unitSize + padding * 2;
             var unitsPerAtlasLimit = Mathf.Pow(atlasSizeLimit / paddedUnitSize, 2);
 
             // Group name->units to name->hash->units map.
@@ -284,7 +300,7 @@ namespace SpriteDicing
             {
                 atlasCount++;
 
-                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, name: $"{target.name} {atlasCount:000}");
+                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, name: $"{atlasName} {atlasCount:000}");
                 var hashToUV = new Dictionary<int, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
                 var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
                 var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
@@ -362,7 +378,7 @@ namespace SpriteDicing
                         var colorsToPack = hashToUnits.Value.First().PaddedColors;
                         atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
                         // Evaluate and assign UVs of the unit to the other units in the group.
-                        var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-paddingSize).Scale(1f / atlasSizeLimit);
+                        var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-padding).Scale(1f / atlasSizeLimit);
                         hashToUnits.Value.ForEach(unit => unit.QuadUVs = unitUVRect);
                         hashToUV.Add(hashToUnits.Key, unitUVRect);
                     }
@@ -390,7 +406,7 @@ namespace SpriteDicing
                 // Save atlas texture.
                 atlasTexture.alphaIsTransparency = true;
                 atlasTexture.Apply();
-                var savedTexture = atlasTexture.SaveAsPng(AssetDatabase.GetAssetPath(target));
+                var savedTexture = atlasTexture.SaveAsPng(atlasAssetPath);
                 texturesProperty.arraySize = Mathf.Max(texturesProperty.arraySize, atlasCount);
                 texturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
                 packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
@@ -399,66 +415,7 @@ namespace SpriteDicing
             return true;
         }
 
-        private void CreateSprites (Dictionary<string, List<DicedUnit>> dicedUnits)
-        {
-            DisplayProgressBar("Generating sprite assets...", 1f);
-
-            // Generate sprites using diced units.
-            var newSprites = dicedUnits.Select(nameToUnits =>
-                CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value)).ToList();
-
-            // Save generated sprites.
-            if (!decoupleSpriteDataProperty.boolValue)
-            {
-                // Delete generated sprites folder (in case it was previously created).
-                if (!string.IsNullOrWhiteSpace(generatedSpritesFolderGuidProperty.stringValue))
-                {
-                    var folderPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuidProperty.stringValue);
-                    if (AssetDatabase.IsValidFolder(folderPath))
-                        AssetDatabase.DeleteAsset(folderPath);
-                }
-
-                // Update rebuilded sprites to preserve references and delete stale ones.
-                var spritesToAdd = new List<Sprite>(newSprites);
-                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                {
-                    var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
-                    if (!oldSprite) continue;
-                    var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
-                    if (newSprite)
-                    {
-                        EditorUtility.CopySerialized(newSprite, oldSprite);
-                        spritesToAdd.Remove(newSprite);
-                    }
-                    else DestroyImmediate(oldSprite, true);
-                }
-
-                foreach (var spriteToAdd in spritesToAdd)
-                    AssetDatabase.AddObjectToAsset(spriteToAdd, target);
-
-                AssetDatabase.Refresh();
-                AssetDatabase.SaveAssets();
-
-                spritesProperty.SetListValues(spritesToAdd, false);
-            }
-            else
-            {
-                // Delete sprites stored in atlas asset (in case they were previously added).
-                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                    DestroyImmediate(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue, true);
-                AssetDatabase.Refresh();
-                AssetDatabase.SaveAssets();
-
-                var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
-                var dicedSpritesFolder = new FolderAssetHelper(folderPath);
-                var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(newSprites);
-
-                generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
-                spritesProperty.SetListValues(savedDicedSprites);
-            }
-        }
-
-        private Sprite CreateSprite (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits)
+        private static Sprite CreateSprite (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, float ppu, bool keepOriginalPivot, Vector2 defaultPivot)
         {
             var vertices = new List<Vector2>();
             var uvs = new List<Vector2>();
@@ -467,9 +424,8 @@ namespace SpriteDicing
             foreach (var dicedUnit in dicedUnits)
                 AddDicedUnit(dicedUnit);
 
-            var ppu = pixelsPerUnitProperty.floatValue;
             var originalPivot = TrimVertices();
-            var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
+            var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
             ApplyPivotChange(pivot);
             var renderRect = EvaluateSpriteRect().Scale(ppu);
 
@@ -558,6 +514,59 @@ namespace SpriteDicing
                     vertices[i] -= deltaPos;
             }
             #endregion
+        }
+
+        private static void SaveGeneratedSprites (List<Sprite> sprites, bool decoupleSpriteData,
+            SerializedProperty generatedSpritesFolderGuidProperty, SerializedProperty spritesProperty, UnityEngine.Object target)
+        {
+            if (!decoupleSpriteData)
+            {
+                // Delete generated sprites folder (in case it was previously created).
+                if (!string.IsNullOrWhiteSpace(generatedSpritesFolderGuidProperty.stringValue))
+                {
+                    var folderPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuidProperty.stringValue);
+                    if (AssetDatabase.IsValidFolder(folderPath))
+                        AssetDatabase.DeleteAsset(folderPath);
+                }
+
+                // Update rebuilded sprites to preserve references and delete stale ones.
+                var spritesToAdd = new List<Sprite>(sprites);
+                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+                {
+                    var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+                    if (!oldSprite) continue;
+                    var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
+                    if (newSprite)
+                    {
+                        EditorUtility.CopySerialized(newSprite, oldSprite);
+                        spritesToAdd.Remove(newSprite);
+                    }
+                    else DestroyImmediate(oldSprite, true);
+                }
+
+                foreach (var spriteToAdd in spritesToAdd)
+                    AssetDatabase.AddObjectToAsset(spriteToAdd, target);
+
+                AssetDatabase.Refresh();
+                AssetDatabase.SaveAssets();
+
+                spritesProperty.SetListValues(spritesToAdd, false);
+            }
+            else
+            {
+                // Delete sprites stored in atlas asset (in case they were previously added).
+                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+                    DestroyImmediate(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue, true);
+                AssetDatabase.Refresh();
+                AssetDatabase.SaveAssets();
+
+                var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
+                var dicedSpritesFolder = new FolderAssetHelper(folderPath);
+                var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(sprites);
+
+                generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
+                spritesProperty.SetListValues(savedDicedSprites);
+            }
         }
 
         private static void DisplayProgressBar (string activity, float progress)
