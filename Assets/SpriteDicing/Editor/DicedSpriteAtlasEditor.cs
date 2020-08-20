@@ -78,8 +78,7 @@ namespace SpriteDicing
             PivotGUI();
             SizeGUI();
             pixelsPerUnitProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnitProperty.floatValue));
-            EditorGUILayout.PropertyField(diceUnitSizeProperty, diceUnitSizeContent);
-            EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues);
+            EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
             paddingProperty.intValue = EditorGUILayout.IntSlider(paddingContent, paddingProperty.intValue, 2, diceUnitSizeProperty.intValue / 2).ToNearestEven();
             InputFolderGUI();
             serializedObject.ApplyModifiedProperties();
