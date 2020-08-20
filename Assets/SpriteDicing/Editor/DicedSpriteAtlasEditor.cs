@@ -468,15 +468,16 @@ namespace SpriteDicing
                 AddDicedUnit(dicedUnit);
 
             var ppu = pixelsPerUnitProperty.floatValue;
-            var spriteRect = EvaluateSpriteRect().Scale(ppu);
-            var originalPivot = TrimVertices(spriteRect);
+            var originalPivot = TrimVertices();
             var pivot = keepOriginalPivotProperty.boolValue ? originalPivot : defaultPivotProperty.vector2Value;
+            ApplyPivotChange(pivot);
+            var renderRect = EvaluateSpriteRect().Scale(ppu);
 
-            // Public sprite ctor won't allow using a rect that is larger than the texture.
+            // Public sprite ctor won't allow using a rect that is larger than the texture:
             // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
             var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
                 // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
-                .Invoke(null, new object[] { atlasTexture, spriteRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
+                .Invoke(null, new object[] { atlasTexture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
             sprite.name = name;
             sprite.SetVertexCount(vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
@@ -516,8 +517,9 @@ namespace SpriteDicing
             }
 
             // Reposition the vertices so that they start at the local origin (0, 0).
-            Vector2 TrimVertices (Rect rect)
+            Vector2 TrimVertices ()
             {
+                var rect = EvaluateSpriteRect();
                 if (rect.min.x > 0 || rect.min.y > 0)
                     for (int i = 0; i < vertices.Count; i++)
                         vertices[i] -= rect.min;
@@ -538,6 +540,23 @@ namespace SpriteDicing
                 return new Rect(minVertPos, spriteSize);
             }
 
+            // Corrects geometry data to to match current pivot value.
+            void ApplyPivotChange (Vector2 newPivot)
+            {
+                var spriteRect = EvaluateSpriteRect();
+
+                var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
+
+                var curDeltaX = spriteRect.size.x * curPivot.x;
+                var curDeltaY = spriteRect.size.y * curPivot.y;
+                var newDeltaX = spriteRect.size.x * newPivot.x;
+                var newDeltaY = spriteRect.size.y * newPivot.y;
+
+                var deltaPos = new Vector2(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
+
+                for (int i = 0; i < vertices.Count; i++)
+                    vertices[i] -= deltaPos;
+            }
             #endregion
         }
 
