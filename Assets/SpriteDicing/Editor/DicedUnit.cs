@@ -20,17 +20,13 @@ namespace SpriteDicing
         /// </summary>
         public Rect QuadUVs { get; set; }
         /// <summary>
-        /// Colors of the diced unit (equivalent to the unit's texture).
-        /// </summary>
-        public Color[] Colors { get; set; }
-        /// <summary>
-        /// Copy of the Colors, plus colors from the padding rect.
-        /// Will be written to the padded areas of the generated atlas to prevent texture bleeding.
+        /// Colors of the diced unit (equivalent to the unit's texture), plus colors from the padding rect.
+        /// Padding is required to prevent texture bleeding.
         /// </summary>
         public Color[] PaddedColors { get; set; }
         /// <summary>
-        /// Unique hash based on the Colors array.
+        /// Unique hash based on the colors of the diced unit.
         /// </summary>
-        public int ColorsHashCode => Colors.GetArrayHashCode();
+        public int ColorsHashCode { get; set; }
     }
 }

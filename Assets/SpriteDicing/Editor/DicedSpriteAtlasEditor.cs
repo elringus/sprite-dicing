@@ -258,7 +258,7 @@ namespace SpriteDicing
                         var paddedRect = pixelsRect.Crop(padding);
                         var paddedColors = sourceTexture.GetPixels(paddedRect);
                         var quadVerts = pixelsRect.Scale(1f / ppu);
-                        var dicedUnit = new DicedUnit { QuadVerts = quadVerts, Colors = colors, PaddedColors = paddedColors };
+                        var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ColorsHashCode = colors.GetArrayHashCode(), PaddedColors = paddedColors };
                         nameToUnits.Value.Add(dicedUnit);
                     }
                 }
