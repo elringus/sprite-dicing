@@ -1,4 +1,4 @@
-This project is a part of **Naninovel** — visual novel engine extension for Unity. [Check it out on the Asset Store!](https://u3d.as/1pg9)
+This plugin is used in **Naninovel** — visual novel engine extension for Unity. [Check it out on the Asset Store!](https://u3d.as/1pg9)
 
 ## Installation
 
