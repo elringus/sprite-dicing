@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace SpriteDicing
 {
-    public struct FolderAsset<T>
+    public readonly struct FolderAsset<T>
     {
         public readonly string Name, Path;
         public readonly T Object;
-        public AssetImporter Importer { get { return AssetImporter.GetAtPath(Path); } }
+        public AssetImporter Importer => AssetImporter.GetAtPath(Path);
 
         public FolderAsset (string name, string path, T @object)
         {
@@ -21,13 +21,12 @@ namespace SpriteDicing
 
     /// <summary>
     /// Provides utils to work with folder assets.
-    /// Should only be used in editor code.
     /// </summary>
     public class FolderAssetHelper
     {
         public Object FolderObject { get; private set; }
-        public string Path { get { return AssetDatabase.GetAssetPath(FolderObject); } }
-        public string FullPath { get { return Application.dataPath.GetBefore("Assets") + Path; } }
+        public string Path => AssetDatabase.GetAssetPath(FolderObject);
+        public string FullPath => Application.dataPath.GetBefore("Assets") + Path;
 
         public FolderAssetHelper (Object folderObject)
         {

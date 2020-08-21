@@ -6,15 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/BatchingTest.unity
+    path: Assets/Scenes/Batching.unity
     guid: 3323678d5a0435d4aa47c38a533f9468
   - enabled: 1
-    path: Assets/Scenes/GetDicedSpriteTest.unity
+    path: Assets/Scenes/GetSprite.unity
     guid: 61a411f951c6e0f4387291871718a5c9
   - enabled: 1
-    path: Assets/Scenes/FlatColorTest.unity
+    path: Assets/Scenes/FlatColor.unity
     guid: 653a98328ee88464fafa6d5d887bfe27
   - enabled: 1
-    path: Assets/Scenes/AnimationTest.unity
+    path: Assets/Scenes/Animation.unity
     guid: c70b52107d16b4c4cb6486485c2317f2
   m_configObjects: {}
