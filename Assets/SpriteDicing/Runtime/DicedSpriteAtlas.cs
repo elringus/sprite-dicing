@@ -30,6 +30,8 @@ namespace SpriteDicing
         [SerializeField] private float pixelsPerUnit = 100f;
         [SerializeField] private int diceUnitSize = 64;
         [SerializeField] private int padding = 2;
+        [Range(0f, .5f)]
+        [SerializeField] private float uvInset = 0f;
         [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
         [SerializeField] private bool keepOriginalPivot;
         [SerializeField] private bool decoupleSpriteData;

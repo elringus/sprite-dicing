@@ -25,8 +25,8 @@ namespace SpriteDicing
         /// </summary>
         public Color[] PaddedColors { get; set; }
         /// <summary>
-        /// Unique hash based on the colors of the diced unit.
+        /// Unique hash based on the texture of the diced unit.
         /// </summary>
-        public int ColorsHashCode { get; set; }
+        public Hash128 ContentHash { get; set; }
     }
 }

@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Batching.unity
     guid: 3323678d5a0435d4aa47c38a533f9468
   - enabled: 1
-    path: Assets/Scenes/GetDicedSprite.unity
+    path: Assets/Scenes/GetSprite.unity
     guid: 61a411f951c6e0f4387291871718a5c9
   - enabled: 1
     path: Assets/Scenes/FlatColor.unity
