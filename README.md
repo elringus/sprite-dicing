@@ -16,7 +16,7 @@ This technique allows to significantly reduce build size, in cases when multiple
 
 ![](https://i.gyazo.com/af08d141e7a08b6a8e2ef60c07332bbf.png)
 
-These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique chunks, having the size of just **2.4MB**. We can now discard the original five textures and use the atlas to render the original sprites, effectively compressing source textures data by **86.3%**:
+These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique chunks, having the size of just **2.4MB**. We can now discard the original five textures and use the atlas to render the original sprites, effectively compressing source textures data by **86.3%**.
 
 ## How to use
 
