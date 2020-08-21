@@ -6,6 +6,8 @@ Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package vi
 
 ![](https://i.gyazo.com/b54e9daa9a483d9bf7f74f0e94b2d38a.gif)
 
+Minimum supported Unity version: 2019.3
+
 ## Description
 
 Sprite Dicing is an editor extension for [Unity game engine](https://unity3d.com/) which allows to split up a set of large sprite textures into small chunks, discard identical ones, bake them into atlas textures and then seamlessly reconstruct the original sprites at runtime for render. 
