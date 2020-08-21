@@ -20,7 +20,7 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 ## How to use
 
-1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atals` menu command, select it;
+1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atlas` menu command, select it;
 2. Specify `Input Folder` — project directory, containing the source textures to process. You can simply drag-drop a folder from the project hierarchy window into the field;
 3. Press `Build Atlas` button and wait for the generation procedure to finish;
 4. Generated sprites will appear inside the atlas asset; select any of them and drop to the scene.
