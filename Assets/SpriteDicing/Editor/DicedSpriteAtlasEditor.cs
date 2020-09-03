@@ -215,6 +215,8 @@ namespace SpriteDicing
                 var sprites = dicedUnits.Select(nameToUnits => CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value, ppu, keepOriginalPivot, defaultPivot)).ToList();
                 SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
                 dataSizeValueContent = GetDataSizeValueContent();
+
+                serializedObject.ApplyModifiedProperties();
                 AssetDatabase.SaveAssets();
             }
             finally { EditorUtility.ClearProgressBar(); }
