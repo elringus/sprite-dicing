@@ -1,43 +1,44 @@
-﻿// WARNING: Don't forget to keep compatibility with .NET 3.5 and Unity 2018.1.
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace UnityCommon
 {
-    [InitializeOnLoad]
     public class PackageExporter : EditorWindow
     {
         public interface IProcessor
         {
-            void OnPackagePreProcess ();
-            void OnPackagePostProcess ();
+            Task OnPackagePreProcessAsync ();
+            Task OnPackagePostProcessAsync ();
         }
 
-        private static string PackageName { get { return PlayerPrefs.GetString(prefsPrefix + "PackageName"); } set { PlayerPrefs.SetString(prefsPrefix + "PackageName", value); } }
-        private static string Copyright { get { return PlayerPrefs.GetString(prefsPrefix + "Copyright"); } set { PlayerPrefs.SetString(prefsPrefix + "Copyright", value); } }
-        private static string LicenseFilePath { get { return PlayerPrefs.GetString(prefsPrefix + "LicenseFilePath"); } set { PlayerPrefs.SetString(prefsPrefix + "LicenseFilePath", value); } }
-        private static string LicenseAssetPath { get { return AssetsPath + "/" + defaultLicenseFileName + ".md"; } }
-        private static string AssetsPath { get { return "Assets/" + PackageName; } }
-        private static string OutputPath { get { return PlayerPrefs.GetString(prefsPrefix + "OutputPath"); } set { PlayerPrefs.SetString(prefsPrefix + "OutputPath", value); } }
-        private static string OutputFileName { get { return PackageName; } }
-        private static string IgnoredAssetGUIds { get { return PlayerPrefs.GetString(prefsPrefix + "IgnoredAssetGUIds"); } set { PlayerPrefs.SetString(prefsPrefix + "IgnoredAssetGUIds", value); } }
-        private static bool IsAnyPathsIgnored { get { return !string.IsNullOrEmpty(IgnoredAssetGUIds); } }
-        private static bool IsReadyToExport { get { return !string.IsNullOrEmpty(OutputPath) && !string.IsNullOrEmpty(OutputFileName); } }
-        private static bool ExportAsUnityPackage { get { return PlayerPrefs.GetInt(prefsPrefix + "ExportAsUnityPackage", 1) == 1; } set { PlayerPrefs.SetInt(prefsPrefix + "ExportAsUnityPackage", value ? 1 : 0); } }
-        private static bool PublishToGit { get { return PlayerPrefs.GetInt(prefsPrefix + "PublishToGit", 0) == 1; } set { PlayerPrefs.SetInt(prefsPrefix + "PublishToGit", value ? 1 : 0); } }
-        private static string GitShellPath { get { return PlayerPrefs.GetString(prefsPrefix + "GitShellPath"); } set { PlayerPrefs.SetString(prefsPrefix + "GitShellPath", value); } }
-        private static string GitScriptPath { get { return PlayerPrefs.GetString(prefsPrefix + "GitScriptPath"); } set { PlayerPrefs.SetString(prefsPrefix + "GitScriptPath", value); } }
+        private static string PackageName { get => PlayerPrefs.GetString(prefsPrefix + "PackageName"); set => PlayerPrefs.SetString(prefsPrefix + "PackageName", value); }
+        private static string Copyright { get => PlayerPrefs.GetString(prefsPrefix + "Copyright"); set => PlayerPrefs.SetString(prefsPrefix + "Copyright", value); }
+        private static string LicenseFilePath { get => PlayerPrefs.GetString(prefsPrefix + "LicenseFilePath"); set => PlayerPrefs.SetString(prefsPrefix + "LicenseFilePath", value); }
+        private static string LicenseAssetPath => AssetsPath + "/" + defaultLicenseFileName + ".md";
+        private static string AssetsPath => "Assets/" + PackageName;
+        private static string OutputPath { get => PlayerPrefs.GetString(prefsPrefix + "OutputPath"); set => PlayerPrefs.SetString(prefsPrefix + "OutputPath", value); }
+        private static string OutputFileName => PackageName;
+        private static string IgnoredAssetGUIds { get => PlayerPrefs.GetString(prefsPrefix + "IgnoredAssetGUIds"); set => PlayerPrefs.SetString(prefsPrefix + "IgnoredAssetGUIds", value); }
+        private static bool IsAnyPathsIgnored => !string.IsNullOrEmpty(IgnoredAssetGUIds);
+        private static bool IsReadyToExport => !string.IsNullOrEmpty(OutputPath) && !string.IsNullOrEmpty(OutputFileName);
+        private static bool ExportAsUnityPackage { get => PlayerPrefs.GetInt(prefsPrefix + "ExportAsUnityPackage", 1) == 1; set => PlayerPrefs.SetInt(prefsPrefix + "ExportAsUnityPackage", value ? 1 : 0); }
+        private static bool PublishToGit { get => PlayerPrefs.GetInt(prefsPrefix + "PublishToGit", 0) == 1; set => PlayerPrefs.SetInt(prefsPrefix + "PublishToGit", value ? 1 : 0); }
+        private static string GitShellPath { get => PlayerPrefs.GetString(prefsPrefix + "GitShellPath"); set => PlayerPrefs.SetString(prefsPrefix + "GitShellPath", value); }
+        private static string GitScriptPath { get => PlayerPrefs.GetString(prefsPrefix + "GitScriptPath"); set => PlayerPrefs.SetString(prefsPrefix + "GitScriptPath", value); }
+        private static bool ApplyModificationsToGit { get => PlayerPrefs.GetInt(prefsPrefix + "ApplyModificationsToGit", 0) == 1; set => PlayerPrefs.SetInt(prefsPrefix + "ApplyModificationsToGit", value ? 1 : 0); }
+        private static string OverrideNamespace { get => PlayerPrefs.GetString(prefsPrefix + "OverrideNamespace"); set => PlayerPrefs.SetString(prefsPrefix + "OverrideNamespace", value); }
 
         private const string prefsPrefix = "PackageExporter.";
         private const string autoRefreshKey = "kAutoRefresh";
         private const string defaultLicenseFileName = "LICENSE";
+        private const char newLine = '\n';
 
         private static Dictionary<string, string> modifiedScripts = new Dictionary<string, string>();
         private static List<UnityEngine.Object> ignoredAssets = new List<UnityEngine.Object>();
@@ -65,7 +66,6 @@ namespace UnityCommon
             RenderGUI();
         }
 
-#if UNITY_2019_1_OR_NEWER
         [SettingsProvider]
         internal static SettingsProvider CreateProjectSettingsProvider ()
         {
@@ -74,23 +74,6 @@ namespace UnityCommon
             provider.guiHandler += id => RenderGUI();
             return provider;
         }
-#elif UNITY_2018_3_OR_NEWER
-        [SettingsProvider]
-        internal static SettingsProvider CreateProjectSettingsProvider ()
-        {
-            var provider = new SettingsProvider("Project/Package Exporter");
-            provider.activateHandler += (a, b) => Initialize();
-            provider.guiHandler += id => RenderGUI();
-            return provider;
-        }
-#else
-        [MenuItem("Edit/Project Settings/Package Exporter")]
-        private static void OpenSettingsWindow ()
-        {
-            var window = GetWindow<PackageExporter>();
-            window.Show();
-        }
-#endif
 
         private static void Initialize ()
         {
@@ -98,7 +81,7 @@ namespace UnityCommon
                 PackageName = Application.productName;
             if (string.IsNullOrEmpty(LicenseFilePath))
                 LicenseFilePath = Application.dataPath.Replace("Assets", "") + defaultLicenseFileName;
-            DeserealizeIgnoredAssets();
+            DeserializeIgnoredAssets();
         }
 
         [MenuItem("Assets/+ Export Package", priority = 20)]
@@ -115,6 +98,7 @@ namespace UnityCommon
             EditorGUILayout.Space();
             PackageName = EditorGUILayout.TextField("Package Name", PackageName);
             Copyright = EditorGUILayout.TextField("Copyright Notice", Copyright);
+            OverrideNamespace = EditorGUILayout.TextField("Override Namespace", OverrideNamespace);
             LicenseFilePath = EditorGUILayout.TextField("License File Path", LicenseFilePath);
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -138,6 +122,7 @@ namespace UnityCommon
                     if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(65)))
                         GitScriptPath = EditorUtility.OpenFilePanelWithFilters("Git Script Path", "", new[] { "Shell", "sh" });
                 }
+                ApplyModificationsToGit = EditorGUILayout.Toggle("Apply Modifications To Git", ApplyModificationsToGit);
             }
             EditorGUILayout.Space();
 
@@ -151,22 +136,22 @@ namespace UnityCommon
 
         private static void SerializeIgnoredAssets ()
         {
-            var ignoredAseetsGUIDs = new List<string>();
+            var ignoredAssetsGUIDs = new List<string>();
             foreach (var asset in ignoredAssets)
             {
                 if (!asset) continue;
                 var assetPath = AssetDatabase.GetAssetPath(asset);
                 var assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
-                ignoredAseetsGUIDs.Add(assetGUID);
+                ignoredAssetsGUIDs.Add(assetGUID);
             }
-            IgnoredAssetGUIds = string.Join(",", ignoredAseetsGUIDs.ToArray());
+            IgnoredAssetGUIds = string.Join(",", ignoredAssetsGUIDs.ToArray());
         }
 
-        private static void DeserealizeIgnoredAssets ()
+        private static void DeserializeIgnoredAssets ()
         {
             ignoredAssets.Clear();
-            var ignoredAseetsGUIDs = IgnoredAssetGUIds.Split(',');
-            foreach (var guid in ignoredAseetsGUIDs)
+            var ignoredAssetsGUIDs = IgnoredAssetGUIds.Split(',');
+            foreach (var guid in ignoredAssetsGUIDs)
             {
                 if (string.IsNullOrEmpty(guid)) continue;
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
@@ -181,7 +166,7 @@ namespace UnityCommon
             return IgnoredAssetGUIds.Contains(guid);
         }
 
-        private static void ExportPackageImpl ()
+        private static async void ExportPackageImpl ()
         {
             DisplayProgressBar("Preparing for export...", 0f);
 
@@ -197,11 +182,11 @@ namespace UnityCommon
             DisplayProgressBar("Pre-processing assets...", 0f);
             var processors = GetProcessors();
             foreach (var proc in processors)
-                proc.OnPackagePreProcess();
+                await proc.OnPackagePreProcessAsync();
 
-            var assetPaths = AssetDatabase.GetAllAssetPaths().Where(p => p.StartsWith(AssetsPath));
-            var ignoredPaths = assetPaths.Where(p => IsAssetIgnored(p));
-            var unignoredPaths = assetPaths.Where(p => !IsAssetIgnored(p));
+            var assetPaths = AssetDatabase.GetAllAssetPaths().Where(p => p.StartsWith(AssetsPath)).ToArray();
+            var ignoredPaths = assetPaths.Where(IsAssetIgnored).ToArray();
+            var unignoredPaths = assetPaths.Where(p => !IsAssetIgnored(p)).ToArray();
 
             // Temporary hide ignored assets.
             DisplayProgressBar("Hiding ignored assets...", .1f);
@@ -220,31 +205,43 @@ namespace UnityCommon
                 AssetDatabase.ImportAsset(LicenseAssetPath, ImportAssetOptions.ForceSynchronousImport);
             }
 
+            // Publish GitHub branch before modifications.
+            if (!ApplyModificationsToGit && PublishToGit)
+            {
+                using (var process = System.Diagnostics.Process.Start(GitShellPath, $"\"{GitScriptPath}\""))
+                {
+                    process?.WaitForExit();
+                }
+            }
+
             // Modify scripts (namespace and copyright).
             DisplayProgressBar("Modifying scripts...", .25f);
             modifiedScripts.Clear();
-            var needToModify = !string.IsNullOrEmpty(Copyright);
+            var needToModify = !string.IsNullOrEmpty(Copyright) || !string.IsNullOrEmpty(OverrideNamespace);
             if (needToModify)
             {
                 foreach (var path in unignoredPaths)
                 {
                     if (!path.EndsWith(".cs") && !path.EndsWith(".shader") && !path.EndsWith(".cginc")) continue;
+                    if (path.Contains("ThirdParty")) continue;
 
-                    var fullpath = Application.dataPath.Replace("Assets", string.Empty) + path;
-                    var originalScriptText = File.ReadAllText(fullpath, Encoding.UTF8);
+                    var fullPath = Application.dataPath.Replace("Assets", string.Empty) + path;
+                    var originalScriptText = File.ReadAllText(fullPath);
 
                     string scriptText = string.Empty;
-                    var isImportedScript = path.Contains("ThirdParty");
 
-                    var copyright = isImportedScript || string.IsNullOrEmpty(Copyright) ? string.Empty : "// " + Copyright;
-                    if (!string.IsNullOrEmpty(copyright) && !isImportedScript)
-                        scriptText += copyright + "\r\n\r\n";
+                    var copyright = string.IsNullOrEmpty(Copyright) ? string.Empty : "// " + Copyright;
+                    if (!string.IsNullOrEmpty(copyright))
+                        scriptText += copyright + newLine + newLine;
 
                     scriptText += originalScriptText;
 
-                    File.WriteAllText(fullpath, scriptText, Encoding.UTF8);
+                    if (!string.IsNullOrEmpty(OverrideNamespace))
+                        scriptText = scriptText.Replace($"namespace {PackageName}{newLine}{{", $"namespace {OverrideNamespace}{newLine}{{");
 
-                    modifiedScripts.Add(fullpath, originalScriptText);
+                    File.WriteAllText(fullPath, scriptText);
+
+                    modifiedScripts.Add(fullPath, originalScriptText);
                 }
             }
 
@@ -257,7 +254,7 @@ namespace UnityCommon
                 try
                 {
                     var sourcePath = Path.Combine(Application.dataPath, PackageName).Replace("\\", "/");
-                    var destPath = Path.Combine(OutputPath, OutputFileName).Replace("\\", "/"); ;
+                    var destPath = Path.Combine(OutputPath, OutputFileName).Replace("\\", "/");
                     var sourceDir = new DirectoryInfo(sourcePath);
 
                     var hiddenFolders = sourceDir.GetDirectories("*", SearchOption.AllDirectories)
@@ -278,12 +275,12 @@ namespace UnityCommon
                 catch (Exception e) { Debug.LogError(e.Message); }
             }
 
-            // Publish GitHub branch.
-            if (PublishToGit)
+            // Publish GitHub branch after modifications.
+            if (ApplyModificationsToGit && PublishToGit)
             {
-                using (var proccess = System.Diagnostics.Process.Start(GitShellPath, $"\"{GitScriptPath}\""))
+                using (var process = System.Diagnostics.Process.Start(GitShellPath, $"\"{GitScriptPath}\""))
                 {
-                    proccess.WaitForExit();
+                    process.WaitForExit();
                 }
             }
 
@@ -292,7 +289,7 @@ namespace UnityCommon
             if (needToModify)
             {
                 foreach (var modifiedScript in modifiedScripts)
-                    File.WriteAllText(modifiedScript.Key, modifiedScript.Value, Encoding.UTF8);
+                    File.WriteAllText(modifiedScript.Key, modifiedScript.Value);
             }
 
             // Remove previously added license asset.
@@ -309,7 +306,7 @@ namespace UnityCommon
 
             DisplayProgressBar("Post-processing assets...", 1f);
             foreach (var proc in processors)
-                proc.OnPackagePostProcess();
+                await proc.OnPackagePostProcessAsync();
 
             EditorPrefs.SetBool(autoRefreshKey, wasAutoRefreshEnabled);
             EditorSceneManager.RestoreSceneManagerSetup(sceneSetup);
@@ -319,15 +316,15 @@ namespace UnityCommon
 
         private static void DisplayProgressBar (string activity, float progress)
         {
-            EditorUtility.DisplayProgressBar(string.Format("Exporting {0}", PackageName), activity, progress);
+            EditorUtility.DisplayProgressBar($"Exporting {PackageName}", activity, progress);
         }
 
-        private static IEnumerable<IProcessor> GetProcessors ()
+        private static IReadOnlyCollection<IProcessor> GetProcessors ()
         {
             return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
                 .Where(t => typeof(IProcessor).IsAssignableFrom(t) && t.IsClass)
-                .Select(t => (IProcessor)Activator.CreateInstance(t));
+                .Select(t => (IProcessor)Activator.CreateInstance(t)).ToArray();
         }
     }
 }
