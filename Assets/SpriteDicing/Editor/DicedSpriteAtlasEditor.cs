@@ -29,7 +29,7 @@ namespace SpriteDicing
         private static readonly GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
         private static readonly GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
         private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
-        private static readonly int[] diceUnitSizeValues = new[] { 8, 16, 32, 64, 128, 256 };
+        private static readonly int[] diceUnitSizeValues = { 8, 16, 32, 64, 128, 256 };
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
 
         private SerializedProperty texturesProperty;
@@ -120,7 +120,7 @@ namespace SpriteDicing
             size += new FileInfo(atlasFullPath).Length / 1024;
 
             var isBinary = EditorSettings.serializationMode != SerializationMode.ForceText;
-            var label = string.Format("{0} KB {1}", size, isBinary ? string.Empty : "(uncompressed)");
+            var label = $"{size} KB {(isBinary ? string.Empty : "(uncompressed)")}";
             return new GUIContent(label);
         }
 
@@ -214,10 +214,10 @@ namespace SpriteDicing
                 DisplayProgressBar("Generating sprite assets...", 1f);
                 var sprites = dicedUnits.Select(nameToUnits => CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value, ppu, keepOriginalPivot, defaultPivot)).ToList();
                 SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
-                dataSizeValueContent = GetDataSizeValueContent();
 
                 serializedObject.ApplyModifiedProperties();
                 AssetDatabase.SaveAssets();
+                dataSizeValueContent = GetDataSizeValueContent();
             }
             finally { EditorUtility.ClearProgressBar(); }
         }
@@ -236,6 +236,7 @@ namespace SpriteDicing
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
                 var textureImporter = textureAsset.Importer as TextureImporter;
+                if (textureImporter is null) throw new Exception($"Failed to get texture importer for `{textureAsset.Name}`.");
                 if (!textureImporter.isReadable || textureImporter.crunchedCompression)
                 {
                     textureImporter.isReadable = true;
@@ -296,7 +297,7 @@ namespace SpriteDicing
 
             var atlasCount = 0;
             var paddedUnitSize = unitSize + padding * 2;
-            var unitsPerAtlasLimit = Mathf.Pow(atlasSizeLimit / paddedUnitSize, 2);
+            var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(atlasSizeLimit / (float)paddedUnitSize), 2));
 
             // Group name->units to name->hash->units map.
             var unitsToPackMap = dicedUnits.Select(nameToUnits => new KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
@@ -325,7 +326,7 @@ namespace SpriteDicing
                 }
 
                 var suitableUnits = findSuitableUnitsToPack();
-                if (suitableUnits.Key == null) // None of the source textures fit atlas limit. 
+                if (suitableUnits.Key == null) // None of the source textures fit atlas limit.
                 {
                     Debug.LogError("SpriteDicing: Unable to fit input textures to the atlas. Consider increasing atlas size limit.");
                     return false;
@@ -348,8 +349,8 @@ namespace SpriteDicing
 
                         int posX, posY; // Position of the new unit on the atlas texture.
                         // Find row positions that have enough room for more units until next power of two.
-                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2);
-                        if (suitableYToLastXEnumerable.Count() == 0) // When no suitable rows found.
+                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2).ToArray();
+                        if (suitableYToLastXEnumerable.Length == 0) // When no suitable rows found.
                         {
                             // Handle corner case when we just started.
                             if (yToLastXMap.Count == 0)
@@ -443,7 +444,8 @@ namespace SpriteDicing
             // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
             var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
                 // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
-                .Invoke(null, new object[] { atlasTexture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
+                ?.Invoke(null, new object[] { atlasTexture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
+            if (sprite is null) throw new Exception($"Failed to create `{name}` sprite.");
             sprite.name = name;
             sprite.SetVertexCount(vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
@@ -539,7 +541,7 @@ namespace SpriteDicing
                         AssetDatabase.DeleteAsset(folderPath);
                 }
 
-                // Update rebuilded sprites to preserve references and delete stale ones.
+                // Update rebuilt sprites to preserve references and delete stale ones.
                 var spritesToAdd = new List<Sprite>(sprites);
                 for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
                 {
