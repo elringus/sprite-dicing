@@ -23,7 +23,7 @@ namespace SpriteDicing
 
         #if UNITY_EDITOR
         // Editor-only data to track source sprite textures and store build configuration.
-        // Disabled warnings are about "unused" variables (used by the editor scripts via reflection).
+        // ReSharper disable NotAccessedField.Local (used by the editor scripts via reflection)
         #pragma warning disable 0169, 0414, 1635, IDE0052
         [SerializeField] private int atlasSizeLimit = 2048;
         [SerializeField] private bool forceSquare = false;
@@ -41,6 +41,7 @@ namespace SpriteDicing
         [HideInInspector]
         [SerializeField] private string generatedSpritesFolderGuid;
         #pragma warning restore 0169, 0414, 1635, IDE0052
+        // ReSharper restore NotAccessedField.Local
         #endif
 
         /// <summary>
