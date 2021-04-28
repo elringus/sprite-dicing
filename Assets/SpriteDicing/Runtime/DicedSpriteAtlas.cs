@@ -53,10 +53,10 @@ namespace SpriteDicing
         /// <summary>
         /// Retrieves all the generated sprites associated with the atlas.
         /// </summary>
-        public List<Sprite> GetAllSprites () => new List<Sprite>(sprites);
+        public IReadOnlyCollection<Sprite> GetAllSprites () => sprites;
         /// <summary>
         /// Retrieves all the generated textures associated with the atlas.
         /// </summary>
-        public List<Texture2D> GetAllTextures () => new List<Texture2D>(textures);
+        public IReadOnlyCollection<Texture2D> GetAllTextures () => textures;
     }
 }
