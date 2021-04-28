@@ -230,9 +230,10 @@ namespace SpriteDicing
             foreach (var textureAsset in textureAssets)
             {
                 var sourceTexture = textureAsset.Object;
-                var key = nameToUnitsMap.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid().ToString() : textureAsset.Name;
+                var key = nameToUnitsMap.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid() : textureAsset.Name;
                 var value = new List<DicedUnit>();
                 var nameToUnits = new KeyValuePair<string, List<DicedUnit>>(key, value);
+                var spritePivot = GetSpritePivot(sourceTexture);
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
                 var textureImporter = textureAsset.Importer as TextureImporter;
@@ -268,7 +269,7 @@ namespace SpriteDicing
                         var quadVerts = pixelsRect.Scale(1f / ppu);
                         // TODO: Find out how Unity builds that hash and replicate. Comparing each element in color arrays has issues with flat color textures and small dice units.
                         var hash = Utilities.CreateTexture(unitSize, colors).imageContentsHash;
-                        var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ContentHash = hash, PaddedColors = paddedColors };
+                        var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ContentHash = hash, PaddedColors = paddedColors, SpritePivot = spritePivot };
                         nameToUnits.Value.Add(dicedUnit);
                     }
                 }
@@ -301,7 +302,7 @@ namespace SpriteDicing
 
             // Group name->units to name->hash->units map.
             var unitsToPackMap = dicedUnits.Select(nameToUnits => new KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>>(nameToUnits.Key, nameToUnits.Value
-                .GroupBy(units => units.ContentHash).ToDictionary(hashToUnitsGroup => hashToUnitsGroup.Key, hashToUnitsGroup => hashToUnitsGroup.ToList())))
+                    .GroupBy(units => units.ContentHash).ToDictionary(hashToUnitsGroup => hashToUnitsGroup.Key, hashToUnitsGroup => hashToUnitsGroup.ToList())))
                 .ToDictionary(nameToHashToUnits => nameToHashToUnits.Key, nameToHashToUnits => nameToHashToUnits.Value);
 
             // Pack units with distinct (inside atlas group) colors to the atlas textures.
@@ -435,7 +436,7 @@ namespace SpriteDicing
             foreach (var dicedUnit in dicedUnits)
                 AddDicedUnit(dicedUnit);
 
-            var originalPivot = TrimVertices();
+            var originalPivot = TrimVertices(dicedUnits.First().SpritePivot);
             var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
             ApplyPivotChange(pivot);
             var renderRect = EvaluateSpriteRect().Scale(ppu);
@@ -455,7 +456,6 @@ namespace SpriteDicing
             return sprite;
 
             #region Local functions
-
             void AddDicedUnit (DicedUnit dicedUnit) => AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, dicedUnit.QuadUVs.min, dicedUnit.QuadUVs.max);
 
             void AddQuad (Vector2 posMin, Vector2 posMax, Vector2 uvMin, Vector2 uvMax)
@@ -485,16 +485,13 @@ namespace SpriteDicing
             }
 
             // Reposition the vertices so that they start at the local origin (0, 0).
-            Vector2 TrimVertices ()
+            Vector2 TrimVertices (Vector2 spritePivot)
             {
                 var rect = EvaluateSpriteRect();
                 if (rect.min.x > 0 || rect.min.y > 0)
                     for (int i = 0; i < vertices.Count; i++)
                         vertices[i] -= rect.min;
-
-                var pivotX = rect.min.x / rect.size.x;
-                var pivotY = rect.min.y / rect.size.y;
-                return new Vector2(-pivotX, -pivotY);
+                return (spritePivot / ppu - rect.min) / rect.size;
             }
 
             // Evaluate sprite rectangle using vertex data.
@@ -512,14 +509,11 @@ namespace SpriteDicing
             void ApplyPivotChange (Vector2 newPivot)
             {
                 var spriteRect = EvaluateSpriteRect();
-
                 var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
-
                 var curDeltaX = spriteRect.size.x * curPivot.x;
                 var curDeltaY = spriteRect.size.y * curPivot.y;
                 var newDeltaX = spriteRect.size.x * newPivot.x;
                 var newDeltaY = spriteRect.size.y * newPivot.y;
-
                 var deltaPos = new Vector2(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
 
                 for (int i = 0; i < vertices.Count; i++)
@@ -579,6 +573,15 @@ namespace SpriteDicing
                 generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
                 spritesProperty.SetListValues(savedDicedSprites);
             }
+        }
+
+        private static Vector2 GetSpritePivot (Texture2D texture)
+        {
+            var defaultPivot = new Vector2(-1, -1);
+            var assetPath = AssetDatabase.GetAssetPath(texture);
+            if (assetPath is null) return defaultPivot;
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            return sprite ? sprite.pivot : defaultPivot;
         }
 
         private static void DisplayProgressBar (string activity, float progress)
