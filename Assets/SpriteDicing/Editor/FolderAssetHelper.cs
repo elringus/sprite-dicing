@@ -24,7 +24,7 @@ namespace SpriteDicing
     /// </summary>
     public class FolderAssetHelper
     {
-        public Object FolderObject { get; private set; }
+        public Object FolderObject { get; }
         public string Path => AssetDatabase.GetAssetPath(FolderObject);
         public string FullPath => Application.dataPath.GetBefore("Assets") + Path;
 
@@ -33,7 +33,7 @@ namespace SpriteDicing
             FolderObject = folderObject;
             if (FolderObject == null || !AssetDatabase.IsValidFolder(Path))
             {
-                Debug.LogError(string.Format("Object '{0}' is not a folder.", FolderObject ? FolderObject.name : "null"));
+                Debug.LogError($"Object '{(FolderObject ? FolderObject.name : "null")}' is not a folder.");
                 return;
             }
         }

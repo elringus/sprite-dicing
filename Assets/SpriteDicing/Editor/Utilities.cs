@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace SpriteDicing
             toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
             EditorGUI.indentLevel = oldIndent;
             if (EditorGUI.EndChangeCheck())
-                property.boolValue = property.hasMultipleDifferentValues ? true : !property.boolValue;
+                property.boolValue = property.hasMultipleDifferentValues || !property.boolValue;
             EditorGUI.showMixedValue = false;
         }
 
@@ -44,6 +45,7 @@ namespace SpriteDicing
             var targetObject = serializedProperty.serializedObject.targetObject;
             var objectType = targetObject.GetType();
             var fieldInfo = objectType.GetField(serializedProperty.name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fieldInfo is null) throw new Exception();
             var list = (List<T>)fieldInfo.GetValue(targetObject);
             if (clearSourceList) list.Clear();
             list.AddRange(listValues);
@@ -62,12 +64,13 @@ namespace SpriteDicing
             path = $"{path.GetBeforeLast("/")}/{texture.name}.png";
             Debug.Assert(AssetDatabase.IsValidFolder(path.GetBefore("/")));
             var bytes = texture.EncodeToPNG();
-            using (var fileStream = System.IO.File.Create(path))
+            using (var fileStream = File.Create(path))
                 fileStream.Write(bytes, 0, bytes.Length);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             var textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (textureImporter is null) throw new Exception();
             textureImporter.textureType = textureType;
             textureImporter.alphaIsTransparency = alphaIsTransparency;
             textureImporter.wrapMode = wrapMode;
@@ -80,28 +83,6 @@ namespace SpriteDicing
                 UnityEngine.Object.DestroyImmediate(texture);
 
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-
-        /// <summary>
-        /// For 'source' rectangle inside 'target' rectangle, get the maximum scale factor 
-        /// that permits the 'source' rectangle to be scaled without stretching or squashing.
-        /// </summary>
-        /// <param name="targetSize">Size of the rectangle to be scaled to.</param>
-        /// <param name="sourceSize">Size of the rectangle to scale.</param>
-        /// <returns>Maximum scale factor preserving aspect ratio.</returns>
-        public static float MaxScaleKeepAspect (Vector2 targetSize, Vector2 sourceSize)
-        {
-            var targetAspect = targetSize.x / targetSize.y;
-            var sourceAspect = sourceSize.x / sourceSize.y;
-
-            if (targetAspect > sourceAspect)
-                return targetSize.y / sourceSize.y;
-            return targetSize.x / sourceSize.x;
-        }
-
-        public static int ToNearestEven (this int value, int upperLimit = int.MaxValue)
-        {
-            return (value % 2 == 0) ? value : Mathf.Min(value + 1, upperLimit);
         }
 
         /// <summary>
@@ -144,20 +125,6 @@ namespace SpriteDicing
             else return null;
         }
 
-        /// <summary>
-        /// Attempts to extract content after the specified match (on first occurence).
-        /// </summary>
-        public static string GetAfterFirst (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
-        {
-            if (content.Contains(matchString))
-            {
-                var startIndex = content.IndexOf(matchString, comp) + matchString.Length;
-                if (content.Length <= startIndex) return string.Empty;
-                return content.Substring(startIndex);
-            }
-            else return null;
-        }
-
         public static float ProgressOf<T> (this List<T> list, T currentItem)
         {
             return list.IndexOf(currentItem) / (float)list.Count;
@@ -179,14 +146,9 @@ namespace SpriteDicing
                 new Vector2(rect.size.x * scale.x, rect.size.y * scale.y));
         }
 
-        public static Rect Scale (this Rect rect, float scaleX, float scaleY)
-        {
-            return rect.Scale(new Vector2(scaleX, scaleY));
-        }
-
         public static Rect Crop (this Rect rect, float cropAmount)
         {
-            return new Rect(rect.position - Vector2.one * cropAmount, rect.size + Vector2.one * cropAmount * 2f);
+            return new Rect(rect.position - Vector2.one * cropAmount, rect.size + Vector2.one * (cropAmount * 2f));
         }
 
         /// <summary>
@@ -221,6 +183,11 @@ namespace SpriteDicing
             texture.SetPixels(pixelColors);
             texture.Apply();
             return texture;
+        }
+
+        public static int ToNearestEven (this int value, int upperLimit = int.MaxValue)
+        {
+            return (value % 2 == 0) ? value : Mathf.Min(value + 1, upperLimit);
         }
 
         /// <summary>
@@ -261,53 +228,5 @@ namespace SpriteDicing
             }
             return colors;
         }
-
-        public static Texture2D ToTexture2D (this RenderTexture renderTexture)
-        {
-            var texture2d = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
-            RenderTexture.active = renderTexture;
-            texture2d.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-            texture2d.Apply();
-            return texture2d;
-        }
-
-        public static int GetArrayHashCode<T> (this T[] array) => ArrayEqualityComparer<T>.GetHashCode(array);
-    }
-
-    /// <summary>
-    /// Allows comparing arrays using equality comparer of the array items.
-    /// Type of the array items should provide a valid comparer for this to work.
-    /// Implementation based on: https://stackoverflow.com/a/7244729/1202251
-    /// </summary>
-    /// <typeparam name="T">Type of the items contained in the array.</typeparam>
-    public sealed class ArrayEqualityComparer<T> : IEqualityComparer<T[]>
-    {
-        private static readonly EqualityComparer<T> ITEMS_COMPARER = EqualityComparer<T>.Default;
-
-        public static bool Equals (T[] first, T[] second)
-        {
-            if (first == second) return true;
-            if (first == null || second == null) return false;
-            if (first.Length != second.Length) return false;
-            for (int i = 0; i < first.Length; i++)
-                if (!ITEMS_COMPARER.Equals(first[i], second[i])) return false;
-            return true;
-        }
-
-        public static int GetHashCode (T[] array)
-        {
-            unchecked
-            {
-                if (array == null) return 0;
-                var hash = 17;
-                foreach (T item in array)
-                    hash = hash * 31 + ITEMS_COMPARER.GetHashCode(item);
-                return hash;
-            }
-        }
-
-        bool IEqualityComparer<T[]>.Equals (T[] first, T[] second) => Equals(first, second);
-
-        int IEqualityComparer<T[]>.GetHashCode (T[] array) => GetHashCode(array);
     }
 }
