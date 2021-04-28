@@ -14,8 +14,6 @@ namespace SpriteDicing
     [CustomEditor(typeof(DicedSpriteAtlas)), CanEditMultipleObjects]
     public class DicedSpriteAtlasEditor : Editor
     {
-        protected DicedSpriteAtlas TargetAtlas => target as DicedSpriteAtlas;
-
         private static readonly GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
         private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
         private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
@@ -31,6 +29,23 @@ namespace SpriteDicing
         private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
         private static readonly int[] diceUnitSizeValues = { 8, 16, 32, 64, 128, 256 };
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+
+        private DicedSpriteAtlas targetAtlas => target as DicedSpriteAtlas;
+        private int unitSize => diceUnitSizeProperty.intValue;
+        private int padding => paddingProperty.intValue;
+        private float uvInset => uvInsetProperty.floatValue;
+        private float ppu => pixelsPerUnitProperty.floatValue;
+        private bool forceSquare => forceSquareProperty.boolValue;
+        private int atlasSizeLimit => atlasSizeLimitProperty.intValue;
+        private UnityEngine.Object inputFolder => inputFolderProperty.objectReferenceValue;
+        private bool includeSubfolders => includeSubfoldersProperty.boolValue;
+        private bool prependSubfolderNames => prependSubfolderNamesProperty.boolValue;
+        private bool keepOriginalPivot => keepOriginalPivotProperty.boolValue;
+        private Vector2 defaultPivot => defaultPivotProperty.vector2Value;
+        private bool decoupleSpriteData => decoupleSpriteDataProperty.boolValue;
+
+        private readonly TextureFinder textureFinder = new TextureFinder();
+        private readonly TextureLoader textureLoader = new TextureLoader();
 
         private SerializedProperty texturesProperty;
         private SerializedProperty spritesProperty;
@@ -93,7 +108,7 @@ namespace SpriteDicing
 
         private GUIContent GetBuildButtonContent ()
         {
-            var name = TargetAtlas.SpritesCount > 0 ? "Rebuild Atlas" : "Build Atlas";
+            var name = targetAtlas.SpritesCount > 0 ? "Rebuild Atlas" : "Build Atlas";
             var tooltip = inputFolderProperty.objectReferenceValue ? "" : "Select input directory to build atlas.";
             return new GUIContent(name, tooltip);
         }
@@ -186,27 +201,14 @@ namespace SpriteDicing
         #region Atlas generation
         private void BuildAtlas ()
         {
-            var atlasAssetPath = AssetDatabase.GetAssetPath(target);
-            var unitSize = diceUnitSizeProperty.intValue;
-            var padding = paddingProperty.intValue;
-            var uvInset = uvInsetProperty.floatValue;
-            var ppu = pixelsPerUnitProperty.floatValue;
-            var forceSquare = forceSquareProperty.boolValue;
-            var atlasSizeLimit = atlasSizeLimitProperty.intValue;
-            var includeSubfolder = includeSubfoldersProperty.boolValue;
-            var prependSubfolderNames = prependSubfolderNamesProperty.boolValue;
-            var inputFolder = inputFolderProperty.objectReferenceValue;
-            var keepOriginalPivot = keepOriginalPivotProperty.boolValue;
-            var defaultPivot = defaultPivotProperty.vector2Value;
-            var decoupleSpriteData = decoupleSpriteDataProperty.boolValue;
-
             try
             {
-                DisplayProgressBar("Loading source textures...", .0f);
-                var inputFolderHelper = new FolderAssetHelper(inputFolder);
-                var textureAssets = inputFolderHelper.LoadContainedAssets<Texture2D>(includeSubfolder, prependSubfolderNames);
-                var dicedUnits = DiceSourceTextures(textureAssets, unitSize, padding, ppu);
-                if (!CreateAtlasTextures(dicedUnits, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, atlasAssetPath))
+                DisplayProgressBar("Collecting source textures...", .0f);
+                var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
+                var texturePaths = textureFinder.FindAt(inputFolderPath, includeSubfolders);
+                var sourceTextures = textureLoader.Load(texturePaths, prependSubfolderNames ? inputFolderPath : null);
+                var dicedUnits = DiceSourceTextures(sourceTextures, unitSize, padding, ppu);
+                if (!CreateAtlasTextures(dicedUnits, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target)))
                 {
                     EditorUtility.ClearProgressBar();
                     return;
@@ -222,38 +224,39 @@ namespace SpriteDicing
             finally { EditorUtility.ClearProgressBar(); }
         }
 
-        private static Dictionary<string, List<DicedUnit>> DiceSourceTextures (List<FolderAsset<Texture2D>> textureAssets, int unitSize, int padding, float ppu)
+        private static Dictionary<string, List<DicedUnit>> DiceSourceTextures (IReadOnlyList<SourceTexture> textures, int unitSize, int padding, float ppu)
         {
             // Texture name -> units diced off the texture.
             var nameToUnitsMap = new Dictionary<string, List<DicedUnit>>();
 
-            foreach (var textureAsset in textureAssets)
+            for (int i = 0; i < textures.Count; i++)
             {
-                var sourceTexture = textureAsset.Object;
-                var key = nameToUnitsMap.ContainsKey(textureAsset.Name) ? textureAsset.Name + Guid.NewGuid() : textureAsset.Name;
+                var source = textures[i];
+                var texture = source.Texture;
+                var assetPath = AssetDatabase.GetAssetPath(source.Texture);
+                var key = nameToUnitsMap.ContainsKey(source.Name) ? source.Name + Guid.NewGuid() : source.Name;
                 var value = new List<DicedUnit>();
                 var nameToUnits = new KeyValuePair<string, List<DicedUnit>>(key, value);
-                var spritePivot = GetSpritePivot(sourceTexture);
+                var spritePivot = GetSpritePivot(source.Texture);
 
                 // Make sure texture is readable and not crunched (can't get pixels otherwise).
-                var textureImporter = textureAsset.Importer as TextureImporter;
-                if (textureImporter is null) throw new Exception($"Failed to get texture importer for `{textureAsset.Name}`.");
+                var textureImporter = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                if (textureImporter is null) throw new Exception($"Failed to get texture importer for `{assetPath}`.");
                 if (!textureImporter.isReadable || textureImporter.crunchedCompression)
                 {
                     textureImporter.isReadable = true;
                     textureImporter.crunchedCompression = false;
-                    AssetDatabase.ImportAsset(textureAsset.Path);
+                    AssetDatabase.ImportAsset(assetPath);
                 }
 
-                var unitCountX = Mathf.CeilToInt((float)sourceTexture.width / unitSize);
-                var unitCountY = Mathf.CeilToInt((float)sourceTexture.height / unitSize);
+                var unitCountX = Mathf.CeilToInt((float)texture.width / unitSize);
+                var unitCountY = Mathf.CeilToInt((float)texture.height / unitSize);
 
                 for (int unitX = 0; unitX < unitCountX; unitX++)
                 {
-                    var textureProgress = .5f * textureAssets.ProgressOf(textureAsset);
-                    var unitProgress = (.5f / textureAssets.Count) * ((float)unitX / unitCountX);
-                    var textureNumber = textureAssets.IndexOf(textureAsset) + 1;
-                    var message = $"Dicing texture '{textureAsset.Name}' ({textureNumber}/{textureAssets.Count})...";
+                    var textureProgress = .5f * i / textures.Count;
+                    var unitProgress = .5f / textures.Count * ((float)unitX / unitCountX);
+                    var message = $"Dicing texture '{source.Name}' ({i + 1}/{textures.Count})...";
                     DisplayProgressBar(message, textureProgress + unitProgress);
 
                     var x = unitX * unitSize;
@@ -261,11 +264,11 @@ namespace SpriteDicing
                     {
                         var y = unitY * unitSize;
                         var pixelsRect = new Rect(x, y, unitSize, unitSize);
-                        var colors = sourceTexture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
+                        var colors = texture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
                         // Skip transparent units (no need to render them).
                         if (colors.All(color => color.a == 0)) continue;
                         var paddedRect = pixelsRect.Crop(padding);
-                        var paddedColors = sourceTexture.GetPixels(paddedRect);
+                        var paddedColors = texture.GetPixels(paddedRect);
                         var quadVerts = pixelsRect.Scale(1f / ppu);
                         // TODO: Find out how Unity builds that hash and replicate. Comparing each element in color arrays has issues with flat color textures and small dice units.
                         var hash = Utilities.CreateTexture(unitSize, colors).imageContentsHash;
