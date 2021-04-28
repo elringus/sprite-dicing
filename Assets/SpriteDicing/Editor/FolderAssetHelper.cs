@@ -73,7 +73,7 @@ namespace SpriteDicing
         public List<FolderAsset<T>> LoadContainedAssets<T> (bool includeSubfolders = false, bool prependSubfolderNames = false) where T : Object
         {
             return new HashSet<string>(AssetDatabase.FindAssets("", new[] { Path }))
-                .Select(assetGuid => AssetDatabase.GUIDToAssetPath(assetGuid))
+                .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(assetPath => new FolderAsset<T>(
                     ExtractAssetName(assetPath, prependSubfolderNames), assetPath,
                     AssetDatabase.LoadAssetAtPath<Object>(assetPath) as T))
