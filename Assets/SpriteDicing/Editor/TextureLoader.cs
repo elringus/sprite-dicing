@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -7,27 +6,20 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for loading texture assets to slice.
+    /// Responsible for loading texture asset to slice.
     /// </summary>
     public class TextureLoader
     {
-        /// <param name="nameRoot">When provided, build names relative to the root replacing slashes with dots.</param>
-        public IReadOnlyList<SourceTexture> Load (IEnumerable<string> texturePaths, string nameRoot = null)
+        /// <param name="nameRoot">When provided, build name relative to the root replacing slashes with dots.</param>
+        public SourceTexture Load (string texturePath, string nameRoot = null)
         {
-            if (texturePaths is null) throw new ArgumentNullException(nameof(texturePaths));
+            if (string.IsNullOrEmpty(texturePath))
+                throw new ArgumentNullException(nameof(texturePath));
 
-            var textures = new List<SourceTexture>();
-            foreach (var path in texturePaths)
-                textures.Add(LoadAt(path, nameRoot));
-            return textures;
-        }
-
-        private static SourceTexture LoadAt (string path, string nameRoot = null)
-        {
-            var name = BuildName(path, nameRoot);
-            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (!texture) throw new Exception($"Failed to load `{path}` texture.");
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            var name = BuildName(texturePath, nameRoot);
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            if (!texture) throw new Exception($"Failed to load `{texturePath}` texture.");
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
             return new SourceTexture(name, texture, sprite);
         }
 

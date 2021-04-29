@@ -203,10 +203,7 @@ namespace SpriteDicing
         {
             try
             {
-                DisplayProgressBar("Collecting source textures...", .0f);
-                var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
-                var texturePaths = textureFinder.FindAt(inputFolderPath, includeSubfolders);
-                var sourceTextures = textureLoader.Load(texturePaths, prependSubfolderNames ? inputFolderPath : null);
+                var sourceTextures = CollectSourceTextures();
                 var dicedUnits = DiceSourceTextures(sourceTextures, unitSize, padding, ppu);
                 if (!CreateAtlasTextures(dicedUnits, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target)))
                 {
@@ -222,6 +219,15 @@ namespace SpriteDicing
                 dataSizeValueContent = GetDataSizeValueContent();
             }
             finally { EditorUtility.ClearProgressBar(); }
+        }
+
+        private IReadOnlyList<SourceTexture> CollectSourceTextures ()
+        {
+            DisplayProgressBar("Collecting source textures...", .0f);
+            var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
+            var texturePaths = textureFinder.FindAt(inputFolderPath, includeSubfolders);
+            var nameRoot = prependSubfolderNames ? inputFolderPath : null;
+            return texturePaths.Select(p => textureLoader.Load(p, nameRoot)).ToArray();
         }
 
         private static Dictionary<string, List<DicedUnit>> DiceSourceTextures (IReadOnlyList<SourceTexture> textures, int unitSize, int padding, float ppu)

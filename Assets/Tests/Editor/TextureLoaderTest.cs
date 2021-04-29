@@ -8,21 +8,27 @@ namespace SpriteDicing.Test
     public class TextureLoaderTest
     {
         [Test]
-        public void WhenNullPathsExceptionIsThrown ()
+        public void WhenNullPathExceptionIsThrown ()
         {
             Throws<ArgumentNullException>(() => new TextureLoader().Load(null));
         }
 
         [Test]
-        public void WhenEmptyPathsEmptyCollectionIsReturned ()
+        public void WhenEmptyPathExceptionIsThrown ()
         {
-            IsEmpty(new TextureLoader().Load(Array.Empty<string>()));
+            Throws<ArgumentNullException>(() => new TextureLoader().Load(""));
         }
 
         [Test]
         public void WhenTextureNotLoadedExceptionIsThrown ()
         {
             Throws<Exception>(() => Load("N/A"));
+        }
+
+        [Test]
+        public void LoadedTextureAssetIsValid ()
+        {
+            IsTrue(Load(Paths.BGRT).Texture);
         }
 
         [Test]
@@ -55,18 +61,9 @@ namespace SpriteDicing.Test
             AreEqual("BGRT", Load(Paths.BGRT).Name);
         }
 
-        [Test]
-        public void LoadedTextureAssetsAreValid ()
-        {
-            var textures = new TextureLoader().Load(Paths.All);
-            AreEqual(Paths.All.Count, textures.Count);
-            foreach (var texture in textures)
-                IsTrue(texture.Texture);
-        }
-
         private static SourceTexture Load (string texturePath, string nameRoot = null)
         {
-            return new TextureLoader().Load(new[] { texturePath }, nameRoot)[0];
+            return new TextureLoader().Load(texturePath, nameRoot);
         }
     }
 }
