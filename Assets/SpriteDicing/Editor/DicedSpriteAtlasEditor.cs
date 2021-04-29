@@ -97,14 +97,22 @@ namespace SpriteDicing
             EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(decoupleSpriteDataProperty, decoupleSpriteDataContent);
-            PivotGUI();
-            SizeGUI();
+            DrawPivotGUI();
+            DrawSizeGUI();
             pixelsPerUnitProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnitProperty.floatValue));
             EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
-            paddingProperty.intValue = EditorGUILayout.IntSlider(paddingContent, paddingProperty.intValue, 0, diceUnitSizeProperty.intValue / 2).ToNearestEven();
+            DrawPaddingSlider();
             EditorGUILayout.PropertyField(uvInsetProperty, uvInsetContent);
-            InputFolderGUI();
+            DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawPaddingSlider ()
+        {
+            var maxValue = diceUnitSizeProperty.intValue / 2;
+            var value = EditorGUILayout.IntSlider(paddingContent, paddingProperty.intValue, 0, maxValue);
+            var nearestEven = value % 2 == 0 ? value : Mathf.Min(value + 1, maxValue);
+            paddingProperty.intValue = nearestEven;
         }
 
         private GUIContent GetBuildButtonContent ()
@@ -140,7 +148,7 @@ namespace SpriteDicing
             return new GUIContent(label);
         }
 
-        private void PivotGUI ()
+        private void DrawPivotGUI ()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -154,14 +162,14 @@ namespace SpriteDicing
             }
         }
 
-        private void SizeGUI ()
+        private void DrawSizeGUI ()
         {
             using (new EditorGUILayout.HorizontalScope())
             {
                 var rect = EditorGUILayout.GetControlRect();
                 rect = EditorGUI.PrefixLabel(rect, -1, atlasSizeLimitContent);
                 rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-                var popupValues = new int[] { 1024, 2048, 4096, 8192 };
+                var popupValues = new[] { 1024, 2048, 4096, 8192 };
                 var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
                 EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
                 rect.x += rect.width + 5;
@@ -169,7 +177,7 @@ namespace SpriteDicing
             }
         }
 
-        private void InputFolderGUI ()
+        private void DrawInputFolderGUI ()
         {
             var folderObject = EditorGUI.ObjectField(EditorGUILayout.GetControlRect(), inputFolderContent, inputFolderProperty.objectReferenceValue, typeof(DefaultAsset), false);
             if (folderObject == null || AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(folderObject)))
@@ -277,7 +285,7 @@ namespace SpriteDicing
             {
                 atlasCount++;
 
-                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, name: $"{atlasName} {atlasCount:000}");
+                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, atlasSizeLimit, name: $"{atlasName} {atlasCount:000}");
                 var hashToUV = new Dictionary<Hash128, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
                 var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
                 var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
@@ -349,7 +357,7 @@ namespace SpriteDicing
                         }
 
                         // Write colors of the unit to the current atlas texture.
-                        var colorsToPack = hashToUnits.Value.First().PaddedColors;
+                        var colorsToPack = hashToUnits.Value.First().PaddedPixels;
                         atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
                         // Evaluate and assign UVs of the unit to the other units in the group.
                         var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-padding).Scale(1f / atlasSizeLimit);

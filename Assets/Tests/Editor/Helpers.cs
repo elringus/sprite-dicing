@@ -14,10 +14,10 @@ namespace SpriteDicing.Test
             public static readonly string BGRT = BuildTexturePath("2x2/BGRT");
             public static readonly string BTGR = BuildTexturePath("2x2/BTGR");
             public static readonly string TTTT = BuildTexturePath("2x2/TTTT");
-            public static readonly string RGBA1x4 = BuildTexturePath("RGBA1x4");
-            public static readonly string RGBA4x1 = BuildTexturePath("RGBA4x1");
-            public static readonly string RGBA8x8 = BuildTexturePath("RGBA8x8");
-            public static readonly IReadOnlyList<string> TopLevel = new[] { RGBA1x4, RGBA4x1, RGBA8x8 };
+            public static readonly string RGB1x3 = BuildTexturePath("RGB1x3");
+            public static readonly string RGB3x1 = BuildTexturePath("RGB3x1");
+            public static readonly string RGB8x8 = BuildTexturePath("RGB8x8");
+            public static readonly IReadOnlyList<string> TopLevel = new[] { RGB1x3, RGB3x1, RGB8x8 };
             public static readonly IReadOnlyList<string> TwoByTwo = new[] { BGRT, BTGR, TTTT };
             public static readonly IReadOnlyList<string> All = TopLevel.Concat(TwoByTwo).ToArray();
         }
@@ -27,9 +27,9 @@ namespace SpriteDicing.Test
             public static Texture2D BGRT => LoadTexture("2x2/BGRT");
             public static Texture2D BTGR => LoadTexture("2x2/BTGR");
             public static Texture2D TTTT => LoadTexture("2x2/TTTT");
-            public static Texture2D RGBA1x4 => LoadTexture("RGBA1x4");
-            public static Texture2D RGBA4x1 => LoadTexture("RGBA4x1");
-            public static Texture2D RGBA8x8 => LoadTexture("RGBA8x8");
+            public static Texture2D RGB1x3 => LoadTexture("RGB1x3");
+            public static Texture2D RGB3x1 => LoadTexture("RGB3x1");
+            public static Texture2D RGB8x8 => LoadTexture("RGB8x8");
         }
 
         public const string TextureFolderPath = "Assets/Tests/Textures";

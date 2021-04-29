@@ -41,13 +41,13 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoAssociatedSpriteItsNull ()
         {
-            IsNull(Load(Paths.RGBA1x4).Sprite);
+            IsNull(Load(Paths.RGB1x3).Sprite);
         }
 
         [Test]
         public void WhenAssociatedSpriteExistItsLoaded ()
         {
-            IsTrue(Load(Paths.RGBA8x8).Sprite);
+            IsTrue(Load(Paths.RGB8x8).Sprite);
         }
 
         [Test]
@@ -71,17 +71,17 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNotReadableBecomesReadableAfterLoad ()
         {
-            GetImporter(Paths.RGBA4x1).isReadable = false;
-            Load(Paths.RGBA4x1);
-            IsTrue(GetImporter(Paths.RGBA4x1).isReadable);
+            GetImporter(Paths.RGB3x1).isReadable = false;
+            Load(Paths.RGB3x1);
+            IsTrue(GetImporter(Paths.RGB3x1).isReadable);
         }
 
         [Test]
         public void WhenCrunchedBecomesNotCrunchedAfterLoad ()
         {
-            GetImporter(Paths.RGBA8x8).crunchedCompression = true;
-            Load(Paths.RGBA8x8);
-            IsFalse(GetImporter(Paths.RGBA8x8).crunchedCompression);
+            GetImporter(Paths.RGB8x8).crunchedCompression = true;
+            Load(Paths.RGB8x8);
+            IsFalse(GetImporter(Paths.RGB8x8).crunchedCompression);
         }
 
         private static SourceTexture Load (string texturePath, string nameRoot = null)
