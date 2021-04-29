@@ -205,10 +205,10 @@ namespace SpriteDicing
             try
             {
                 var sourceTextures = CollectSourceTextures();
-                var dicedTextures = DiceSourceTextures(sourceTextures);
+                var dicedTextures = DiceTextures(sourceTextures);
                 CreateAtlasTextures(dicedTextures, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target));
                 DisplayProgressBar("Generating sprite assets...", 1f);
-                var sprites = dicedTextures.Select(t => CreateSprite(t.Source.Name, t.Units.First().AtlasTexture, t.Units, ppu, keepOriginalPivot, defaultPivot)).ToList();
+                var sprites = dicedTextures.Select(t => CreateSprite(t.Source.Name, t.Units.First().AtlasTexture, t, ppu, keepOriginalPivot, defaultPivot)).ToList();
                 SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
 
                 serializedObject.ApplyModifiedProperties();
@@ -227,60 +227,23 @@ namespace SpriteDicing
             return texturePaths.Select(p => textureLoader.Load(p, nameRoot)).ToArray();
         }
 
-        private IReadOnlyList<DicedTexture> DiceSourceTextures (IReadOnlyList<SourceTexture> textures)
+        private IReadOnlyList<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
-            var result = new List<DicedTexture>();
-            for (int i = 0; i < textures.Count; i++)
+            var dicedTextures = new List<DicedTexture>();
+            for (int i = 0; i < sourceTextures.Count; i++)
             {
-                var texture = textures[i];
-                DisplayProgressBar($"Dicing texture '{texture.Name}' ({i + 1}/{textures.Count})...", .5f * i / textures.Count);
-                var dicedTexture = DiceSourceTexture(texture, unitSize, padding, ppu);
-                result.Add(dicedTexture);
+                var sourceTexture = sourceTextures[i];
+                DisplayDicingProgress(sourceTexture.Name, i, sourceTextures.Count);
+                dicedTextures.Add(textureDicer.Dice(sourceTexture, unitSize, padding, ppu));
             }
-            return result;
+            return dicedTextures;
         }
 
-        private static DicedTexture DiceSourceTexture (SourceTexture source, int unitSize, int padding, float ppu)
+        private static void DisplayDicingProgress (string name, int index, int total)
         {
-            var texture = source.Texture;
-            var assetPath = AssetDatabase.GetAssetPath(source.Texture);
-            var units = new List<DicedUnit>();
-            var spritePivot = GetSpritePivot(source.Texture);
-
-            // Make sure texture is readable and not crunched (can't get pixels otherwise).
-            var textureImporter = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-            if (textureImporter is null) throw new Exception($"Failed to get texture importer for `{assetPath}`.");
-            if (!textureImporter.isReadable || textureImporter.crunchedCompression)
-            {
-                textureImporter.isReadable = true;
-                textureImporter.crunchedCompression = false;
-                AssetDatabase.ImportAsset(assetPath);
-            }
-
-            var unitCountX = Mathf.CeilToInt((float)texture.width / unitSize);
-            var unitCountY = Mathf.CeilToInt((float)texture.height / unitSize);
-
-            for (int unitX = 0; unitX < unitCountX; unitX++)
-            {
-                var x = unitX * unitSize;
-                for (int unitY = 0; unitY < unitCountY; unitY++)
-                {
-                    var y = unitY * unitSize;
-                    var pixelsRect = new Rect(x, y, unitSize, unitSize);
-                    var colors = texture.GetPixels(pixelsRect); // TODO: Get only padded pixels and evaluate original pixels from them.
-                    // Skip transparent units (no need to render them).
-                    if (colors.All(color => color.a == 0)) continue;
-                    var paddedRect = pixelsRect.Crop(padding);
-                    var paddedColors = texture.GetPixels(paddedRect);
-                    var quadVerts = pixelsRect.Scale(1f / ppu);
-                    // TODO: Find out how Unity builds that hash and replicate. Comparing each element in color arrays has issues with flat color textures and small dice units.
-                    var hash = Utilities.CreateTexture(unitSize, colors).imageContentsHash;
-                    var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ContentHash = hash, PaddedColors = paddedColors, SpritePivot = spritePivot };
-                    units.Add(dicedUnit);
-                }
-            }
-
-            return new DicedTexture(source, units);
+            var progress = .5f * index / total;
+            var message = $"Dicing '{name}' ({index + 1}/{total})...";
+            DisplayProgressBar(message, progress);
         }
 
         private static void CreateAtlasTextures (IReadOnlyList<DicedTexture> dicedTextures, int unitSize, int padding, float uvInset,
@@ -425,16 +388,16 @@ namespace SpriteDicing
             }
         }
 
-        private static Sprite CreateSprite (string name, Texture2D atlasTexture, IReadOnlyList<DicedUnit> dicedUnits, float ppu, bool keepOriginalPivot, Vector2 defaultPivot)
+        private static Sprite CreateSprite (string name, Texture2D atlasTexture, DicedTexture dicedTexture, float ppu, bool keepOriginalPivot, Vector2 defaultPivot)
         {
             var vertices = new List<Vector2>();
             var uvs = new List<Vector2>();
             var triangles = new List<ushort>();
 
-            foreach (var dicedUnit in dicedUnits)
+            foreach (var dicedUnit in dicedTexture.Units)
                 AddDicedUnit(dicedUnit);
 
-            var originalPivot = TrimVertices(dicedUnits.First().SpritePivot);
+            var originalPivot = TrimVertices();
             var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
             ApplyPivotChange(pivot);
             var renderRect = EvaluateSpriteRect().Scale(ppu);
@@ -483,13 +446,14 @@ namespace SpriteDicing
             }
 
             // Reposition the vertices so that they start at the local origin (0, 0).
-            Vector2 TrimVertices (Vector2 spritePivot)
+            Vector2 TrimVertices ()
             {
                 var rect = EvaluateSpriteRect();
                 if (rect.min.x > 0 || rect.min.y > 0)
                     for (int i = 0; i < vertices.Count; i++)
                         vertices[i] -= rect.min;
-                return (spritePivot / ppu - rect.min) / rect.size;
+                if (!dicedTexture.Source.Sprite) return Vector2.zero;
+                return (dicedTexture.Source.Sprite.pivot / ppu - rect.min) / rect.size;
             }
 
             // Evaluate sprite rectangle using vertex data.

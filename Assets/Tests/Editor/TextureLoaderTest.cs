@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using UnityEditor;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
 
@@ -20,9 +21,15 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenTextureNotLoadedExceptionIsThrown ()
+        public void WhenNoAssetExceptionIsThrown ()
         {
             Throws<Exception>(() => Load("N/A"));
+        }
+
+        [Test]
+        public void WhenInvalidAssetExceptionIsThrown ()
+        {
+            Throws<Exception>(() => Load(TextureFolderPath));
         }
 
         [Test]
@@ -34,7 +41,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoAssociatedSpriteItsNull ()
         {
-            IsNull(Load(Paths.BGRT).Sprite);
+            IsNull(Load(Paths.RGBA1x4).Sprite);
         }
 
         [Test]
@@ -52,18 +59,39 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNameRootSpecifiedSubfolderNamesArePrepended ()
         {
-            AreEqual("2x2.BGRT", Load(Paths.BGRT, TextureFolderPath).Name);
+            AreEqual("2x2.BTGR", Load(Paths.BTGR, TextureFolderPath).Name);
         }
 
         [Test]
         public void WhenNameRootNotSpecifiedSubfolderNamesAreNotPrepended ()
         {
-            AreEqual("BGRT", Load(Paths.BGRT).Name);
+            AreEqual("TTTT", Load(Paths.TTTT).Name);
+        }
+
+        [Test]
+        public void WhenNotReadableBecomesReadableAfterLoad ()
+        {
+            GetImporter(Paths.RGBA4x1).isReadable = false;
+            Load(Paths.RGBA4x1);
+            IsTrue(GetImporter(Paths.RGBA4x1).isReadable);
+        }
+
+        [Test]
+        public void WhenCrunchedBecomesNotCrunchedAfterLoad ()
+        {
+            GetImporter(Paths.RGBA8x8).crunchedCompression = true;
+            Load(Paths.RGBA8x8);
+            IsFalse(GetImporter(Paths.RGBA8x8).crunchedCompression);
         }
 
         private static SourceTexture Load (string texturePath, string nameRoot = null)
         {
             return new TextureLoader().Load(texturePath, nameRoot);
+        }
+
+        private static TextureImporter GetImporter (string texturePath)
+        {
+            return (TextureImporter)AssetImporter.GetAtPath(texturePath);
         }
     }
 }

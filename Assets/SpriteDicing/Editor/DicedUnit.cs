@@ -28,9 +28,5 @@ namespace SpriteDicing
         /// Unique hash based on the texture of the diced unit.
         /// </summary>
         public Hash128 ContentHash { get; set; }
-        /// <summary>
-        /// Pivot (in offset pixels) of a sprite associated with the texture (if any).
-        /// </summary>
-        public Vector2 SpritePivot { get; set; }
     }
 }
