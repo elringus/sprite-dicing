@@ -205,11 +205,7 @@ namespace SpriteDicing
             {
                 var sourceTextures = CollectSourceTextures();
                 var dicedUnits = DiceSourceTextures(sourceTextures, unitSize, padding, ppu);
-                if (!CreateAtlasTextures(dicedUnits, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target)))
-                {
-                    EditorUtility.ClearProgressBar();
-                    return;
-                }
+                CreateAtlasTextures(dicedUnits, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target));
                 DisplayProgressBar("Generating sprite assets...", 1f);
                 var sprites = dicedUnits.Select(nameToUnits => CreateSprite(nameToUnits.Key, nameToUnits.Value.First().AtlasTexture, nameToUnits.Value, ppu, keepOriginalPivot, defaultPivot)).ToList();
                 SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
@@ -289,7 +285,7 @@ namespace SpriteDicing
             return nameToUnitsMap;
         }
 
-        private static bool CreateAtlasTextures (Dictionary<string, List<DicedUnit>> dicedUnits, int unitSize, int padding, float uvInset,
+        private static void CreateAtlasTextures (Dictionary<string, List<DicedUnit>> dicedUnits, int unitSize, int padding, float uvInset,
             bool forceSquare, int atlasSizeLimit, SerializedProperty texturesProperty, string atlasAssetPath)
         {
             DisplayProgressBar("Processing diced textures...", .5f);
@@ -337,10 +333,7 @@ namespace SpriteDicing
 
                 var suitableUnits = findSuitableUnitsToPack();
                 if (suitableUnits.Key == null) // None of the source textures fit atlas limit.
-                {
-                    Debug.LogError("SpriteDicing: Unable to fit input textures to the atlas. Consider increasing atlas size limit.");
-                    return false;
-                }
+                    throw new Exception("SpriteDicing: Unable to fit input textures to the atlas. Consider increasing atlas size limit.");
 
                 while (suitableUnits.Key != null)
                 {
@@ -432,8 +425,6 @@ namespace SpriteDicing
                 texturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
                 packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
             }
-
-            return true;
         }
 
         private static Sprite CreateSprite (string name, Texture2D atlasTexture, List<DicedUnit> dicedUnits, float ppu, bool keepOriginalPivot, Vector2 defaultPivot)
