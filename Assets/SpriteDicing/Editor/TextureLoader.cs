@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for loading texture asset to slice.
+    /// Responsible for loading texture asset to dice.
     /// </summary>
     public class TextureLoader
     {

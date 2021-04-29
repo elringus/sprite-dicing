@@ -7,7 +7,7 @@ using UnityEditor;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for finding paths of the texture assets to slice.
+    /// Responsible for finding paths of the texture assets to dice.
     /// </summary>
     public class TextureFinder
     {
