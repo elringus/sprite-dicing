@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using static NUnit.Framework.Assert;
@@ -45,8 +46,8 @@ namespace SpriteDicing.Test
         public void TransparentDicesAreIgnored ()
         {
             IsEmpty(Dice(Textures.TTTT).Units);
-            AreEqual(3, Dice(Textures.BGRT).Units.Count);
-            AreEqual(3, Dice(Textures.BTGR).Units.Count);
+            IsFalse(Dice(Textures.BGRT).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
+            IsFalse(Dice(Textures.BTGR).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
         }
 
         [Test]
