@@ -135,7 +135,6 @@ namespace SpriteDicing.Test
 
         private static Color[] Map3x3 (params Color[] colors)
         {
-            // Pixels are stored left to right, bottom to top;
             return new[] {
                 colors[6], colors[7], colors[8],
                 colors[3], colors[4], colors[5],
