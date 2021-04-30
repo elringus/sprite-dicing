@@ -29,7 +29,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoTexturesFoundEmptyCollectionIsReturned ()
         {
-            IsEmpty(FindAt("Assets/Tests/Editor", false));
+            IsEmpty(FindAt("Assets/Tests/Editor", true));
         }
 
         [Test]
