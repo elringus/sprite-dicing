@@ -460,7 +460,7 @@ namespace SpriteDicing
                 if (rect.min.x > 0 || rect.min.y > 0)
                     for (int i = 0; i < vertices.Count; i++)
                         vertices[i] -= rect.min;
-                if (!dicedTexture.Source.Sprite) return Vector2.zero;
+                if (!dicedTexture.Source.Sprite) return -rect.min / rect.size;
                 return (dicedTexture.Source.Sprite.pivot / ppu - rect.min) / rect.size;
             }
 
