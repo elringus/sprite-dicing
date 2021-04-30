@@ -54,16 +54,10 @@ namespace SpriteDicing
             var endX = startX + rectWidth;
             var endY = startY + rectHeight;
             var colors = new Color[rectWidth * rectHeight];
-            for (int y = startY, colorsIndex = 0; y < endY; y++)
-            for (int x = startX; x < endX; x++, colorsIndex++)
-                colors[colorsIndex] = texture.GetPixel(x, y);
+            for (int y = startY, i = 0; y < endY; y++)
+            for (int x = startX; x < endX; x++, i++)
+                colors[i] = texture.GetPixel(x, y);
             return colors;
-        }
-
-        private static bool IsWithinTexture (int x, int y, Texture texture)
-        {
-            if (x < 0 || y < 0) return false;
-            return x < texture.width && y < texture.height;
         }
 
         private static Hash128 GetHash (int size, Color[] pixels)
