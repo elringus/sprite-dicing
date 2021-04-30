@@ -51,9 +51,6 @@ namespace SpriteDicing
             return new DicedTexture(source, units);
         }
 
-        /// <summary>
-        /// Reads pixels inside the specified texture rect.
-        /// </summary>
         /// <returns>Flattened 2D array, where pixels are laid out left to right, bottom to top.</returns>
         private static Color[] GetPixels (Texture2D texture, RectInt rect)
         {
