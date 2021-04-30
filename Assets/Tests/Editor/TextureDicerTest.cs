@@ -109,23 +109,21 @@ namespace SpriteDicing.Test
         public void WhenNoContentPaddedPixelsAreRepeated ()
         {
             var pixels = Dice(Textures.B, padding: 1).Units[0].PaddedPixels;
-            var expected = new[] {
+            var expected = Map3x3(
                 Color.blue, Color.blue, Color.blue,
                 Color.blue, Color.blue, Color.blue,
-                Color.blue, Color.blue, Color.blue
-            };
+                Color.blue, Color.blue, Color.blue);
             AreEqual(expected, pixels);
         }
-        
+
         [Test]
         public void PaddedPixelsAreNeighbors ()
         {
             var pixels = Dice(Textures.BGRT, padding: 1).Units.Select(u => u.PaddedPixels).ToArray();
-            var expected = new[] {
-                Color.clear, Color.red, Color.clear,
-                Color.green, Color.blue, Color.green,
-                Color.clear, Color.red, Color.clear
-            };
+            var expected = Map3x3(
+                Color.blue, Color.blue, Color.green,
+                Color.blue, Color.blue, Color.green,
+                Color.red, Color.red, new Color(1, 0, 0, 0));
             Contains(expected, pixels);
         }
 
@@ -133,6 +131,16 @@ namespace SpriteDicing.Test
         {
             var source = new SourceTexture(texture.name, texture);
             return new TextureDicer().Dice(source, size, padding, ppu);
+        }
+
+        private static Color[] Map3x3 (params Color[] colors)
+        {
+            // Pixels are stored left to right, bottom to top;
+            return new[] {
+                colors[6], colors[7], colors[8],
+                colors[3], colors[4], colors[5],
+                colors[0], colors[1], colors[2]
+            };
         }
     }
 }
