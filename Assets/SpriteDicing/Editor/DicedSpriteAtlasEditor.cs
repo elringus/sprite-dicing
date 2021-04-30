@@ -545,15 +545,6 @@ namespace SpriteDicing
             }
         }
 
-        private static Vector2 GetSpritePivot (Texture2D texture)
-        {
-            var defaultPivot = new Vector2(-1, -1);
-            var assetPath = AssetDatabase.GetAssetPath(texture);
-            if (assetPath is null) return defaultPivot;
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-            return sprite ? sprite.pivot : defaultPivot;
-        }
-
         private static void DisplayProgressBar (string activity, float progress)
         {
             EditorUtility.DisplayProgressBar("Building Diced Sprite Atlas", activity, progress);
