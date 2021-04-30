@@ -26,12 +26,12 @@ namespace SpriteDicing
             {
                 var x = unitX * unitSize;
                 var y = unitY * unitSize;
-                var pixelsRect = new Rect(x, y, unitSize, unitSize);
+                var pixelsRect = new RectInt(x, y, unitSize, unitSize);
                 var pixels = GetPixels(texture, pixelsRect);
                 if (pixels.All(p => p.a == 0)) continue;
-                var paddedRect = pixelsRect.Crop(padding);
+                var paddedRect = PadRect(pixelsRect, padding);
                 var paddedPixels = GetPixels(texture, paddedRect);
-                var quadVerts = pixelsRect.Scale(1f / ppu);
+                var quadVerts = ScaleRect(pixelsRect, ppu);
                 var hash = GetHash(unitSize, pixels);
                 var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ContentHash = hash, PaddedPixels = paddedPixels };
                 units.Add(dicedUnit);
@@ -44,20 +44,28 @@ namespace SpriteDicing
         /// Reads pixels inside the specified texture rect.
         /// </summary>
         /// <returns>Flattened 2D array, where pixels are laid out left to right, bottom to top.</returns>
-        private static Color[] GetPixels (Texture2D texture, Rect rect)
+        private static Color[] GetPixels (Texture2D texture, RectInt rect)
         {
             // TODO: GetPixels() from texture and reuse the array.
-            var startX = Mathf.FloorToInt(rect.x);
-            var startY = Mathf.FloorToInt(rect.y);
-            var rectWidth = Mathf.FloorToInt(rect.width);
-            var rectHeight = Mathf.FloorToInt(rect.height);
-            var endX = startX + rectWidth;
-            var endY = startY + rectHeight;
-            var colors = new Color[rectWidth * rectHeight];
-            for (int y = startY, i = 0; y < endY; y++)
-            for (int x = startX; x < endX; x++, i++)
+            var endX = rect.x + rect.width;
+            var endY = rect.y + rect.height;
+            var colors = new Color[rect.width * rect.height];
+            for (int y = rect.x, i = 0; y < endY; y++)
+            for (int x = rect.y; x < endX; x++, i++)
                 colors[i] = texture.GetPixel(x, y);
             return colors;
+        }
+
+        private static RectInt PadRect (RectInt rect, int padding)
+        {
+            var delta = Vector2Int.one * padding;
+            return new RectInt(rect.position - delta, rect.size + delta * 2);
+        }
+
+        private static Rect ScaleRect (RectInt rect, float ppu)
+        {
+            var scale = 1f / ppu;
+            return new Rect((Vector2)rect.position * scale, (Vector2)rect.size * scale);
         }
 
         private static Hash128 GetHash (int size, Color[] pixels)
