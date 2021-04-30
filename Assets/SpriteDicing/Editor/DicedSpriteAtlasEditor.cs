@@ -275,7 +275,7 @@ namespace SpriteDicing
             var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(atlasSizeLimit / (float)paddedUnitSize), 2));
 
             // Group name->units to name->hash->units map.
-            var unitsToPackMap = dicedTextures.Select(nameToUnits => new KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>>(nameToUnits.Source.Name, nameToUnits.Units
+            var unitsToPackMap = dicedTextures.Select(dicedTexture => new KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>>(dicedTexture.Source.Name, dicedTexture.Units
                     .GroupBy(units => units.ContentHash).ToDictionary(hashToUnitsGroup => hashToUnitsGroup.Key, hashToUnitsGroup => hashToUnitsGroup.ToList())))
                 .ToDictionary(nameToHashToUnits => nameToHashToUnits.Key, nameToHashToUnits => nameToHashToUnits.Value);
 
