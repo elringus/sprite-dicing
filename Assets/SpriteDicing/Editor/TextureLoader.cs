@@ -10,13 +10,20 @@ namespace SpriteDicing
     /// </summary>
     public class TextureLoader
     {
-        /// <param name="nameRoot">When provided, build name relative to the root replacing slashes with dots.</param>
-        public SourceTexture Load (string texturePath, string nameRoot = null)
+        private readonly string nameRoot;
+
+        /// <param name="nameRoot">When provided, will include subfolders in the texture names.</param>
+        public TextureLoader (string nameRoot = null)
+        {
+            this.nameRoot = nameRoot;
+        }
+
+        public SourceTexture Load (string texturePath)
         {
             if (string.IsNullOrEmpty(texturePath))
                 throw new ArgumentNullException(nameof(texturePath));
 
-            var name = BuildName(texturePath, nameRoot);
+            var name = BuildName(texturePath);
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             if (!texture) throw new Exception($"Failed to load `{texturePath}` texture.");
             EnsureReadable(texturePath);
@@ -24,11 +31,11 @@ namespace SpriteDicing
             return new SourceTexture(name, texture, sprite);
         }
 
-        private static string BuildName (string path, string root = null)
+        private string BuildName (string path)
         {
-            if (string.IsNullOrEmpty(root)) return Path.GetFileNameWithoutExtension(path);
-            if (!path.Contains(root)) throw new Exception($"Name root `{root}` is not valid for `{path}` path.");
-            return Path.GetFileNameWithoutExtension(path.Substring(root.Length + 1).Replace("/", "."));
+            if (nameRoot is null) return Path.GetFileNameWithoutExtension(path);
+            if (!path.Contains(nameRoot)) throw new Exception($"Name root `{nameRoot}` is not valid for `{path}` path.");
+            return Path.GetFileNameWithoutExtension(path.Substring(nameRoot.Length + 1).Replace("/", "."));
         }
 
         private static void EnsureReadable (string path)

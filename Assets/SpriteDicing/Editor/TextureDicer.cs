@@ -10,12 +10,23 @@ namespace SpriteDicing
     /// </summary>
     public class TextureDicer
     {
-        public DicedTexture Dice (SourceTexture source, int unitSize, int padding, float ppu)
+        private readonly int unitSize;
+        private readonly int padding;
+        private readonly float ppu;
+
+        public TextureDicer (int unitSize, int padding, float ppu)
         {
             if (unitSize < 1) throw new ArgumentException("Size should be greater than one.");
             if (padding < 0) throw new ArgumentException("Padding couldn't be negative.");
             if (ppu <= 0) throw new ArgumentException("PPU should be greater than zero.");
 
+            this.unitSize = unitSize;
+            this.padding = padding;
+            this.ppu = ppu;
+        }
+
+        public DicedTexture Dice (SourceTexture source)
+        {
             var texture = source.Texture;
             var units = new List<DicedUnit>();
             var unitCountX = Mathf.CeilToInt((float)texture.width / unitSize);

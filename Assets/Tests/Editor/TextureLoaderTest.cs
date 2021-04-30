@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEditor;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
+using static SpriteDicing.Test.Helpers.Paths;
 
 namespace SpriteDicing.Test
 {
@@ -11,13 +12,13 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNullPathExceptionIsThrown ()
         {
-            Throws<ArgumentNullException>(() => new TextureLoader().Load(null));
+            Throws<ArgumentNullException>(() => Load(null));
         }
 
         [Test]
         public void WhenEmptyPathExceptionIsThrown ()
         {
-            Throws<ArgumentNullException>(() => new TextureLoader().Load(""));
+            Throws<ArgumentNullException>(() => Load(""));
         }
 
         [Test]
@@ -35,58 +36,58 @@ namespace SpriteDicing.Test
         [Test]
         public void LoadedTextureAssetIsValid ()
         {
-            IsTrue(Load(Paths.BGRT).Texture);
+            IsTrue(Load(BGRT).Texture);
         }
 
         [Test]
         public void WhenNoAssociatedSpriteItsNull ()
         {
-            IsNull(Load(Paths.RGB1x3).Sprite);
+            IsNull(Load(RGB1x3).Sprite);
         }
 
         [Test]
         public void WhenAssociatedSpriteExistItsLoaded ()
         {
-            IsTrue(Load(Paths.RGB8x8).Sprite);
+            IsTrue(Load(RGB8x8).Sprite);
         }
 
         [Test]
         public void WhenNameRootInvalidExceptionIsThrown ()
         {
-            Throws<Exception>(() => Load(Paths.BGRT, "N/A"));
+            Throws<Exception>(() => Load(BGRT, "N/A"));
         }
 
         [Test]
         public void WhenNameRootSpecifiedSubfolderNamesArePrepended ()
         {
-            AreEqual("2x2.BTGR", Load(Paths.BTGR, TextureFolderPath).Name);
+            AreEqual("2x2.BTGR", Load(BTGR, TextureFolderPath).Name);
         }
 
         [Test]
         public void WhenNameRootNotSpecifiedSubfolderNamesAreNotPrepended ()
         {
-            AreEqual("TTTT", Load(Paths.TTTT).Name);
+            AreEqual("TTTT", Load(TTTT).Name);
         }
 
         [Test]
         public void WhenNotReadableBecomesReadableAfterLoad ()
         {
-            GetImporter(Paths.RGB3x1).isReadable = false;
-            Load(Paths.RGB3x1);
-            IsTrue(GetImporter(Paths.RGB3x1).isReadable);
+            GetImporter(RGB3x1).isReadable = false;
+            Load(RGB3x1);
+            IsTrue(GetImporter(RGB3x1).isReadable);
         }
 
         [Test]
         public void WhenCrunchedBecomesNotCrunchedAfterLoad ()
         {
-            GetImporter(Paths.RGB8x8).crunchedCompression = true;
-            Load(Paths.RGB8x8);
-            IsFalse(GetImporter(Paths.RGB8x8).crunchedCompression);
+            GetImporter(RGB8x8).crunchedCompression = true;
+            Load(RGB8x8);
+            IsFalse(GetImporter(RGB8x8).crunchedCompression);
         }
 
         private static SourceTexture Load (string texturePath, string nameRoot = null)
         {
-            return new TextureLoader().Load(texturePath, nameRoot);
+            return new TextureLoader(nameRoot).Load(texturePath);
         }
 
         private static TextureImporter GetImporter (string texturePath)

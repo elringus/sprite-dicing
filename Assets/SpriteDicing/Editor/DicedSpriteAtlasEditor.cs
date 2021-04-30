@@ -44,10 +44,6 @@ namespace SpriteDicing
         private Vector2 defaultPivot => defaultPivotProperty.vector2Value;
         private bool decoupleSpriteData => decoupleSpriteDataProperty.boolValue;
 
-        private readonly TextureFinder textureFinder = new TextureFinder();
-        private readonly TextureLoader textureLoader = new TextureLoader();
-        private readonly TextureDicer textureDicer = new TextureDicer();
-
         private SerializedProperty texturesProperty;
         private SerializedProperty spritesProperty;
         private SerializedProperty defaultPivotProperty;
@@ -212,6 +208,7 @@ namespace SpriteDicing
         {
             try
             {
+                DeleteAtlasTextures();
                 var sourceTextures = CollectSourceTextures();
                 var dicedTextures = DiceTextures(sourceTextures);
                 CreateAtlasTextures(dicedTextures, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target));
@@ -226,23 +223,36 @@ namespace SpriteDicing
             finally { EditorUtility.ClearProgressBar(); }
         }
 
+        private void DeleteAtlasTextures ()
+        {
+            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
+            {
+                var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                var texturePath = AssetDatabase.GetAssetPath(texture);
+                AssetDatabase.DeleteAsset(texturePath);
+                DestroyImmediate(texture, true);
+            }
+            texturesProperty.arraySize = 0;
+        }
+
         private IReadOnlyList<SourceTexture> CollectSourceTextures ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
-            var texturePaths = textureFinder.FindAt(inputFolderPath, includeSubfolders);
-            var nameRoot = prependSubfolderNames ? inputFolderPath : null;
-            return texturePaths.Select(p => textureLoader.Load(p, nameRoot)).ToArray();
+            var texturePaths = TextureFinder.FindAt(inputFolderPath, includeSubfolders);
+            var loader = new TextureLoader(prependSubfolderNames ? inputFolderPath : null);
+            return texturePaths.Select(loader.Load).ToArray();
         }
 
         private IReadOnlyList<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
+            var dicer = new TextureDicer(unitSize, padding, ppu);
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {
                 var sourceTexture = sourceTextures[i];
                 DisplayDicingProgress(sourceTexture.Name, i, sourceTextures.Count);
-                dicedTextures.Add(textureDicer.Dice(sourceTexture, unitSize, padding, ppu));
+                dicedTextures.Add(dicer.Dice(sourceTexture));
             }
             return dicedTextures;
         }
@@ -260,16 +270,6 @@ namespace SpriteDicing
             DisplayProgressBar("Processing diced textures...", .5f);
 
             var atlasName = Path.GetFileNameWithoutExtension(atlasAssetPath);
-
-            // Delete any previously generated atlas textures.
-            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
-            {
-                var unusedTexture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(unusedTexture));
-                DestroyImmediate(unusedTexture, true);
-            }
-            texturesProperty.arraySize = 0;
-
             var atlasCount = 0;
             var paddedUnitSize = unitSize + padding * 2;
             var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(atlasSizeLimit / (float)paddedUnitSize), 2));

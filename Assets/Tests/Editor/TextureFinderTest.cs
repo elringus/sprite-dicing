@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
+using static SpriteDicing.TextureFinder;
 
 namespace SpriteDicing.Test
 {
@@ -11,47 +11,37 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNullFolderExceptionIsThrown ()
         {
-            Throws<ArgumentException>(() => CollectAt(null));
+            Throws<ArgumentException>(() => FindAt(null, false));
         }
 
         [Test]
         public void WhenEmptyFolderExceptionIsThrown ()
         {
-            Throws<ArgumentException>(() => CollectAt(""));
+            Throws<ArgumentException>(() => FindAt("", false));
         }
 
         [Test]
         public void WhenFolderNotFoundExceptionIsThrown ()
         {
-            Throws<ArgumentException>(() => CollectAt("C:\\Invalid"));
+            Throws<ArgumentException>(() => FindAt("C:\\Invalid", false));
         }
 
         [Test]
         public void WhenNoTexturesFoundEmptyCollectionIsReturned ()
         {
-            IsEmpty(CollectAt("Assets/Tests/Editor"));
+            IsEmpty(FindAt("Assets/Tests/Editor", false));
         }
 
         [Test]
         public void WhenSubfoldersNotIncludedOnlyTopLevelTexturesAreReturned ()
         {
-            AreEqual(Paths.TopLevel.Count, Collect(false).Count);
+            AreEqual(Paths.TopLevel.Count, FindAt(TextureFolderPath, false).Count);
         }
 
         [Test]
         public void WhenSubfoldersIncludedAllTexturesAreReturned ()
         {
-            AreEqual(Paths.All.Count, Collect(true).Count);
-        }
-
-        private static IReadOnlyList<string> CollectAt (string folderPath)
-        {
-            return new TextureFinder().FindAt(folderPath, false);
-        }
-
-        private static IReadOnlyList<string> Collect (bool includeSubfolders)
-        {
-            return new TextureFinder().FindAt(TextureFolderPath, includeSubfolders);
+            AreEqual(Paths.All.Count, FindAt(TextureFolderPath, true).Count);
         }
     }
 }

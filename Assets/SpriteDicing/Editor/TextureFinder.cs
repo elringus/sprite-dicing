@@ -9,9 +9,9 @@ namespace SpriteDicing
     /// <summary>
     /// Responsible for finding paths of the texture assets to dice.
     /// </summary>
-    public class TextureFinder
+    public static class TextureFinder
     {
-        public IReadOnlyList<string> FindAt (string folderPath, bool includeSubfolders)
+        public static IReadOnlyList<string> FindAt (string folderPath, bool includeSubfolders)
         {
             if (string.IsNullOrEmpty(folderPath))
                 throw new ArgumentException("Folder path is empty.");
