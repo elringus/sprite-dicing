@@ -8,7 +8,7 @@ namespace SpriteDicing
     /// <summary>
     /// Represents an atlas texture generated from diced textures.
     /// </summary>
-    public readonly struct AtlasTexture
+    public class AtlasTexture
     {
         /// <summary>
         /// The atlas texture asset.

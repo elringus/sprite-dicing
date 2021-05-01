@@ -28,22 +28,12 @@ namespace SpriteDicing
             this.atlasSizeLimit = atlasSizeLimit;
         }
 
-        private static bool TryFindTextureToPack (IReadOnlyList<DicedTexture> textures, IDictionary<Hash128, Rect> contentToUV, int unitsPerAtlasLimit, out int index)
-        {
-            for (index = 0; index < textures.Count; index++)
-            {
-                var unitsToPack = textures[index].UniqueUnits.Count(u => !contentToUV.ContainsKey(u.ContentHash));
-                if (contentToUV.Keys.Count + unitsToPack <= unitsPerAtlasLimit) return true;
-            }
-            return false;
-        }
-
         public IReadOnlyList<AtlasTexture> Build (IEnumerable<DicedTexture> dicedTextures)
         {
             var atlases = new List<AtlasTexture>();
             var paddedUnitSize = unitSize + padding * 2;
             var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(atlasSizeLimit / (float)paddedUnitSize), 2));
-            var texturesToPack = new List<DicedTexture>(dicedTextures);
+            var texturesToPack = new HashSet<DicedTexture>(dicedTextures);
 
             while (texturesToPack.Count > 0)
             {
@@ -53,11 +43,8 @@ namespace SpriteDicing
                 var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
                 var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
 
-                while (TryFindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit, out var index))
+                while (FindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit) is DicedTexture textureToPack)
                 {
-                    var textureToPack = texturesToPack[index];
-                    texturesToPack.RemoveAt(index);
-
                     foreach (var unitToPack in textureToPack.UniqueUnits)
                     {
                         if (contentToUV.ContainsKey(unitToPack.ContentHash)) continue;
@@ -108,6 +95,7 @@ namespace SpriteDicing
                         contentToUV.Add(unitToPack.ContentHash, unitUVRect);
                     }
 
+                    texturesToPack.Remove(textureToPack);
                     packedTextures.Add(textureToPack);
                 }
 
@@ -141,6 +129,19 @@ namespace SpriteDicing
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             texture.wrapMode = TextureWrapMode.Clamp;
             return texture;
+        }
+
+        private static DicedTexture FindTextureToPack (IEnumerable<DicedTexture> textures, IDictionary<Hash128, Rect> contentToUV, int unitsPerAtlasLimit)
+        {
+            foreach (var texture in textures)
+                if (CountUnitsToPack(texture, contentToUV) <= unitsPerAtlasLimit)
+                    return texture;
+            return null;
+        }
+
+        private static int CountUnitsToPack (DicedTexture texture, IDictionary<Hash128, Rect> contentToUV)
+        {
+            return contentToUV.Keys.Count + texture.UniqueUnits.Count(u => !contentToUV.ContainsKey(u.ContentHash));
         }
     }
 }

@@ -6,7 +6,7 @@ namespace SpriteDicing
     /// <summary>
     /// Represents original texture and associated data required to generate sliced sprite.
     /// </summary>
-    public readonly struct SourceTexture
+    public class SourceTexture
     {
         /// <summary>
         /// Name of the texture.

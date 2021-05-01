@@ -7,7 +7,7 @@ namespace SpriteDicing
     /// <summary>
     /// Represents a texture diced of a <see cref="SourceTexture"/>.
     /// </summary>
-    public readonly struct DicedTexture
+    public class DicedTexture
     {
         /// <summary>
         /// Original texture from which this one was generated.
