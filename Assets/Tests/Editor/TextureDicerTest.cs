@@ -127,6 +127,13 @@ namespace SpriteDicing.Test
             Contains(expected, pixels);
         }
 
+        [Test]
+        public void WhenUnitsNullExceptionIsThrown ()
+        {
+            // ReSharper disable once ObjectCreationAsStatement
+            Throws<ArgumentNullException>(() => new DicedTexture(default, null));
+        }
+
         private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
         {
             var source = new SourceTexture(texture.name, texture);

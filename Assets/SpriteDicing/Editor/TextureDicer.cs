@@ -6,7 +6,7 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for creating <see cref="DicedTexture"/> from <see cref="SourceTexture"/>.
+    /// Responsible for dicing source textures.
     /// </summary>
     public class TextureDicer
     {
@@ -44,7 +44,7 @@ namespace SpriteDicing
                 var paddedPixels = GetPixels(texture, paddedRect);
                 var quadVerts = ScaleRect(pixelsRect, ppu);
                 var hash = GetHash(unitSize, pixels);
-                var dicedUnit = new DicedUnit { QuadVerts = quadVerts, ContentHash = hash, PaddedPixels = paddedPixels };
+                var dicedUnit = new DicedUnit(quadVerts, paddedPixels, hash);
                 units.Add(dicedUnit);
             }
 

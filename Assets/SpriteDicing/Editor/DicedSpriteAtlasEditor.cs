@@ -211,9 +211,10 @@ namespace SpriteDicing
                 DeleteAtlasTextures();
                 var sourceTextures = CollectSourceTextures();
                 var dicedTextures = DiceTextures(sourceTextures);
-                CreateAtlasTextures(dicedTextures, unitSize, padding, uvInset, forceSquare, atlasSizeLimit, texturesProperty, AssetDatabase.GetAssetPath(target));
+                var atlasTextures = BuildAtlasTextures(dicedTextures);
+                SaveAtlasTextures(atlasTextures);
                 DisplayProgressBar("Generating sprite assets...", 1f);
-                var sprites = dicedTextures.Select(t => CreateSprite(t.Source.Name, t.Units.First().AtlasTexture, t, ppu, keepOriginalPivot, defaultPivot)).ToList();
+                var sprites = atlasTextures.SelectMany(BuildDicedSprites).ToArray();
                 SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
 
                 serializedObject.ApplyModifiedProperties();
@@ -228,11 +229,19 @@ namespace SpriteDicing
             for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
             {
                 var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                if (!texture) continue;
                 var texturePath = AssetDatabase.GetAssetPath(texture);
                 AssetDatabase.DeleteAsset(texturePath);
                 DestroyImmediate(texture, true);
             }
             texturesProperty.arraySize = 0;
+        }
+
+        private void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
+        {
+            texturesProperty.arraySize = textures.Count;
+            for (int i = 0; i < textures.Count; i++)
+                texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
         }
 
         private IReadOnlyList<SourceTexture> CollectSourceTextures ()
@@ -264,235 +273,126 @@ namespace SpriteDicing
             DisplayProgressBar(message, progress);
         }
 
-        private static void CreateAtlasTextures (IReadOnlyList<DicedTexture> dicedTextures, int unitSize, int padding, float uvInset,
-            bool forceSquare, int atlasSizeLimit, SerializedProperty texturesProperty, string atlasAssetPath)
+        private IReadOnlyList<AtlasTexture> BuildAtlasTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
             DisplayProgressBar("Processing diced textures...", .5f);
-
-            var atlasName = Path.GetFileNameWithoutExtension(atlasAssetPath);
-            var atlasCount = 0;
-            var paddedUnitSize = unitSize + padding * 2;
-            var unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(atlasSizeLimit / (float)paddedUnitSize), 2));
-
-            // Group name->units to name->hash->units map.
-            var unitsToPackMap = dicedTextures.Select(dicedTexture => new KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>>(dicedTexture.Source.Name, dicedTexture.Units
-                    .GroupBy(units => units.ContentHash).ToDictionary(hashToUnitsGroup => hashToUnitsGroup.Key, hashToUnitsGroup => hashToUnitsGroup.ToList())))
-                .ToDictionary(nameToHashToUnits => nameToHashToUnits.Key, nameToHashToUnits => nameToHashToUnits.Value);
-
-            // Pack units with distinct (inside atlas group) colors to the atlas textures.
-            // Ensure sprites integrity (units belonging to one sprite should be in a common atlas) and atlas size limit (distinct units per atlas count).
-            while (unitsToPackMap.Count > 0)
-            {
-                atlasCount++;
-
-                var atlasTexture = Utilities.CreateTexture(atlasSizeLimit, atlasSizeLimit, name: $"{atlasName} {atlasCount:000}");
-                var hashToUV = new Dictionary<Hash128, Rect>(); // Colors hash to UV rects map of the packed diced units in the current atlas.
-                var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
-                var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
-                var packedUnits = new List<DicedUnit>(); // List of the units packed to the current atlas.
-
-                // Find units that can be packed to the current atlas (respecting atlas size limit and remaining free space).
-                KeyValuePair<string, Dictionary<Hash128, List<DicedUnit>>> findSuitableUnitsToPack ()
-                {
-                    return unitsToPackMap.FirstOrDefault(nameToHashToUnits => {
-                        var unitsToPackCount = nameToHashToUnits.Value.Count(hashToUnits => !hashToUV.ContainsKey(hashToUnits.Key));
-                        return hashToUV.Keys.Count + unitsToPackCount <= unitsPerAtlasLimit;
-                    });
-                }
-
-                var suitableUnits = findSuitableUnitsToPack();
-                if (suitableUnits.Key == null) // None of the source textures fit atlas limit.
-                    throw new Exception("SpriteDicing: Unable to fit input textures to the atlas. Consider increasing atlas size limit.");
-
-                while (suitableUnits.Key != null)
-                {
-                    var packingProgress = 1f - (unitsToPackMap.Count / (float)dicedTextures.Count);
-                    DisplayProgressBar("Packing diced textures...", .5f + .5f * packingProgress);
-
-                    // Iterate suitable for packing units grouped by their color hashes.
-                    foreach (var hashToUnits in suitableUnits.Value)
-                    {
-                        if (hashToUV.ContainsKey(hashToUnits.Key))
-                        {
-                            // We've already packed unit with the same colors to this atlas; assign it's UVs to the others in the group.
-                            hashToUnits.Value.ForEach(unit => unit.QuadUVs = hashToUV[hashToUnits.Key]);
-                            continue;
-                        }
-
-                        int posX, posY; // Position of the new unit on the atlas texture.
-                        // Find row positions that have enough room for more units until next power of two.
-                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2).ToArray();
-                        if (suitableYToLastXEnumerable.Length == 0) // When no suitable rows found.
-                        {
-                            // Handle corner case when we just started.
-                            if (yToLastXMap.Count == 0)
-                            {
-                                yToLastXMap.Add(0, 0);
-                                posX = 0;
-                                posY = 0;
-                            }
-                            // Determine whether we need to add a new row or increase x limit.
-                            else if (xLimit > yToLastXMap.Last().Key)
-                            {
-                                var newRowYPos = yToLastXMap.Last().Key + paddedUnitSize;
-                                yToLastXMap.Add(newRowYPos, 0);
-                                posX = 0;
-                                posY = newRowYPos;
-                            }
-                            else
-                            {
-                                xLimit = Mathf.NextPowerOfTwo(xLimit + 1);
-                                posX = yToLastXMap.First().Value + paddedUnitSize;
-                                posY = 0;
-                                yToLastXMap[0] = posX;
-                            }
-                        }
-                        else // When suitable rows found.
-                        {
-                            // Find one with the least number of elements and use it.
-                            var suitableYToLastX = suitableYToLastXEnumerable.OrderBy(yToLastX => yToLastX.Value).First();
-                            posX = suitableYToLastX.Value + paddedUnitSize;
-                            posY = suitableYToLastX.Key;
-                            yToLastXMap[posY] = posX;
-                        }
-
-                        // Write colors of the unit to the current atlas texture.
-                        var colorsToPack = hashToUnits.Value.First().PaddedPixels;
-                        atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
-                        // Evaluate and assign UVs of the unit to the other units in the group.
-                        var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-padding).Scale(1f / atlasSizeLimit);
-                        if (uvInset > 0) unitUVRect = unitUVRect.Crop(-uvInset * (unitUVRect.width / 2f));
-                        hashToUnits.Value.ForEach(unit => unit.QuadUVs = unitUVRect);
-                        hashToUV.Add(hashToUnits.Key, unitUVRect);
-                    }
-
-                    packedUnits.AddRange(suitableUnits.Value.SelectMany(u => u.Value));
-                    unitsToPackMap.Remove(suitableUnits.Key);
-                    suitableUnits = findSuitableUnitsToPack();
-                }
-
-                // Crop unused atlas texture space.
-                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
-                if (needToCrop)
-                {
-                    var croppedWidth = xLimit;
-                    var croppedHeight = forceSquare ? croppedWidth : yToLastXMap.Last().Key + paddedUnitSize;
-                    var croppedPixels = atlasTexture.GetPixels(0, 0, croppedWidth, croppedHeight);
-                    atlasTexture = Utilities.CreateTexture(croppedWidth, croppedHeight, name: atlasTexture.name);
-                    atlasTexture.SetPixels(croppedPixels);
-
-                    // Correct UV rects after crop.
-                    packedUnits.ForEach(unit => unit.QuadUVs = unit.QuadUVs
-                        .Scale(new Vector2(atlasSizeLimit / (float)croppedWidth, atlasSizeLimit / (float)croppedHeight)));
-                }
-
-                // Save atlas texture.
-                atlasTexture.alphaIsTransparency = true;
-                atlasTexture.Apply();
-                var savedTexture = atlasTexture.SaveAsPng(atlasAssetPath);
-                texturesProperty.arraySize = Mathf.Max(texturesProperty.arraySize, atlasCount);
-                texturesProperty.GetArrayElementAtIndex(atlasCount - 1).objectReferenceValue = savedTexture;
-                packedUnits.ForEach(unit => unit.AtlasTexture = savedTexture);
-            }
+            var textureSerializer = new TextureSerializer(BuildBaseAtlasTexturePath());
+            var atlasTextureBuilder = new AtlasTextureBuilder(textureSerializer, unitSize, padding, uvInset, forceSquare, atlasSizeLimit);
+            return atlasTextureBuilder.Build(dicedTextures);
         }
 
-        private static Sprite CreateSprite (string name, Texture2D atlasTexture, DicedTexture dicedTexture, float ppu, bool keepOriginalPivot, Vector2 defaultPivot)
+        private string BuildBaseAtlasTexturePath ()
         {
-            var vertices = new List<Vector2>();
-            var uvs = new List<Vector2>();
-            var triangles = new List<ushort>();
-
-            foreach (var dicedUnit in dicedTexture.Units)
-                AddDicedUnit(dicedUnit);
-
-            var originalPivot = TrimVertices();
-            var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
-            ApplyPivotChange(pivot);
-            var renderRect = EvaluateSpriteRect().Scale(ppu);
-
-            // Public sprite ctor won't allow using a rect that is larger than the texture:
-            // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
-            var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
-                // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
-                ?.Invoke(null, new object[] { atlasTexture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
-            if (sprite is null) throw new Exception($"Failed to create `{name}` sprite.");
-            sprite.name = name;
-            sprite.SetVertexCount(vertices.Count);
-            sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.Select(v => new Vector3(v.x, v.y)).ToArray(), Allocator.Temp));
-            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
-
-            return sprite;
-
-            #region Local functions
-            void AddDicedUnit (DicedUnit dicedUnit) => AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, dicedUnit.QuadUVs.min, dicedUnit.QuadUVs.max);
-
-            void AddQuad (Vector2 posMin, Vector2 posMax, Vector2 uvMin, Vector2 uvMax)
-            {
-                var startIndex = vertices.Count;
-
-                AddVertice(new Vector2(posMin.x, posMin.y), new Vector2(uvMin.x, uvMin.y));
-                AddVertice(new Vector2(posMin.x, posMax.y), new Vector2(uvMin.x, uvMax.y));
-                AddVertice(new Vector2(posMax.x, posMax.y), new Vector2(uvMax.x, uvMax.y));
-                AddVertice(new Vector2(posMax.x, posMin.y), new Vector2(uvMax.x, uvMin.y));
-
-                AddTriangle(startIndex, startIndex + 1, startIndex + 2);
-                AddTriangle(startIndex + 2, startIndex + 3, startIndex);
-            }
-
-            void AddVertice (Vector2 position, Vector2 uv)
-            {
-                vertices.Add(position);
-                uvs.Add(uv);
-            }
-
-            void AddTriangle (int idx0, int idx1, int idx2)
-            {
-                triangles.Add((ushort)idx0);
-                triangles.Add((ushort)idx1);
-                triangles.Add((ushort)idx2);
-            }
-
-            // Reposition the vertices so that they start at the local origin (0, 0).
-            Vector2 TrimVertices ()
-            {
-                var rect = EvaluateSpriteRect();
-                if (rect.min.x > 0 || rect.min.y > 0)
-                    for (int i = 0; i < vertices.Count; i++)
-                        vertices[i] -= rect.min;
-                if (!dicedTexture.Source.Sprite) return -rect.min / rect.size;
-                return (dicedTexture.Source.Sprite.pivot / ppu - rect.min) / rect.size;
-            }
-
-            // Evaluate sprite rectangle using vertex data.
-            Rect EvaluateSpriteRect ()
-            {
-                var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
-                var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
-                var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
-                var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
-                var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
-                return new Rect(minVertPos, spriteSize);
-            }
-
-            // Corrects geometry data to to match current pivot value.
-            void ApplyPivotChange (Vector2 newPivot)
-            {
-                var spriteRect = EvaluateSpriteRect();
-                var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
-                var curDeltaX = spriteRect.size.x * curPivot.x;
-                var curDeltaY = spriteRect.size.y * curPivot.y;
-                var newDeltaX = spriteRect.size.x * newPivot.x;
-                var newDeltaY = spriteRect.size.y * newPivot.y;
-                var deltaPos = new Vector2(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
-
-                for (int i = 0; i < vertices.Count; i++)
-                    vertices[i] -= deltaPos;
-            }
-            #endregion
+            var atlasPath = AssetDatabase.GetAssetPath(targetAtlas);
+            var extensionIndex = atlasPath.LastIndexOf(".asset", StringComparison.Ordinal);
+            return atlasPath.Substring(0, extensionIndex);
         }
 
-        private static void SaveGeneratedSprites (List<Sprite> sprites, bool decoupleSpriteData,
+        private IReadOnlyList<Sprite> BuildDicedSprites (AtlasTexture atlasTexture)
+        {
+            var dicedSprites = new List<Sprite>();
+            foreach (var dicedTexture in atlasTexture.DicedTextures)
+                dicedSprites.Add(BuildDicedSprite(dicedTexture));
+            return dicedSprites;
+
+            Sprite BuildDicedSprite (DicedTexture dicedTexture)
+            {
+                var vertices = new List<Vector2>();
+                var uvs = new List<Vector2>();
+                var triangles = new List<ushort>();
+
+                foreach (var dicedUnit in dicedTexture.Units)
+                    AddDicedUnit(dicedUnit, atlasTexture.ContentToUV[dicedUnit.ContentHash]);
+
+                var originalPivot = TrimVertices();
+                var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
+                ApplyPivotChange(pivot);
+                var renderRect = EvaluateSpriteRect().Scale(ppu);
+
+                // Public sprite ctor won't allow using a rect that is larger than the texture:
+                // https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/2D/Common/ScriptBindings/Sprites.bindings.cs#L271
+                var sprite = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static)
+                    // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
+                    ?.Invoke(null, new object[] { atlasTexture.Texture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false }) as Sprite;
+                if (sprite is null) throw new Exception($"Failed to create `{dicedTexture.Source.Name}` sprite.");
+                sprite.name = dicedTexture.Source.Name;
+                sprite.SetVertexCount(vertices.Count);
+                sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
+                sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.Select(v => new Vector3(v.x, v.y)).ToArray(), Allocator.Temp));
+                sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
+
+                return sprite;
+
+                #region Local functions
+                void AddDicedUnit (DicedUnit dicedUnit, Rect uv) => AddQuad(dicedUnit.QuadVerts.min, dicedUnit.QuadVerts.max, uv.min, uv.max);
+
+                void AddQuad (Vector2 posMin, Vector2 posMax, Vector2 uvMin, Vector2 uvMax)
+                {
+                    var startIndex = vertices.Count;
+
+                    AddVertice(new Vector2(posMin.x, posMin.y), new Vector2(uvMin.x, uvMin.y));
+                    AddVertice(new Vector2(posMin.x, posMax.y), new Vector2(uvMin.x, uvMax.y));
+                    AddVertice(new Vector2(posMax.x, posMax.y), new Vector2(uvMax.x, uvMax.y));
+                    AddVertice(new Vector2(posMax.x, posMin.y), new Vector2(uvMax.x, uvMin.y));
+
+                    AddTriangle(startIndex, startIndex + 1, startIndex + 2);
+                    AddTriangle(startIndex + 2, startIndex + 3, startIndex);
+                }
+
+                void AddVertice (Vector2 position, Vector2 uv)
+                {
+                    vertices.Add(position);
+                    uvs.Add(uv);
+                }
+
+                void AddTriangle (int idx0, int idx1, int idx2)
+                {
+                    triangles.Add((ushort)idx0);
+                    triangles.Add((ushort)idx1);
+                    triangles.Add((ushort)idx2);
+                }
+
+                // Reposition the vertices so that they start at the local origin (0, 0).
+                Vector2 TrimVertices ()
+                {
+                    var rect = EvaluateSpriteRect();
+                    if (rect.min.x > 0 || rect.min.y > 0)
+                        for (int i = 0; i < vertices.Count; i++)
+                            vertices[i] -= rect.min;
+                    if (!dicedTexture.Source.Sprite) return -rect.min / rect.size;
+                    return (dicedTexture.Source.Sprite.pivot / ppu - rect.min) / rect.size;
+                }
+
+                // Evaluate sprite rectangle using vertex data.
+                Rect EvaluateSpriteRect ()
+                {
+                    var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
+                    var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
+                    var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
+                    var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
+                    var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
+                    return new Rect(minVertPos, spriteSize);
+                }
+
+                // Corrects geometry data to to match current pivot value.
+                void ApplyPivotChange (Vector2 newPivot)
+                {
+                    var spriteRect = EvaluateSpriteRect();
+                    var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
+                    var curDeltaX = spriteRect.size.x * curPivot.x;
+                    var curDeltaY = spriteRect.size.y * curPivot.y;
+                    var newDeltaX = spriteRect.size.x * newPivot.x;
+                    var newDeltaY = spriteRect.size.y * newPivot.y;
+                    var deltaPos = new Vector2(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
+
+                    for (int i = 0; i < vertices.Count; i++)
+                        vertices[i] -= deltaPos;
+                }
+                #endregion
+            }
+        }
+
+        private static void SaveGeneratedSprites (IReadOnlyList<Sprite> sprites, bool decoupleSpriteData,
             SerializedProperty generatedSpritesFolderGuidProperty, SerializedProperty spritesProperty, UnityEngine.Object target)
         {
             if (!decoupleSpriteData)

@@ -50,14 +50,15 @@ namespace SpriteDicing
             else FolderObject = AssetDatabase.LoadAssetAtPath<Object>(path);
         }
 
-        public List<T> SetContainedAssets<T> (List<T> objectsToSave) where T : Object
+        public IReadOnlyList<T> SetContainedAssets<T> (IReadOnlyList<T> objectsToSave) where T : Object
         {
             var assetsToDestroy = LoadContainedAssets<T>()
-                .Where(containedAsset => !objectsToSave.Exists(objectToSave => objectToSave.name == containedAsset.Object.name)).ToList();
+                .Where(containedAsset => !objectsToSave.Any(objectToSave => objectToSave.name == containedAsset.Object.name)).ToList();
             assetsToDestroy.ForEach(assetToDestroy => AssetDatabase.DeleteAsset(assetToDestroy.Path));
 
             var savedObjects = new List<T>();
-            objectsToSave.ForEach(objectToSave => savedObjects.Add(objectToSave.CreateOrReplaceAsset<T>(Path + "/" + objectToSave.name + ".asset")));
+            foreach (var objectToSave in objectsToSave)
+                savedObjects.Add(objectToSave.CreateOrReplaceAsset<T>(Path + "/" + objectToSave.name + ".asset"));
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 

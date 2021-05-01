@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -38,7 +37,7 @@ namespace SpriteDicing
             }
         }
 
-        public static void SetListValues<T> (this SerializedProperty serializedProperty, List<T> listValues, bool clearSourceList = true) where T : UnityEngine.Object
+        public static void SetListValues<T> (this SerializedProperty serializedProperty, IReadOnlyList<T> listValues, bool clearSourceList = true) where T : UnityEngine.Object
         {
             Debug.Assert(serializedProperty != null && serializedProperty.isArray);
 
@@ -52,37 +51,6 @@ namespace SpriteDicing
             list.RemoveAll(item => !item || item == null);
 
             serializedProperty.serializedObject.CopyFromSerializedProperty(new SerializedObject(targetObject).FindProperty(serializedProperty.name));
-        }
-
-        public static Texture2D SaveAsPng (this Texture2D texture, string path, TextureImporterType textureType = TextureImporterType.Default,
-            TextureImporterCompression compression = TextureImporterCompression.Uncompressed, bool generateMipmaps = false, bool destroyInitialTextureObject = true)
-        {
-            var wrapMode = texture.wrapMode;
-            var alphaIsTransparency = texture.alphaIsTransparency;
-            var maxSize = Mathf.Max(texture.width, texture.height);
-
-            path = $"{path.GetBeforeLast("/")}/{texture.name}.png";
-            Debug.Assert(AssetDatabase.IsValidFolder(path.GetBefore("/")));
-            var bytes = texture.EncodeToPNG();
-            using (var fileStream = File.Create(path))
-                fileStream.Write(bytes, 0, bytes.Length);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            var textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (textureImporter is null) throw new Exception();
-            textureImporter.textureType = textureType;
-            textureImporter.alphaIsTransparency = alphaIsTransparency;
-            textureImporter.wrapMode = wrapMode;
-            textureImporter.mipmapEnabled = generateMipmaps;
-            textureImporter.textureCompression = compression;
-            textureImporter.maxTextureSize = maxSize;
-            AssetDatabase.ImportAsset(path);
-
-            if (destroyInitialTextureObject)
-                UnityEngine.Object.DestroyImmediate(texture);
-
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
         /// <summary>
@@ -125,16 +93,6 @@ namespace SpriteDicing
             else return null;
         }
 
-        public static float ProgressOf<T> (this List<T> list, T currentItem)
-        {
-            return list.IndexOf(currentItem) / (float)list.Count;
-        }
-
-        public static bool Contains (this Rect rect, float x, float y)
-        {
-            return rect.Contains(new Vector2(x, y));
-        }
-
         public static Rect Scale (this Rect rect, float scale)
         {
             return new Rect(rect.position * scale, rect.size * scale);
@@ -149,16 +107,6 @@ namespace SpriteDicing
         public static Rect Crop (this Rect rect, float cropAmount)
         {
             return new Rect(rect.position - Vector2.one * cropAmount, rect.size + Vector2.one * (cropAmount * 2f));
-        }
-
-        public static Texture2D CreateTexture (int width, int height, TextureWrapMode wrapMode = TextureWrapMode.Clamp,
-            TextureFormat textureFormat = TextureFormat.RGBA32, bool mipmap = false, bool linear = false, string name = "")
-        {
-            var texture = new Texture2D(width, height, textureFormat, mipmap, linear);
-            texture.wrapMode = wrapMode;
-            if (!string.IsNullOrEmpty(name))
-                texture.name = name;
-            return texture;
         }
     }
 }
