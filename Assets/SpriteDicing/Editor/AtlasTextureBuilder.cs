@@ -40,8 +40,8 @@ namespace SpriteDicing
                 var atlasTexture = CreateAtlasTexture(atlasSizeLimit, atlasSizeLimit);
                 var contentToUV = new Dictionary<Hash128, Rect>();
                 var packedTextures = new List<DicedTexture>();
-                var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
-                var maxAtlasWidth = Mathf.NextPowerOfTwo(paddedUnitSize);
+                var yToLastX = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
+                var atlasWidth = Mathf.NextPowerOfTwo(paddedUnitSize);
 
                 while (FindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit) is DicedTexture textureToPack)
                 {
@@ -51,39 +51,39 @@ namespace SpriteDicing
 
                         int posX, posY; // Position of the new unit on the atlas texture.
                         // Find row positions that have enough room for more units until next power of two.
-                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => maxAtlasWidth - yToLastX.Value >= paddedUnitSize * 2).ToArray();
-                        if (suitableYToLastXEnumerable.Length == 0) // When no suitable rows found.
+                        var suitableYToLastXList = yToLastX.Where(y => atlasWidth - y.Value >= paddedUnitSize * 2).ToArray();
+                        if (suitableYToLastXList.Length == 0) // When no suitable rows found.
                         {
                             // Handle corner case when we just started.
-                            if (yToLastXMap.Count == 0)
+                            if (yToLastX.Count == 0)
                             {
-                                yToLastXMap.Add(0, 0);
+                                yToLastX.Add(0, 0);
                                 posX = 0;
                                 posY = 0;
                             }
                             // Determine whether we need to add a new row or increase x limit.
-                            else if (maxAtlasWidth > yToLastXMap.Last().Key)
+                            else if (atlasWidth > yToLastX.Last().Key)
                             {
-                                var newRowYPos = yToLastXMap.Last().Key + paddedUnitSize;
-                                yToLastXMap.Add(newRowYPos, 0);
+                                var newRowYPos = yToLastX.Last().Key + paddedUnitSize;
+                                yToLastX.Add(newRowYPos, 0);
                                 posX = 0;
                                 posY = newRowYPos;
                             }
                             else
                             {
-                                maxAtlasWidth = Mathf.NextPowerOfTwo(maxAtlasWidth + 1);
-                                posX = yToLastXMap.First().Value + paddedUnitSize;
+                                atlasWidth = Mathf.NextPowerOfTwo(atlasWidth + 1);
+                                posX = yToLastX.First().Value + paddedUnitSize;
                                 posY = 0;
-                                yToLastXMap[0] = posX;
+                                yToLastX[0] = posX;
                             }
                         }
                         else // When suitable rows found.
                         {
                             // Find one with the least number of elements and use it.
-                            var suitableYToLastX = suitableYToLastXEnumerable.OrderBy(yToLastX => yToLastX.Value).First();
+                            var suitableYToLastX = suitableYToLastXList.OrderBy(y => y.Value).First();
                             posX = suitableYToLastX.Value + paddedUnitSize;
                             posY = suitableYToLastX.Key;
-                            yToLastXMap[posY] = posX;
+                            yToLastX[posY] = posX;
                         }
 
                         // Write colors of the unit to the current atlas texture.
@@ -102,17 +102,17 @@ namespace SpriteDicing
                 if (packedTextures.Count == 0) throw new Exception("Unable to fit diced textures. Consider increasing atlas size limit.");
 
                 // Crop unused atlas texture space.
-                var needToCrop = maxAtlasWidth < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
+                var needToCrop = atlasWidth < atlasSizeLimit || (!forceSquare && yToLastX.Last().Key + paddedUnitSize < atlasSizeLimit);
                 if (needToCrop)
                 {
-                    var croppedHeight = forceSquare ? maxAtlasWidth : yToLastXMap.Last().Key + paddedUnitSize;
-                    var croppedPixels = atlasTexture.GetPixels(0, 0, maxAtlasWidth, croppedHeight);
-                    atlasTexture = CreateAtlasTexture(maxAtlasWidth, croppedHeight);
+                    var croppedHeight = forceSquare ? atlasWidth : yToLastX.Last().Key + paddedUnitSize;
+                    var croppedPixels = atlasTexture.GetPixels(0, 0, atlasWidth, croppedHeight);
+                    atlasTexture = CreateAtlasTexture(atlasWidth, croppedHeight);
                     atlasTexture.SetPixels(croppedPixels);
 
                     // Correct UV rects after crop.
                     foreach (var kv in contentToUV.ToArray())
-                        contentToUV[kv.Key] = kv.Value.Scale(new Vector2(atlasSizeLimit / (float)maxAtlasWidth, atlasSizeLimit / (float)croppedHeight));
+                        contentToUV[kv.Key] = kv.Value.Scale(new Vector2(atlasSizeLimit / (float)atlasWidth, atlasSizeLimit / (float)croppedHeight));
                 }
 
                 atlasTexture.alphaIsTransparency = true;
