@@ -156,6 +156,19 @@ namespace SpriteDicing.Test
             CollectionAssert.AllItemsAreUnique(Dice(RGB1x3).Units);
         }
 
+        [Test]
+        public void DistinctUnitsAreNotEqual ()
+        {
+            CollectionAssert.AllItemsAreUnique(Dice(RGB8x8).Units.Distinct());
+        }
+
+        [Test]
+        public void DistinctUnitsAreSubsetOfUnits ()
+        {
+            var dicedTexture = Dice(RGB8x8);
+            CollectionAssert.IsSubsetOf(dicedTexture.Units.Distinct(), dicedTexture.Units);
+        }
+
         private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
         {
             var source = new SourceTexture(texture.name, texture);
