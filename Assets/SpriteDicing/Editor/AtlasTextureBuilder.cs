@@ -41,7 +41,7 @@ namespace SpriteDicing
                 var contentToUV = new Dictionary<Hash128, Rect>();
                 var packedTextures = new List<DicedTexture>();
                 var yToLastXMap = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
-                var xLimit = Mathf.NextPowerOfTwo(paddedUnitSize); // Maximum allowed width of the current atlas. Increases by the power of two in the process.
+                var maxAtlasWidth = Mathf.NextPowerOfTwo(paddedUnitSize);
 
                 while (FindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit) is DicedTexture textureToPack)
                 {
@@ -51,7 +51,7 @@ namespace SpriteDicing
 
                         int posX, posY; // Position of the new unit on the atlas texture.
                         // Find row positions that have enough room for more units until next power of two.
-                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => xLimit - yToLastX.Value >= paddedUnitSize * 2).ToArray();
+                        var suitableYToLastXEnumerable = yToLastXMap.Where(yToLastX => maxAtlasWidth - yToLastX.Value >= paddedUnitSize * 2).ToArray();
                         if (suitableYToLastXEnumerable.Length == 0) // When no suitable rows found.
                         {
                             // Handle corner case when we just started.
@@ -62,7 +62,7 @@ namespace SpriteDicing
                                 posY = 0;
                             }
                             // Determine whether we need to add a new row or increase x limit.
-                            else if (xLimit > yToLastXMap.Last().Key)
+                            else if (maxAtlasWidth > yToLastXMap.Last().Key)
                             {
                                 var newRowYPos = yToLastXMap.Last().Key + paddedUnitSize;
                                 yToLastXMap.Add(newRowYPos, 0);
@@ -71,7 +71,7 @@ namespace SpriteDicing
                             }
                             else
                             {
-                                xLimit = Mathf.NextPowerOfTwo(xLimit + 1);
+                                maxAtlasWidth = Mathf.NextPowerOfTwo(maxAtlasWidth + 1);
                                 posX = yToLastXMap.First().Value + paddedUnitSize;
                                 posY = 0;
                                 yToLastXMap[0] = posX;
@@ -102,17 +102,17 @@ namespace SpriteDicing
                 if (packedTextures.Count == 0) throw new Exception("Unable to fit diced textures. Consider increasing atlas size limit.");
 
                 // Crop unused atlas texture space.
-                var needToCrop = xLimit < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
+                var needToCrop = maxAtlasWidth < atlasSizeLimit || (!forceSquare && yToLastXMap.Last().Key + paddedUnitSize < atlasSizeLimit);
                 if (needToCrop)
                 {
-                    var croppedHeight = forceSquare ? xLimit : yToLastXMap.Last().Key + paddedUnitSize;
-                    var croppedPixels = atlasTexture.GetPixels(0, 0, xLimit, croppedHeight);
-                    atlasTexture = CreateAtlasTexture(xLimit, croppedHeight);
+                    var croppedHeight = forceSquare ? maxAtlasWidth : yToLastXMap.Last().Key + paddedUnitSize;
+                    var croppedPixels = atlasTexture.GetPixels(0, 0, maxAtlasWidth, croppedHeight);
+                    atlasTexture = CreateAtlasTexture(maxAtlasWidth, croppedHeight);
                     atlasTexture.SetPixels(croppedPixels);
 
                     // Correct UV rects after crop.
                     foreach (var kv in contentToUV.ToArray())
-                        contentToUV[kv.Key] = kv.Value.Scale(new Vector2(atlasSizeLimit / (float)xLimit, atlasSizeLimit / (float)croppedHeight));
+                        contentToUV[kv.Key] = kv.Value.Scale(new Vector2(atlasSizeLimit / (float)maxAtlasWidth, atlasSizeLimit / (float)croppedHeight));
                 }
 
                 atlasTexture.alphaIsTransparency = true;
