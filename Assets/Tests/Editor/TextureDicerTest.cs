@@ -134,6 +134,41 @@ namespace SpriteDicing.Test
             Throws<ArgumentNullException>(() => new DicedTexture(default, null));
         }
 
+        [Test]
+        public void UnitsWithEqualContentHashAreEqual ()
+        {
+            var unit1 = new DicedUnit(new Rect(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new Rect(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            AreEqual(unit1, unit2);
+        }
+
+        [Test]
+        public void BoxedUnitsWithEqualContentHashAreEqual ()
+        {
+            var unit1 = new DicedUnit(new Rect(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new Rect(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            IsTrue(unit1.Equals((object)unit2));
+        }
+
+        [Test]
+        public void UnitsWithDifferentContentHashAreNotEqual ()
+        {
+            CollectionAssert.AllItemsAreUnique(Dice(RGB1x3).Units);
+        }
+
+        [Test]
+        public void UniqueUnitsAreNotEqual ()
+        {
+            CollectionAssert.AllItemsAreUnique(Dice(RGB8x8).UniqueUnits);
+        }
+
+        [Test]
+        public void UniqueUnitsIsSubsetOfUnits ()
+        {
+            var dicedTexture = Dice(RGB8x8);
+            CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
+        }
+
         private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
         {
             var source = new SourceTexture(texture.name, texture);
