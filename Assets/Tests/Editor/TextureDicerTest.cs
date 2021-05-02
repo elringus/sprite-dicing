@@ -163,7 +163,7 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void UniqueUnitsIsSubsetOfUnits ()
+        public void UniqueUnitsAreSubsetOfUnits ()
         {
             var dicedTexture = Dice(RGB8x8);
             CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
