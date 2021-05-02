@@ -45,7 +45,8 @@ namespace SpriteDicing
 
                 while (FindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit) is DicedTexture textureToPack)
                 {
-                    foreach (var unitToPack in textureToPack.UniqueUnits)
+                    var unitsToPack = textureToPack.Units.Distinct().ToArray();
+                    foreach (var unitToPack in unitsToPack)
                     {
                         if (contentToUV.ContainsKey(unitToPack.ContentHash)) continue;
 
@@ -140,7 +141,7 @@ namespace SpriteDicing
 
         private static int CountUnitsToPack (DicedTexture texture, IDictionary<Hash128, Rect> contentToUV)
         {
-            return contentToUV.Keys.Count + texture.UniqueUnits.Count(u => !contentToUV.ContainsKey(u.ContentHash));
+            return contentToUV.Keys.Count + texture.Units.Distinct().Count(u => !contentToUV.ContainsKey(u.ContentHash));
         }
     }
 }
