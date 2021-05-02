@@ -40,7 +40,7 @@ namespace SpriteDicing
                 var atlasTexture = CreateAtlasTexture(atlasSizeLimit, atlasSizeLimit);
                 var contentToUV = new Dictionary<Hash128, Rect>();
                 var packedTextures = new List<DicedTexture>();
-                var yToLastX = new Dictionary<int, int>(); // Y position of a units row in the current atlas to the x position of the last unit in this row.
+                var yToLastX = new Dictionary<int, int>(); // y-pos of a row in the current atlas to x-pos of the last unit in that row.
                 var atlasWidth = Mathf.NextPowerOfTwo(paddedUnitSize);
 
                 while (FindTextureToPack(texturesToPack, contentToUV, unitsPerAtlasLimit) is DicedTexture textureToPack)
