@@ -87,8 +87,7 @@ namespace SpriteDicing
                         }
 
                         // Write colors of the unit to the current atlas texture.
-                        var colorsToPack = unitToPack.PaddedPixels;
-                        atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, colorsToPack);
+                        atlasTexture.SetPixels(posX, posY, paddedUnitSize, paddedUnitSize, unitToPack.PaddedPixels);
                         // Evaluate and assign UVs of the unit to the other units in the group.
                         var unitUVRect = new Rect(posX, posY, paddedUnitSize, paddedUnitSize).Crop(-padding).Scale(1f / atlasSizeLimit);
                         if (uvInset > 0) unitUVRect = unitUVRect.Crop(-uvInset * (unitUVRect.width / 2f));
