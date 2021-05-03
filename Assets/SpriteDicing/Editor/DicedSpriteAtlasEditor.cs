@@ -79,7 +79,7 @@ namespace SpriteDicing
             prependSubfolderNamesProperty = serializedObject.FindProperty("prependSubfolderNames");
             generatedSpritesFolderGuidProperty = serializedObject.FindProperty("generatedSpritesFolderGuid");
 
-            dataSizeValueContent = GetDataSizeValueContent();
+            UpdateDataSize();
         }
 
         #region GUI
@@ -118,32 +118,6 @@ namespace SpriteDicing
             return new GUIContent(name, tooltip);
         }
 
-        private GUIContent GetDataSizeValueContent ()
-        {
-            long size = 0;
-
-            if (decoupleSpriteDataProperty.boolValue)
-            {
-                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                {
-                    var spriteData = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                    if (!spriteData) continue;
-                    var spritePath = AssetDatabase.GetAssetPath(spriteData);
-                    var spriteFullPath = Path.GetFullPath(spritePath);
-                    size += new FileInfo(spriteFullPath).Length / 1024;
-                }
-            }
-
-            var atlasPath = AssetDatabase.GetAssetPath(target);
-            if (string.IsNullOrEmpty(atlasPath)) return GUIContent.none;
-            var atlasFullPath = Path.GetFullPath(atlasPath);
-            size += new FileInfo(atlasFullPath).Length / 1024;
-
-            var isBinary = EditorSettings.serializationMode != SerializationMode.ForceText;
-            var label = $"{size} KB {(isBinary ? string.Empty : "(uncompressed)")}";
-            return new GUIContent(label);
-        }
-
         private void DrawPivotGUI ()
         {
             using (new EditorGUILayout.HorizontalScope())
@@ -179,69 +153,45 @@ namespace SpriteDicing
             if (folderObject == null || AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(folderObject)))
                 inputFolderProperty.objectReferenceValue = folderObject;
 
-            using (new EditorGUI.DisabledScope(!inputFolderProperty.objectReferenceValue))
-            {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    var rect = EditorGUILayout.GetControlRect();
-                    rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
-                    rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-                    EditorGUIUtility.labelWidth = 50;
-                    Utilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
-                    rect.x += rect.width + 5;
-                    using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
-                        Utilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
-                    EditorGUIUtility.labelWidth = 0;
-                }
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    GUILayout.Space(EditorGUIUtility.labelWidth);
-                    if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
-                        BuildAtlas();
-                }
-            }
+            EditorGUI.BeginDisabledGroup(!inputFolderProperty.objectReferenceValue);
+
+            EditorGUILayout.BeginHorizontal();
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
+            rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+            EditorGUIUtility.labelWidth = 50;
+            Utilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
+            rect.x += rect.width + 5;
+            using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
+                Utilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
+            EditorGUIUtility.labelWidth = 0;
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUIUtility.labelWidth);
+            if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
+                BuildAtlas();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.EndDisabledGroup();
         }
         #endregion
 
-        #region Atlas generation
         private void BuildAtlas ()
         {
             try
             {
-                DeleteAtlasTextures();
                 var sourceTextures = CollectSourceTextures();
                 var dicedTextures = DiceTextures(sourceTextures);
-                var atlasTextures = BuildAtlasTextures(dicedTextures);
-                SaveAtlasTextures(atlasTextures);
-                DisplayProgressBar("Generating sprite assets...", 1f);
-                var sprites = atlasTextures.SelectMany(BuildDicedSprites).ToArray();
-                SaveGeneratedSprites(sprites, decoupleSpriteData, generatedSpritesFolderGuidProperty, spritesProperty, target);
-
-                serializedObject.ApplyModifiedProperties();
-                AssetDatabase.SaveAssets();
-                dataSizeValueContent = GetDataSizeValueContent();
+                var atlasTextures = PackTextures(dicedTextures);
+                BuildDicedSprites(atlasTextures);
+                UpdateDataSize();
             }
-            finally { EditorUtility.ClearProgressBar(); }
-        }
-
-        private void DeleteAtlasTextures ()
-        {
-            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
+            finally
             {
-                var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                if (!texture) continue;
-                var texturePath = AssetDatabase.GetAssetPath(texture);
-                AssetDatabase.DeleteAsset(texturePath);
-                DestroyImmediate(texture, true);
+                EditorUtility.ClearProgressBar(); 
+                GUIUtility.ExitGUI();
             }
-            texturesProperty.arraySize = 0;
-        }
-
-        private void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
-        {
-            texturesProperty.arraySize = textures.Count;
-            for (int i = 0; i < textures.Count; i++)
-                texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
         }
 
         private IReadOnlyList<SourceTexture> CollectSourceTextures ()
@@ -259,33 +209,54 @@ namespace SpriteDicing
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {
-                var sourceTexture = sourceTextures[i];
-                DisplayDicingProgress(sourceTexture.Name, i, sourceTextures.Count);
-                dicedTextures.Add(dicer.Dice(sourceTexture));
+                DisplayProgressBar("Dicing textures...", .5f * i / sourceTextures.Count);
+                dicedTextures.Add(dicer.Dice(sourceTextures[i]));
             }
             return dicedTextures;
         }
 
-        private static void DisplayDicingProgress (string name, int index, int total)
+        private IReadOnlyList<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
-            var progress = .5f * index / total;
-            var message = $"Dicing '{name}' ({index + 1}/{total})...";
-            DisplayProgressBar(message, progress);
-        }
-
-        private IReadOnlyList<AtlasTexture> BuildAtlasTextures (IReadOnlyList<DicedTexture> dicedTextures)
-        {
-            DisplayProgressBar("Processing diced textures...", .5f);
-            var textureSerializer = new TextureSerializer(BuildBaseAtlasTexturePath());
+            DisplayProgressBar("Packing dices...", .5f);
+            DeleteOldAtlasTextures();
+            var textureSerializer = new TextureSerializer(BuildBasePath());
             var atlasTextureBuilder = new AtlasTextureBuilder(textureSerializer, unitSize, padding, uvInset, forceSquare, atlasSizeLimit);
-            return atlasTextureBuilder.Build(dicedTextures);
+            var atlasTextures = atlasTextureBuilder.Build(dicedTextures);
+            SaveNewAtlasTextures(atlasTextures);
+            return atlasTextures;
+
+            void DeleteOldAtlasTextures ()
+            {
+                for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
+                    if (texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue is Texture2D texture)
+                        AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
+                texturesProperty.arraySize = 0;
+            }
+
+            void SaveNewAtlasTextures (IReadOnlyList<AtlasTexture> textures)
+            {
+                texturesProperty.arraySize = textures.Count;
+                for (int i = 0; i < textures.Count; i++)
+                    texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
+            }
+
+            string BuildBasePath ()
+            {
+                var atlasPath = AssetDatabase.GetAssetPath(targetAtlas);
+                var extensionIndex = atlasPath.LastIndexOf(".asset", StringComparison.Ordinal);
+                return atlasPath.Substring(0, extensionIndex);
+            }
         }
 
-        private string BuildBaseAtlasTexturePath ()
+        private void BuildDicedSprites (IReadOnlyList<AtlasTexture> atlasTextures)
         {
-            var atlasPath = AssetDatabase.GetAssetPath(targetAtlas);
-            var extensionIndex = atlasPath.LastIndexOf(".asset", StringComparison.Ordinal);
-            return atlasPath.Substring(0, extensionIndex);
+            var sprites = new List<Sprite>();
+            for (int i = 0; i < atlasTextures.Count; i++)
+            {
+                DisplayProgressBar("Building diced sprites...", .5f + .5f * i / atlasTextures.Count);
+                sprites.AddRange(BuildDicedSprites(atlasTextures[i]));
+            }
+            SaveDicedSprites(sprites);
         }
 
         private IReadOnlyList<Sprite> BuildDicedSprites (AtlasTexture atlasTexture)
@@ -392,9 +363,10 @@ namespace SpriteDicing
             }
         }
 
-        private static void SaveGeneratedSprites (IReadOnlyList<Sprite> sprites, bool decoupleSpriteData,
-            SerializedProperty generatedSpritesFolderGuidProperty, SerializedProperty spritesProperty, UnityEngine.Object target)
+        private void SaveDicedSprites (IReadOnlyList<Sprite> sprites)
         {
+            DisplayProgressBar("Saving diced sprites...", 1f);
+
             if (!decoupleSpriteData)
             {
                 // Delete generated sprites folder (in case it was previously created).
@@ -443,12 +415,45 @@ namespace SpriteDicing
                 generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
                 spritesProperty.SetListValues(savedDicedSprites);
             }
+
+            serializedObject.ApplyModifiedProperties();
+            AssetDatabase.SaveAssets();
+        }
+
+        private void UpdateDataSize ()
+        {
+            dataSizeValueContent = FormatDataSize(CalculateDataSize());
+
+            long CalculateDataSize ()
+            {
+                var size = CalculateAssetSize(target);
+                if (size == 0) return 0;
+                if (decoupleSpriteData)
+                    for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+                        size += CalculateAssetSize(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
+                return size;
+            }
+
+            long CalculateAssetSize (UnityEngine.Object asset)
+            {
+                if (!asset) return 0;
+                var assetPath = AssetDatabase.GetAssetPath(asset);
+                return new FileInfo(assetPath).Length / 1024;
+            }
+
+            GUIContent FormatDataSize (long size)
+            {
+                if (size == 0) return GUIContent.none;
+                var binary = EditorSettings.serializationMode != SerializationMode.ForceText;
+                var label = $"{size} KB {(binary ? string.Empty : "(uncompressed)")}";
+                return new GUIContent(label);
+            }
         }
 
         private static void DisplayProgressBar (string activity, float progress)
         {
-            EditorUtility.DisplayProgressBar("Building Diced Sprite Atlas", activity, progress);
+            if (EditorUtility.DisplayCancelableProgressBar("Building Diced Sprite Atlas", activity, progress))
+                throw new OperationCanceledException("Diced sprite atlas building was canceled by the user.");
         }
-        #endregion
     }
 }
