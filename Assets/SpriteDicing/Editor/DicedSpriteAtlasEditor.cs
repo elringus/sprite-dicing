@@ -189,7 +189,7 @@ namespace SpriteDicing
             }
             finally
             {
-                EditorUtility.ClearProgressBar(); 
+                EditorUtility.ClearProgressBar();
                 GUIUtility.ExitGUI();
             }
         }
@@ -389,7 +389,7 @@ namespace SpriteDicing
                         EditorUtility.CopySerialized(newSprite, oldSprite);
                         spritesToAdd.Remove(newSprite);
                     }
-                    else DestroyImmediate(oldSprite, true);
+                    else AssetDatabase.RemoveObjectFromAsset(oldSprite);
                 }
 
                 foreach (var spriteToAdd in spritesToAdd)
@@ -404,7 +404,7 @@ namespace SpriteDicing
             {
                 // Delete sprites stored in atlas asset (in case they were previously added).
                 for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                    DestroyImmediate(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue, true);
+                    AssetDatabase.RemoveObjectFromAsset(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
                 AssetDatabase.Refresh();
                 AssetDatabase.SaveAssets();
 
@@ -436,14 +436,13 @@ namespace SpriteDicing
 
             long CalculateAssetSize (UnityEngine.Object asset)
             {
-                if (!asset) return 0;
                 var assetPath = AssetDatabase.GetAssetPath(asset);
+                if (!File.Exists(assetPath)) return 0;
                 return new FileInfo(assetPath).Length / 1024;
             }
 
             GUIContent FormatDataSize (long size)
             {
-                if (size == 0) return GUIContent.none;
                 var binary = EditorSettings.serializationMode != SerializationMode.ForceText;
                 var label = $"{size} KB {(binary ? string.Empty : "(uncompressed)")}";
                 return new GUIContent(label);
