@@ -59,8 +59,6 @@ namespace SpriteDicing
             var savedObjects = new List<T>();
             foreach (var objectToSave in objectsToSave)
                 savedObjects.Add(objectToSave.CreateOrReplaceAsset<T>(Path + "/" + objectToSave.name + ".asset"));
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
 
             return savedObjects;
         }

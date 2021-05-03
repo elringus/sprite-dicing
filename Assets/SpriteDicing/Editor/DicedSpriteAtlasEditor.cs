@@ -31,6 +31,7 @@ namespace SpriteDicing
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
 
         private DicedSpriteAtlas targetAtlas => target as DicedSpriteAtlas;
+        private string atlasPath => AssetDatabase.GetAssetPath(target);
         private int unitSize => diceUnitSizeProperty.intValue;
         private int padding => paddingProperty.intValue;
         private float uvInset => uvInsetProperty.floatValue;
@@ -228,8 +229,12 @@ namespace SpriteDicing
             void DeleteOldAtlasTextures ()
             {
                 for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
-                    if (texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue is Texture2D texture)
-                        AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
+                {
+                    var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                    if (!texture) continue;
+                    AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
+                    DestroyImmediate(texture, true);
+                }
                 texturesProperty.arraySize = 0;
             }
 
@@ -242,7 +247,6 @@ namespace SpriteDicing
 
             string BuildBasePath ()
             {
-                var atlasPath = AssetDatabase.GetAssetPath(targetAtlas);
                 var extensionIndex = atlasPath.LastIndexOf(".asset", StringComparison.Ordinal);
                 return atlasPath.Substring(0, extensionIndex);
             }
@@ -389,29 +393,23 @@ namespace SpriteDicing
                         EditorUtility.CopySerialized(newSprite, oldSprite);
                         spritesToAdd.Remove(newSprite);
                     }
-                    else AssetDatabase.RemoveObjectFromAsset(oldSprite);
+                    else DestroyImmediate(oldSprite, true);
                 }
-
+                AssetDatabase.SaveAssets(); // Required to delete old sprites before adding new ones.
                 foreach (var spriteToAdd in spritesToAdd)
                     AssetDatabase.AddObjectToAsset(spriteToAdd, target);
-
-                AssetDatabase.Refresh();
-                AssetDatabase.SaveAssets();
-
                 spritesProperty.SetListValues(spritesToAdd, false);
             }
             else
             {
                 // Delete sprites stored in atlas asset (in case they were previously added).
-                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                    AssetDatabase.RemoveObjectFromAsset(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
-                AssetDatabase.Refresh();
-                AssetDatabase.SaveAssets();
+                foreach (var asset in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
+                    DestroyImmediate(asset, true);
+                AssetDatabase.SaveAssets(); // Required to remove sub-assets.
 
                 var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
                 var dicedSpritesFolder = new FolderAssetHelper(folderPath);
                 var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(sprites);
-
                 generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
                 spritesProperty.SetListValues(savedDicedSprites);
             }
