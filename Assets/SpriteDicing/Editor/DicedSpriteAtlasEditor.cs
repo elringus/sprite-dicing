@@ -195,7 +195,7 @@ namespace SpriteDicing
             }
         }
 
-        private IReadOnlyList<SourceTexture> CollectSourceTextures ()
+        private SourceTexture[] CollectSourceTextures ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
@@ -204,7 +204,7 @@ namespace SpriteDicing
             return texturePaths.Select(loader.Load).ToArray();
         }
 
-        private IReadOnlyList<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
+        private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
             var dicer = new TextureDicer(unitSize, padding, ppu);
             var dicedTextures = new List<DicedTexture>();
@@ -216,7 +216,7 @@ namespace SpriteDicing
             return dicedTextures;
         }
 
-        private IReadOnlyList<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
+        private List<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
             DisplayProgressBar("Packing dices...", .5f);
             DeleteOldAtlasTextures();
@@ -263,7 +263,7 @@ namespace SpriteDicing
             SaveDicedSprites(sprites);
         }
 
-        private IReadOnlyList<Sprite> BuildDicedSprites (AtlasTexture atlasTexture)
+        private List<Sprite> BuildDicedSprites (AtlasTexture atlasTexture)
         {
             var dicedSprites = new List<Sprite>();
             foreach (var dicedTexture in atlasTexture.DicedTextures)

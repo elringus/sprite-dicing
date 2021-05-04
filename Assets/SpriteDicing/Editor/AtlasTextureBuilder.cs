@@ -28,7 +28,7 @@ namespace SpriteDicing
             this.atlasSizeLimit = atlasSizeLimit;
         }
 
-        public IReadOnlyList<AtlasTexture> Build (IEnumerable<DicedTexture> dicedTextures)
+        public List<AtlasTexture> Build (IEnumerable<DicedTexture> dicedTextures)
         {
             var atlases = new List<AtlasTexture>();
             var paddedUnitSize = unitSize + padding * 2;

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,7 +12,6 @@ namespace SpriteDicing
         private readonly ITextureSerializer serializer;
         private readonly float uvInset;
         private readonly bool square;
-        private readonly int sizeLimit;
         private readonly int unitSize;
         private readonly int padding;
         private readonly int paddedUnitSize;
@@ -24,14 +22,13 @@ namespace SpriteDicing
             this.serializer = serializer;
             this.uvInset = uvInset;
             this.square = square;
-            this.sizeLimit = sizeLimit;
             this.unitSize = unitSize;
             this.padding = padding;
             paddedUnitSize = unitSize + padding * 2;
             unitsPerAtlasLimit = Mathf.FloorToInt(Mathf.Pow(Mathf.FloorToInt(sizeLimit / (float)paddedUnitSize), 2));
         }
 
-        public IReadOnlyList<AtlasTexture> Pack (IEnumerable<DicedTexture> dicedTextures)
+        public List<AtlasTexture> Pack (IEnumerable<DicedTexture> dicedTextures)
         {
             var atlases = new List<AtlasTexture>();
             var texturesToPack = new HashSet<DicedTexture>(dicedTextures);
@@ -43,47 +40,72 @@ namespace SpriteDicing
         private AtlasTexture PackToAtlas (HashSet<DicedTexture> texturesToPack)
         {
             var packedTextures = new List<DicedTexture>();
-            var packedContent = new HashSet<Hash128>();
-            while (FindTextureToPack(texturesToPack, packedContent) is DicedTexture textureToPack)
+            var packedUnits = new HashSet<DicedUnit>();
+            while (FindTextureToPack(texturesToPack, packedUnits) is DicedTexture textureToPack)
             {
                 texturesToPack.Remove(textureToPack);
                 packedTextures.Add(textureToPack);
-                packedContent.UnionWith(textureToPack.UniqueContent);
+                packedUnits.UnionWith(textureToPack.Units);
             }
-            var contentToUV = MapContentToUV(packedTextures);
-            var atlasTexture = BuildAtlasTexture(packedTextures, contentToUV);
+            var atlasTexture = CreateAtlasTexture(packedUnits.Count);
+            var contentToUV = MapContent(packedUnits, atlasTexture);
             return new AtlasTexture(atlasTexture, contentToUV, packedTextures);
         }
 
-        private DicedTexture FindTextureToPack (IReadOnlyCollection<DicedTexture> textures, HashSet<Hash128> packedContent)
+        private DicedTexture FindTextureToPack (IReadOnlyCollection<DicedTexture> texturesToPack, HashSet<DicedUnit> packedUnits)
         {
             var optimalTexture = default(DicedTexture);
             var minUnitsToPack = int.MaxValue;
-            foreach (var texture in textures)
+            foreach (var texture in texturesToPack)
             {
-                var unitsToPack = texture.UniqueContent.Count(c => !packedContent.Contains(c));
+                var unitsToPack = texture.UniqueUnits.Count(c => !packedUnits.Contains(c));
                 if (unitsToPack >= minUnitsToPack) continue;
                 optimalTexture = texture;
                 minUnitsToPack = unitsToPack;
             }
-            return packedContent.Count + minUnitsToPack <= unitsPerAtlasLimit ? optimalTexture : null;
+            return packedUnits.Count + minUnitsToPack <= unitsPerAtlasLimit ? optimalTexture : null;
         }
 
-        private Dictionary<Hash128, Rect> MapContentToUV (IReadOnlyCollection<DicedTexture> packedTextures)
+        private Texture2D CreateAtlasTexture (int unitsCount)
         {
-            return new Dictionary<Hash128, Rect>();
-        }
-
-        private Texture2D BuildAtlasTexture (IReadOnlyCollection<DicedTexture> packedTextures, IReadOnlyDictionary<Hash128, Rect> contentToUV)
-        {
-            return null;
-        }
-
-        private static Texture2D CreateTexture (int width, int height)
-        {
+            var size = Mathf.Sqrt(unitsCount * paddedUnitSize);
+            var width = Mathf.CeilToInt(size);
+            var height = square ? width : Mathf.FloorToInt(size);
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             texture.wrapMode = TextureWrapMode.Clamp;
-            return texture;
+            return serializer.Serialize(texture);
+        }
+
+        private Dictionary<Hash128, Rect> MapContent (HashSet<DicedUnit> packedUnits, Texture2D atlasTexture)
+        {
+            var contentToUV = new Dictionary<Hash128, Rect>();
+            var atlasSize = new Vector2(atlasTexture.width, atlasTexture.height);
+            var unitsPerRow = atlasTexture.width / paddedUnitSize;
+            var unitIndex = 0;
+            foreach (var unit in packedUnits)
+            {
+                var row = ++unitIndex / unitsPerRow + 1;
+                var column = unitIndex % unitsPerRow + 1;
+                SetPixels(row, column, unit.PaddedPixels, atlasTexture);
+                contentToUV[unit.ContentHash] = GetUV(column, row, atlasSize);
+            }
+            return contentToUV;
+        }
+
+        private void SetPixels (int column, int row, Color[] pixels, Texture2D texture)
+        {
+            var x = column * paddedUnitSize;
+            var y = row * paddedUnitSize;
+            texture.SetPixels(x, y, paddedUnitSize, paddedUnitSize, pixels);
+        }
+
+        private Rect GetUV (int column, int row, Vector2 atlasSize)
+        {
+            var width = (unitSize - uvInset) / atlasSize.x;
+            var height = (unitSize - uvInset) / atlasSize.y;
+            var posX = (column * paddedUnitSize - padding + uvInset) / atlasSize.x;
+            var posY = (row * paddedUnitSize - padding + uvInset) / atlasSize.y;
+            return new Rect(posX, posY, width, height);
         }
     }
 }

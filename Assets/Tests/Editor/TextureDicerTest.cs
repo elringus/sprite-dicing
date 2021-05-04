@@ -75,7 +75,7 @@ namespace SpriteDicing.Test
         [Test]
         public void ContentHashOfDistinctPixelsIsNotEqual ()
         {
-            AreNotEqual(Dice(B).Units[0].ContentHash, Dice(R).Units[0].ContentHash);
+            AreNotEqual(Dice(B).Units.First().ContentHash, Dice(R).Units.First().ContentHash);
         }
 
         [Test]
@@ -108,7 +108,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoContentPaddedPixelsAreRepeated ()
         {
-            var pixels = Dice(B, padding: 1).Units[0].PaddedPixels;
+            var pixels = Dice(B, padding: 1).Units.First().PaddedPixels;
             var expected = Map3x3(
                 Color.blue, Color.blue, Color.blue,
                 Color.blue, Color.blue, Color.blue,
@@ -163,10 +163,10 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void UniqueContentIsSubsetOfUnits ()
+        public void UniqueUnitsAreSubsetOfUnits ()
         {
             var dicedTexture = Dice(RGB8x8);
-            CollectionAssert.IsSubsetOf(dicedTexture.UniqueContent, dicedTexture.Units.Select(u => u.ContentHash));
+            CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
         }
 
         private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
