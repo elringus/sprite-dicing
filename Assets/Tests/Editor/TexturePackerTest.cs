@@ -6,7 +6,7 @@ using static NUnit.Framework.Assert;
 
 namespace SpriteDicing.Test
 {
-    public class AtlasTextureBuilderTest
+    public class TexturePackerTest
     {
         [Test]
         public void WhenArgumentNullExceptionIsThrown ()

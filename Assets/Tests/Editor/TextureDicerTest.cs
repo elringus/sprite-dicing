@@ -163,10 +163,10 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void DistinctUnitsAreSubsetOfUnits ()
+        public void UniqueContentIsSubsetOfUnits ()
         {
             var dicedTexture = Dice(RGB8x8);
-            CollectionAssert.IsSubsetOf(dicedTexture.Units.Distinct(), dicedTexture.Units);
+            CollectionAssert.IsSubsetOf(dicedTexture.UniqueContent, dicedTexture.Units.Select(u => u.ContentHash));
         }
 
         private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
