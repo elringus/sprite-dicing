@@ -219,37 +219,32 @@ namespace SpriteDicing
         private List<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
             DisplayProgressBar("Packing dices...", .5f);
-            DeleteOldAtlasTextures();
-            var textureSerializer = new TextureSerializer(BuildBasePath());
-            var atlasTextureBuilder = new AtlasTextureBuilder(textureSerializer, unitSize, padding, uvInset, forceSquare, atlasSizeLimit);
-            var atlasTextures = atlasTextureBuilder.Build(dicedTextures);
-            SaveNewAtlasTextures(atlasTextures);
+            DeleteAtlasTextures();
+            var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".asset", StringComparison.Ordinal));
+            var textureSerializer = new TextureSerializer(basePath);
+            var texturePacker = new TexturePacker(textureSerializer, uvInset, forceSquare, atlasSizeLimit, unitSize, padding);
+            var atlasTextures = texturePacker.Pack(dicedTextures);
+            SaveAtlasTextures(atlasTextures);
             return atlasTextures;
+        }
 
-            void DeleteOldAtlasTextures ()
+        private void DeleteAtlasTextures ()
+        {
+            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
             {
-                for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
-                {
-                    var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                    if (!texture) continue;
-                    AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
-                    DestroyImmediate(texture, true);
-                }
-                texturesProperty.arraySize = 0;
+                var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                if (!texture) continue;
+                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
+                DestroyImmediate(texture, true);
             }
+            texturesProperty.arraySize = 0;
+        }
 
-            void SaveNewAtlasTextures (IReadOnlyList<AtlasTexture> textures)
-            {
-                texturesProperty.arraySize = textures.Count;
-                for (int i = 0; i < textures.Count; i++)
-                    texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
-            }
-
-            string BuildBasePath ()
-            {
-                var extensionIndex = atlasPath.LastIndexOf(".asset", StringComparison.Ordinal);
-                return atlasPath.Substring(0, extensionIndex);
-            }
+        private void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
+        {
+            texturesProperty.arraySize = textures.Count;
+            for (int i = 0; i < textures.Count; i++)
+                texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
         }
 
         private void BuildDicedSprites (IReadOnlyList<AtlasTexture> atlasTextures)
