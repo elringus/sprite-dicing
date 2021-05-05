@@ -38,8 +38,8 @@ namespace SpriteDicing
         [SerializeField] private Object inputFolder;
         [SerializeField] private bool includeSubfolders;
         [SerializeField] private bool prependSubfolderNames;
-        [HideInInspector]
         [SerializeField] private string generatedSpritesFolderGuid;
+        [SerializeField] private string lastRatioValue = "Unknown (build atlas to update)";
         #pragma warning restore 0169, 0414, 1635, IDE0052
         // ReSharper restore NotAccessedField.Local
         #endif
@@ -53,10 +53,10 @@ namespace SpriteDicing
         /// <summary>
         /// Retrieves all the generated sprites associated with the atlas.
         /// </summary>
-        public IReadOnlyCollection<Sprite> GetAllSprites () => sprites;
+        public IReadOnlyList<Sprite> GetAllSprites () => sprites;
         /// <summary>
         /// Retrieves all the generated textures associated with the atlas.
         /// </summary>
-        public IReadOnlyCollection<Texture2D> GetAllTextures () => textures;
+        public IReadOnlyList<Texture2D> GetAllTextures () => textures;
     }
 }

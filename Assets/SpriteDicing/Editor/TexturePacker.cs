@@ -12,6 +12,7 @@ namespace SpriteDicing
         private readonly ITextureSerializer serializer;
         private readonly float uvInset;
         private readonly bool square;
+        private readonly int sizeLimit;
         private readonly int unitSize;
         private readonly int padding;
         private readonly int paddedUnitSize;
@@ -22,6 +23,7 @@ namespace SpriteDicing
             this.serializer = serializer;
             this.uvInset = uvInset;
             this.square = square;
+            this.sizeLimit = sizeLimit;
             this.unitSize = unitSize;
             this.padding = padding;
             paddedUnitSize = unitSize + padding * 2;
@@ -47,9 +49,10 @@ namespace SpriteDicing
                 packedTextures.Add(textureToPack);
                 packedUnits.UnionWith(textureToPack.Units);
             }
-            var atlasTexture = CreateAtlasTexture(packedUnits.Count);
+            var atlasSize = EvaluateAtlasSize(packedUnits.Count);
+            var atlasTexture = CreateAtlasTexture(atlasSize);
             var contentToUV = MapContent(packedUnits, atlasTexture);
-            return new AtlasTexture(atlasTexture, contentToUV, packedTextures);
+            return new AtlasTexture(serializer.Serialize(atlasTexture), contentToUV, packedTextures);
         }
 
         private DicedTexture FindTextureToPack (IReadOnlyCollection<DicedTexture> texturesToPack, HashSet<DicedUnit> packedUnits)
@@ -66,14 +69,25 @@ namespace SpriteDicing
             return packedUnits.Count + minUnitsToPack <= unitsPerAtlasLimit ? optimalTexture : null;
         }
 
-        private Texture2D CreateAtlasTexture (int unitsCount)
+        private Vector2Int EvaluateAtlasSize (int unitsCount)
         {
-            var size = Mathf.Sqrt(unitsCount * paddedUnitSize);
-            var width = Mathf.CeilToInt(size);
-            var height = square ? width : Mathf.FloorToInt(size);
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            var size = Vector2Int.one * Mathf.CeilToInt(Mathf.Sqrt(unitsCount));
+            if (square) return size * paddedUnitSize;
+            for (var width = size.x; width > 0; width--)
+            {
+                var height = Mathf.CeilToInt(unitsCount / (float)width);
+                if (height * paddedUnitSize > sizeLimit) break;
+                if (width * height < size.x * size.y)
+                    size = new Vector2Int(width, height);
+            }
+            return size * paddedUnitSize;
+        }
+
+        private Texture2D CreateAtlasTexture (Vector2Int size)
+        {
+            var texture = new Texture2D(size.x, size.y, TextureFormat.RGBA32, false);
             texture.wrapMode = TextureWrapMode.Clamp;
-            return serializer.Serialize(texture);
+            return texture;
         }
 
         private Dictionary<Hash128, Rect> MapContent (HashSet<DicedUnit> packedUnits, Texture2D atlasTexture)
@@ -84,9 +98,9 @@ namespace SpriteDicing
             var unitIndex = 0;
             foreach (var unit in packedUnits)
             {
-                var row = ++unitIndex / unitsPerRow + 1;
-                var column = unitIndex % unitsPerRow + 1;
-                SetPixels(row, column, unit.PaddedPixels, atlasTexture);
+                var row = unitIndex / unitsPerRow;
+                var column = unitIndex++ % unitsPerRow;
+                SetPixels(column, row, unit.PaddedPixels, atlasTexture);
                 contentToUV[unit.ContentHash] = GetUV(column, row, atlasSize);
             }
             return contentToUV;
@@ -101,11 +115,19 @@ namespace SpriteDicing
 
         private Rect GetUV (int column, int row, Vector2 atlasSize)
         {
-            var width = (unitSize - uvInset) / atlasSize.x;
-            var height = (unitSize - uvInset) / atlasSize.y;
-            var posX = (column * paddedUnitSize - padding + uvInset) / atlasSize.x;
-            var posY = (row * paddedUnitSize - padding + uvInset) / atlasSize.y;
-            return new Rect(posX, posY, width, height);
+            var width = unitSize / atlasSize.x;
+            var height = unitSize / atlasSize.y;
+            var posX = (column * paddedUnitSize + padding) / atlasSize.x;
+            var posY = (row * paddedUnitSize + padding) / atlasSize.y;
+            return InsetUV(new Rect(posX, posY, width, height));
+        }
+
+        private Rect InsetUV (Rect uv)
+        {
+            var crop = uvInset * (uv.width / 2f);
+            var position = uv.position + Vector2.one * crop;
+            var size = uv.size - Vector2.one * (crop * 2);
+            return new Rect(position, size);
         }
     }
 }

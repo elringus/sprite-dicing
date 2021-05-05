@@ -14,7 +14,7 @@ namespace SpriteDicing
     [CustomEditor(typeof(DicedSpriteAtlas)), CanEditMultipleObjects]
     public class DicedSpriteAtlasEditor : Editor
     {
-        private static readonly GUIContent dataSizeContent = new GUIContent("Generated Data Size", "Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size.");
+        private static readonly GUIContent ratioContent = new GUIContent("Compression Ratio", "Total size of the source textures divided by size of the generated diced atlas textures plus associated sprite data (higher is better).");
         private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
         private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
         private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
@@ -29,6 +29,7 @@ namespace SpriteDicing
         private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
         private static readonly int[] diceUnitSizeValues = { 8, 16, 32, 64, 128, 256 };
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+        private static GUIStyle richLabelStyle;
 
         private DicedSpriteAtlas targetAtlas => target as DicedSpriteAtlas;
         private string atlasPath => AssetDatabase.GetAssetPath(target);
@@ -60,7 +61,8 @@ namespace SpriteDicing
         private SerializedProperty includeSubfoldersProperty;
         private SerializedProperty prependSubfolderNamesProperty;
         private SerializedProperty generatedSpritesFolderGuidProperty;
-        private GUIContent dataSizeValueContent;
+        private SerializedProperty lastRatioValue;
+        private GUIContent ratioValueContent;
 
         private void OnEnable ()
         {
@@ -79,19 +81,20 @@ namespace SpriteDicing
             includeSubfoldersProperty = serializedObject.FindProperty("includeSubfolders");
             prependSubfolderNamesProperty = serializedObject.FindProperty("prependSubfolderNames");
             generatedSpritesFolderGuidProperty = serializedObject.FindProperty("generatedSpritesFolderGuid");
-
-            UpdateDataSize();
+            lastRatioValue = serializedObject.FindProperty("lastRatioValue");
+            ratioValueContent = new GUIContent(lastRatioValue.stringValue);
         }
 
         #region GUI
         public override void OnInspectorGUI ()
         {
             serializedObject.Update();
+            InitializeRichStyle();
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.PropertyField(texturesProperty, true);
             EditorGUILayout.PropertyField(spritesProperty, true);
             EditorGUI.EndDisabledGroup();
-            EditorGUILayout.LabelField(dataSizeContent, dataSizeValueContent);
+            EditorGUILayout.LabelField(ratioContent, ratioValueContent, richLabelStyle);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(decoupleSpriteDataProperty, decoupleSpriteDataContent);
             DrawPivotGUI();
@@ -102,6 +105,13 @@ namespace SpriteDicing
             EditorGUILayout.PropertyField(uvInsetProperty, uvInsetContent);
             DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void InitializeRichStyle ()
+        {
+            if (richLabelStyle != null) return;
+            richLabelStyle = new GUIStyle(GUI.skin.label);
+            richLabelStyle.richText = true;
         }
 
         private void DrawPaddingSlider ()
@@ -186,7 +196,7 @@ namespace SpriteDicing
                 var dicedTextures = DiceTextures(sourceTextures);
                 var atlasTextures = PackTextures(dicedTextures);
                 BuildDicedSprites(atlasTextures);
-                UpdateDataSize();
+                UpdateRatio(sourceTextures, atlasTextures);
             }
             finally
             {
@@ -413,32 +423,32 @@ namespace SpriteDicing
             AssetDatabase.SaveAssets();
         }
 
-        private void UpdateDataSize ()
+        private void UpdateRatio (IEnumerable<SourceTexture> sourceTextures, IEnumerable<AtlasTexture> atlasTextures)
         {
-            dataSizeValueContent = FormatDataSize(CalculateDataSize());
+            var sourceSize = sourceTextures.Sum(t => GetAssetSize(t.Texture));
+            var atlasSize = atlasTextures.Sum(t => GetAssetSize(t.Texture));
+            var dataSize = GetDataSize();
+            var ratio = sourceSize / (float)(atlasSize + dataSize);
+            var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
+            ratioValueContent = new GUIContent($"{sourceSize} KB / ({atlasSize} KB + {dataSize} KB) = <color={color}>{ratio:F2}</color>");
+            lastRatioValue.stringValue = ratioValueContent.text;
+            serializedObject.ApplyModifiedProperties();
+            AssetDatabase.SaveAssets();
 
-            long CalculateDataSize ()
+            long GetDataSize ()
             {
-                var size = CalculateAssetSize(target);
-                if (size == 0) return 0;
+                var size = GetAssetSize(target);
                 if (decoupleSpriteData)
                     for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                        size += CalculateAssetSize(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
-                return size;
+                        size += GetAssetSize(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
+                return size / (EditorSettings.serializationMode == SerializationMode.ForceText ? 2 : 1);
             }
 
-            long CalculateAssetSize (UnityEngine.Object asset)
+            long GetAssetSize (UnityEngine.Object asset)
             {
                 var assetPath = AssetDatabase.GetAssetPath(asset);
                 if (!File.Exists(assetPath)) return 0;
                 return new FileInfo(assetPath).Length / 1024;
-            }
-
-            GUIContent FormatDataSize (long size)
-            {
-                var binary = EditorSettings.serializationMode != SerializationMode.ForceText;
-                var label = $"{size} KB {(binary ? string.Empty : "(uncompressed)")}";
-                return new GUIContent(label);
             }
         }
 
