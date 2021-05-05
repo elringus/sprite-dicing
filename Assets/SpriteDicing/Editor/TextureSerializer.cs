@@ -23,7 +23,7 @@ namespace SpriteDicing
             SaveAsPNG(texture, filePath);
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
             var maxSize = Mathf.Max(texture.width, texture.height);
-            ApplyImportSettings(filePath, maxSize);
+            ApplyImportSettings(filePath, Mathf.NextPowerOfTwo(maxSize));
             UnityEngine.Object.DestroyImmediate(texture);
             return png;
         }
