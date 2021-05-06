@@ -26,11 +26,11 @@ namespace SpriteDicing
         // ReSharper disable NotAccessedField.Local (used by the editor scripts via reflection)
         #pragma warning disable 0169, 0414, 1635, IDE0052
         [SerializeField] private int atlasSizeLimit = 2048;
-        [SerializeField] private bool forceSquare = false;
+        [SerializeField] private bool forceSquare;
         [SerializeField] private float pixelsPerUnit = 100f;
         [SerializeField] private int diceUnitSize = 64;
         [SerializeField] private int padding = 2;
-        [SerializeField] private float uvInset = 0f;
+        [SerializeField] private float uvInset;
         [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
         [SerializeField] private bool keepOriginalPivot;
         [SerializeField] private bool decoupleSpriteData;
