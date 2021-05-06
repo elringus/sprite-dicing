@@ -124,7 +124,7 @@ namespace SpriteDicing
 
         private GUIContent GetBuildButtonContent ()
         {
-            var name = targetAtlas.SpritesCount > 0 ? "Rebuild Atlas" : "Build Atlas";
+            var name = targetAtlas.Sprites.Count > 0 ? "Rebuild Atlas" : "Build Atlas";
             var tooltip = inputFolderProperty.objectReferenceValue ? "" : "Select input directory to build atlas.";
             return new GUIContent(name, tooltip);
         }

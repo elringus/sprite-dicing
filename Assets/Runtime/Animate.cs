@@ -12,9 +12,8 @@ public class Animate : MonoBehaviour
     {
         var renderer = GetComponent<SpriteRenderer>();
         var waitForSeconds = new WaitForSeconds(Delay);
-        var sprites = Atlas.GetAllSprites();
 
-        foreach (var sprite in sprites)
+        foreach (var sprite in Atlas.Sprites)
         {
             renderer.sprite = sprite;
             yield return waitForSeconds;

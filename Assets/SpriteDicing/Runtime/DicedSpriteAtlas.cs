@@ -4,22 +4,22 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Stores diced sprites data and associated atlas textures.
+    /// Stores diced sprites and associated atlas textures.
     /// </summary>
     [CreateAssetMenu(menuName = "Diced Sprite Atlas", order = 350)]
     public class DicedSpriteAtlas : ScriptableObject
     {
         /// <summary>
-        /// Number of sprites stored in this atlas.
+        /// Diced sprites stored in the atlas.
         /// </summary>
-        public int SpritesCount => sprites.Count;
+        public IReadOnlyList<Sprite> Sprites => sprites;
         /// <summary>
-        /// Number of textures used by this atlas.
+        /// Atlas textures used by the diced sprites.
         /// </summary>
-        public int TexturesCount => textures.Count;
+        public IReadOnlyList<Texture2D> Textures => textures;
 
-        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
         [SerializeField] private List<Sprite> sprites = new List<Sprite>();
+        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
 
         #if UNITY_EDITOR
         // Editor-only data to track source sprite textures and store build configuration.
@@ -45,18 +45,10 @@ namespace SpriteDicing
         #endif
 
         /// <summary>
-        /// Retrieves a generated sprite with the provided name.
+        /// Retrieves a diced sprite with the specified name.
         /// </summary>
         /// <param name="spriteName">Name of the sprite to retrieve.</param>
         /// <returns>Diced sprite data or null if not found.</returns>
-        public Sprite GetSprite (string spriteName) => sprites.Find(s => s.name.Equals(spriteName));
-        /// <summary>
-        /// Retrieves all the generated sprites associated with the atlas.
-        /// </summary>
-        public IReadOnlyList<Sprite> GetAllSprites () => sprites;
-        /// <summary>
-        /// Retrieves all the generated textures associated with the atlas.
-        /// </summary>
-        public IReadOnlyList<Texture2D> GetAllTextures () => textures;
+        public Sprite GetSprite (string spriteName) => sprites.Find(s => s.name == spriteName);
     }
 }
