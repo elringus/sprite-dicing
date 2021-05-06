@@ -257,14 +257,16 @@ namespace SpriteDicing
                 texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
         }
 
-        private void BuildDicedSprites (IReadOnlyList<AtlasTexture> atlasTextures)
+        private void BuildDicedSprites (IReadOnlyCollection<AtlasTexture> atlasTextures)
         {
             var sprites = new List<Sprite>();
             var builder = new SpriteBuilder(ppu, defaultPivot, keepOriginalPivot);
-            for (int i = 0; i < atlasTextures.Count; i++)
+            float total = atlasTextures.Sum(a => a.DicedTextures.Count), built = 0;
+            foreach (var atlasTexture in atlasTextures)
+            foreach (var dicedTexture in atlasTexture.DicedTextures)
             {
-                DisplayProgressBar("Building diced sprites...", .5f + .5f * i / atlasTextures.Count);
-                sprites.AddRange(builder.Build(atlasTextures[i]));
+                DisplayProgressBar("Building diced sprites...", .5f + ++built / total * .5f);
+                sprites.Add(builder.Build(atlasTexture, dicedTexture));
             }
             SaveDicedSprites(sprites);
         }
