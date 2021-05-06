@@ -8,20 +8,6 @@ namespace SpriteDicing
 {
     public static class Utilities
     {
-        public static void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
-        {
-            var toggleValue = property.boolValue;
-            EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
-            EditorGUI.BeginChangeCheck();
-            var oldIndent = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = 0;
-            toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
-            EditorGUI.indentLevel = oldIndent;
-            if (EditorGUI.EndChangeCheck())
-                property.boolValue = property.hasMultipleDifferentValues || !property.boolValue;
-            EditorGUI.showMixedValue = false;
-        }
-
         public static T CreateOrReplaceAsset<T> (this UnityEngine.Object asset, string path) where T : UnityEngine.Object
         {
             var existingAsset = AssetDatabase.LoadAssetAtPath<T>(path);
@@ -53,9 +39,6 @@ namespace SpriteDicing
             serializedProperty.serializedObject.CopyFromSerializedProperty(new SerializedObject(targetObject).FindProperty(serializedProperty.name));
         }
 
-        /// <summary>
-        /// Attempts to extract content before the specified match (on first occurence).
-        /// </summary>
         public static string GetBefore (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
             if (content.Contains(matchString))
@@ -66,9 +49,6 @@ namespace SpriteDicing
             else return null;
         }
 
-        /// <summary>
-        /// Attempts to extract content before the specified match (on last occurence).
-        /// </summary>
         public static string GetBeforeLast (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
             if (content.Contains(matchString))
@@ -79,9 +59,6 @@ namespace SpriteDicing
             else return null;
         }
 
-        /// <summary>
-        /// Attempts to extract content after the specified match (on last occurence).
-        /// </summary>
         public static string GetAfter (this string content, string matchString, StringComparison comp = StringComparison.Ordinal)
         {
             if (content.Contains(matchString))
@@ -91,22 +68,6 @@ namespace SpriteDicing
                 return content.Substring(startIndex);
             }
             else return null;
-        }
-
-        public static Rect Scale (this Rect rect, float scale)
-        {
-            return new Rect(rect.position * scale, rect.size * scale);
-        }
-
-        public static Rect Scale (this Rect rect, Vector2 scale)
-        {
-            return new Rect(new Vector2(rect.position.x * scale.x, rect.position.y * scale.y),
-                new Vector2(rect.size.x * scale.x, rect.size.y * scale.y));
-        }
-
-        public static Rect Crop (this Rect rect, float cropAmount)
-        {
-            return new Rect(rect.position - Vector2.one * cropAmount, rect.size + Vector2.one * (cropAmount * 2f));
         }
     }
 }

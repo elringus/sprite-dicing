@@ -48,7 +48,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenAssociatedSpriteExistItsLoaded ()
         {
-            IsTrue(Load(RGB8x8).Sprite);
+            IsTrue(Load(RGB4x4).Sprite);
         }
 
         [Test]
@@ -80,9 +80,9 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenCrunchedBecomesNotCrunchedAfterLoad ()
         {
-            GetImporter(RGB8x8).crunchedCompression = true;
-            Load(RGB8x8);
-            IsFalse(GetImporter(RGB8x8).crunchedCompression);
+            GetImporter(RGB4x4).crunchedCompression = true;
+            Load(RGB4x4);
+            IsFalse(GetImporter(RGB4x4).crunchedCompression);
         }
 
         private static SourceTexture Load (string texturePath, string nameRoot = null)

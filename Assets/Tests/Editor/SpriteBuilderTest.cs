@@ -1,0 +1,67 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using NUnit.Framework;
+using UnityEngine;
+using static NUnit.Framework.Assert;
+using static SpriteDicing.Test.Helpers.Paths;
+
+namespace SpriteDicing.Test
+{
+    public class SpriteBuilderTest
+    {
+        [Test]
+        public void WhenInvalidArgumentExceptionIsThrown ()
+        {
+            Throws<ArgumentException>(() => Build(Array.Empty<string>(), ppu: 0));
+        }
+
+        [Test]
+        public void CustomPivotIsAppliedToSprite ()
+        {
+            var pivot = new Vector2(.95f, -.15f);
+            AreEqual(pivot, Build(new[] { B }, pivot: pivot)[0].pivot);
+        }
+
+        [Test]
+        public void OriginalPivotIsPreserved ()
+        {
+            AreEqual(Vector2.one, Build(new[] { RGB4x4 }, keepOriginalPivot: true)[0].pivot);
+        }
+
+        [Test]
+        public void SpriteSizeIsPreserved ()
+        {
+            AreEqual(Vector2.one, Build(new[] { B })[0].rect.size);
+            AreEqual(new Vector2(2, 2), Build(new[] { BGRT })[0].rect.size);
+            AreEqual(new Vector2(1, 3), Build(new[] { RGB1x3 })[0].rect.size);
+            AreEqual(new Vector2(3, 1), Build(new[] { RGB3x1 })[0].rect.size);
+            AreEqual(new Vector2(4, 4), Build(new[] { RGB4x4 })[0].rect.size);
+        }
+
+        [Test]
+        public void TransparentAreasAreTrimmed ()
+        {
+            AreEqual(new Vector2(1, 2), Build(new[] { BTGT })[0].rect.size);
+        }
+
+        private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, int sizeLimit = 8,
+            int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false)
+        {
+            // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
+            var textureLoader = new TextureLoader();
+            var sourceTextures = texturePaths.Select(textureLoader.Load);
+            var dicer = new TextureDicer(unitSize, padding, ppu);
+            var dicedTextures = sourceTextures.Select(dicer.Dice);
+            var serializer = new MockTextureSerializer();
+            var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);
+            var atlasTextures = packer.Pack(dicedTextures);
+            var builder = new SpriteBuilder(ppu, pivot, keepOriginalPivot);
+            var sprites = new List<Sprite>();
+            foreach (var atlasTexture in atlasTextures)
+            foreach (var dicedTexture in atlasTexture.DicedTextures)
+                sprites.Add(builder.Build(atlasTexture, dicedTexture));
+            return sprites;
+        }
+    }
+}

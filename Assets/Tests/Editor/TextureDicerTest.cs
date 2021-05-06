@@ -31,15 +31,15 @@ namespace SpriteDicing.Test
         public void UnitCountEqualDoubleTextureSizeDividedByUnitSizeSquare ()
         {
             AreEqual(3, Dice(RGB1x3).Units.Count);
-            AreEqual(4, Dice(RGB8x8, 2).Units.Count);
-            AreEqual(1, Dice(RGB8x8, 4).Units.Count);
+            AreEqual(4, Dice(RGB4x4, 2).Units.Count);
+            AreEqual(1, Dice(RGB4x4, 4).Units.Count);
         }
 
         [Test]
         public void UnitCountDoesntDependOnPadding ()
         {
-            var normalUnits = Dice(RGB8x8, padding: 0).Units;
-            var paddedUnits = Dice(RGB8x8, padding: 1).Units;
+            var normalUnits = Dice(RGB4x4, padding: 0).Units;
+            var paddedUnits = Dice(RGB4x4, padding: 1).Units;
             AreEqual(normalUnits.Count, paddedUnits.Count);
         }
 
@@ -47,7 +47,7 @@ namespace SpriteDicing.Test
         public void WhenUnitSizeIsLargerThanTextureSingleUnitIsDiced ()
         {
             AreEqual(1, Dice(RGB3x1, 5).Units.Count);
-            AreEqual(1, Dice(RGB8x8, 128).Units.Count);
+            AreEqual(1, Dice(RGB4x4, 128).Units.Count);
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace SpriteDicing.Test
         [Test]
         public void SourceTextureIsPreserved ()
         {
-            AreEqual(RGB8x8, Dice(RGB8x8).Source.Texture);
+            AreEqual(RGB4x4, Dice(RGB4x4).Source.Texture);
         }
 
         [Test]
@@ -81,8 +81,8 @@ namespace SpriteDicing.Test
         [Test]
         public void ContentHashIgnoresPadding ()
         {
-            var normalUnits = Dice(RGB8x8, padding: 0).Units;
-            var paddedUnits = Dice(RGB8x8, padding: 1).Units;
+            var normalUnits = Dice(RGB4x4, padding: 0).Units;
+            var paddedUnits = Dice(RGB4x4, padding: 1).Units;
             foreach (var paddedUnit in paddedUnits)
                 IsTrue(normalUnits.Any(u => u.ContentHash == paddedUnit.ContentHash));
         }
@@ -159,13 +159,13 @@ namespace SpriteDicing.Test
         [Test]
         public void DistinctUnitsAreNotEqual ()
         {
-            CollectionAssert.AllItemsAreUnique(Dice(RGB8x8).Units.Distinct());
+            CollectionAssert.AllItemsAreUnique(Dice(RGB4x4).Units.Distinct());
         }
 
         [Test]
         public void UniqueUnitsAreSubsetOfUnits ()
         {
-            var dicedTexture = Dice(RGB8x8);
+            var dicedTexture = Dice(RGB4x4);
             CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
         }
 

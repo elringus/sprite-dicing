@@ -52,27 +52,27 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenContentFromSingleTextureDoesntFitExceptionIsThrown ()
         {
-            Throws<InvalidOperationException>(() => Pack(new[] { RGB8x8 }, sizeLimit: 1));
+            Throws<InvalidOperationException>(() => Pack(new[] { RGB4x4 }, sizeLimit: 1));
         }
 
         [Test]
         public void WhenForcingSquareAtlasTextureIsSquare ()
         {
-            var atlas = Pack(new[] { RGB8x8, B }, sizeLimit: 4, square: true)[0];
+            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 4, square: true)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
         }
 
         [Test]
         public void WhenNotForcingSquareAndSquareIsNotOptimalAtlasTextureIsNotSquare ()
         {
-            var atlas = Pack(new[] { RGB8x8, B }, sizeLimit: 4, square: false)[0];
+            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 4, square: false)[0];
             IsFalse(atlas.Texture.width == atlas.Texture.height);
         }
 
         [Test]
         public void WhenNotForcingSquareButSquareIsOptimalAtlasTextureIsSquare ()
         {
-            var atlas = Pack(new[] { RGB8x8, B }, sizeLimit: 6, square: false, padding: 1)[0];
+            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 6, square: false, padding: 1)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
         }
 

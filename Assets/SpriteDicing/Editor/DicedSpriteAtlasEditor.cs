@@ -131,31 +131,29 @@ namespace SpriteDicing
 
         private void DrawPivotGUI ()
         {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var rect = EditorGUILayout.GetControlRect();
-                rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
-                rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-                using (new EditorGUI.DisabledScope(keepOriginalPivotProperty.boolValue))
-                    defaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivotProperty.vector2Value);
-                rect.x += rect.width + 5;
-                Utilities.ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
-            }
+            EditorGUILayout.BeginHorizontal();
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
+            rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+            using (new EditorGUI.DisabledScope(keepOriginalPivotProperty.boolValue))
+                defaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivotProperty.vector2Value);
+            rect.x += rect.width + 5;
+            ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
+            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawSizeGUI ()
         {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                var rect = EditorGUILayout.GetControlRect();
-                rect = EditorGUI.PrefixLabel(rect, -1, atlasSizeLimitContent);
-                rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-                var popupValues = new[] { 1024, 2048, 4096, 8192 };
-                var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
-                EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
-                rect.x += rect.width + 5;
-                Utilities.ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
-            }
+            EditorGUILayout.BeginHorizontal();
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.PrefixLabel(rect, -1, atlasSizeLimitContent);
+            rect.width = Mathf.Max(50, (rect.width - 4) / 2);
+            var popupValues = new[] { 1024, 2048, 4096, 8192 };
+            var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
+            EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
+            rect.x += rect.width + 5;
+            ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
+            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawInputFolderGUI ()
@@ -171,10 +169,10 @@ namespace SpriteDicing
             rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
             EditorGUIUtility.labelWidth = 50;
-            Utilities.ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
+            ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
             rect.x += rect.width + 5;
             using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
-                Utilities.ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
+                ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
             EditorGUIUtility.labelWidth = 0;
             EditorGUILayout.EndHorizontal();
 
@@ -185,6 +183,20 @@ namespace SpriteDicing
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
+        }
+
+        private static void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
+        {
+            var toggleValue = property.boolValue;
+            EditorGUI.showMixedValue = property.hasMultipleDifferentValues;
+            EditorGUI.BeginChangeCheck();
+            var oldIndent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            toggleValue = EditorGUI.ToggleLeft(position, label, toggleValue);
+            EditorGUI.indentLevel = oldIndent;
+            if (EditorGUI.EndChangeCheck())
+                property.boolValue = property.hasMultipleDifferentValues || !property.boolValue;
+            EditorGUI.showMixedValue = false;
         }
         #endregion
 
@@ -265,7 +277,7 @@ namespace SpriteDicing
             foreach (var atlasTexture in atlasTextures)
             foreach (var dicedTexture in atlasTexture.DicedTextures)
             {
-                DisplayProgressBar("Building diced sprites...", .5f + ++built / total * .5f);
+                DisplayProgressBar("Building diced sprites...", .5f + .5f * ++built / total);
                 sprites.Add(builder.Build(atlasTexture, dicedTexture));
             }
             SaveDicedSprites(sprites);

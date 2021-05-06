@@ -14,8 +14,9 @@ namespace SpriteDicing
     /// </summary>
     public class SpriteBuilder
     {
-        // Public sprite ctor won't allow using a rect that is larger than the texture.
-        private static readonly MethodInfo createSpriteMethod = GetCreateSpriteMethod();
+        // Public sprite ctor won't allow rect larger than the texture. (https://git.io/J31tI)
+        private static readonly MethodInfo createSpriteMethod =
+            typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
 
         private readonly float ppu;
         private readonly Vector2 defaultPivot;
@@ -26,7 +27,7 @@ namespace SpriteDicing
 
         public SpriteBuilder (float ppu, Vector2 defaultPivot, bool keepOriginalPivot)
         {
-            this.ppu = ppu;
+            this.ppu = ppu <= 0 ? throw new ArgumentException("PPU should be greater than zero.") : ppu;
             this.defaultPivot = defaultPivot;
             this.keepOriginalPivot = keepOriginalPivot;
         }
@@ -36,17 +37,12 @@ namespace SpriteDicing
             ResetState();
             foreach (var unit in dicedTexture.Units)
                 AddDicedUnit(unit, atlasTexture.ContentToUV[unit.ContentHash]);
-            var originalPivot = TrimVertices(dicedTexture.Source.Sprite);
+            var spriteRect = EvaluateSpriteRect();
+            var originalPivot = GetOriginalPivot(spriteRect, dicedTexture.Source.Sprite);
             var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
-            ApplyPivotChange(pivot);
-            var renderRect = EvaluateSpriteRect().Scale(ppu);
+            ApplyPivotChange(spriteRect, pivot);
+            var renderRect = EvaluateSpriteRect(ppu);
             return CreateSprite(dicedTexture.Source.Name, atlasTexture.Texture, pivot, renderRect);
-        }
-
-        private static MethodInfo GetCreateSpriteMethod ()
-        {
-            var method = typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
-            return method ?? throw new Exception("Failed to get Unity's internal create sprite method.");
         }
 
         private void AddDicedUnit (DicedUnit unit, Rect uv)
@@ -80,35 +76,26 @@ namespace SpriteDicing
             triangles.Add((ushort)idx2);
         }
 
-        private Rect EvaluateSpriteRect ()
+        private Rect EvaluateSpriteRect (float scale = 1)
         {
             var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
             var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
             var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
             var spriteSizeY = Mathf.Abs(maxVertPos.y - minVertPos.y);
             var spriteSize = new Vector2(spriteSizeX, spriteSizeY);
-            return new Rect(minVertPos, spriteSize);
+            return new Rect(minVertPos * scale, spriteSize * scale);
         }
 
-        private Vector2 TrimVertices (Sprite sourceSprite)
+        private Vector2 GetOriginalPivot (Rect rect, Sprite sourceSprite)
         {
-            var rect = EvaluateSpriteRect();
-            if (rect.min.x > 0 || rect.min.y > 0)
-                for (int i = 0; i < vertices.Count; i++)
-                    vertices[i] -= (Vector3)rect.min;
             if (!sourceSprite) return -rect.min / rect.size;
             return (sourceSprite.pivot / ppu - rect.min) / rect.size;
         }
 
-        private void ApplyPivotChange (Vector2 newPivot)
+        private void ApplyPivotChange (Rect rect, Vector2 newPivot)
         {
-            var spriteRect = EvaluateSpriteRect();
-            var curPivot = new Vector2(-spriteRect.min.x / spriteRect.size.x, -spriteRect.min.y / spriteRect.size.y);
-            var curDeltaX = spriteRect.size.x * curPivot.x;
-            var curDeltaY = spriteRect.size.y * curPivot.y;
-            var newDeltaX = spriteRect.size.x * newPivot.x;
-            var newDeltaY = spriteRect.size.y * newPivot.y;
-            var deltaPos = new Vector3(newDeltaX - curDeltaX, newDeltaY - curDeltaY);
+            var curPivot = new Vector2(-rect.min.x / rect.size.x, -rect.min.y / rect.size.y);
+            var deltaPos = (Vector3)(rect.size * newPivot - rect.size * curPivot);
             for (int i = 0; i < vertices.Count; i++)
                 vertices[i] -= deltaPos;
         }
