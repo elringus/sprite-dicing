@@ -18,8 +18,8 @@ namespace SpriteDicing
         /// </summary>
         public IReadOnlyList<Texture2D> Textures => textures;
 
-        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
         [SerializeField] private List<Sprite> sprites = new List<Sprite>();
+        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
 
         #if UNITY_EDITOR
         // Editor-only data to track source sprite textures and store build configuration.

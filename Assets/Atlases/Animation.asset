@@ -6312,10 +6312,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c68106294c057640a5701c6cc4e5f0e, type: 3}
   m_Name: Animation
   m_EditorClassIdentifier: 
-  textures:
-  - {fileID: 2800000, guid: 070fca11f489df848bc92b2bcadba78e, type: 3}
-  - {fileID: 2800000, guid: f5dda0510b3ac8f40900807c5656e6c6, type: 3}
-  - {fileID: 2800000, guid: bff6f499ccce2804aa491f583fb0fec9, type: 3}
   sprites:
   - {fileID: 3356193528851568247}
   - {fileID: 1915847020247638807}
@@ -6375,6 +6371,10 @@ MonoBehaviour:
   - {fileID: -4272564504028064880}
   - {fileID: -5695821861506680217}
   - {fileID: 7946185528702977107}
+  textures:
+  - {fileID: 2800000, guid: 070fca11f489df848bc92b2bcadba78e, type: 3}
+  - {fileID: 2800000, guid: f5dda0510b3ac8f40900807c5656e6c6, type: 3}
+  - {fileID: 2800000, guid: bff6f499ccce2804aa491f583fb0fec9, type: 3}
   atlasSizeLimit: 4096
   forceSquare: 0
   pixelsPerUnit: 100

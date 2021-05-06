@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c68106294c057640a5701c6cc4e5f0e, type: 3}
   m_Name: Kohaku
   m_EditorClassIdentifier: 
-  textures:
-  - {fileID: 2800000, guid: 129f337fbba715e4083dd83ac545d3f1, type: 3}
   sprites:
   - {fileID: 4376504475622857655}
   - {fileID: 4408961792009645208}
   - {fileID: 965755747622868936}
+  textures:
+  - {fileID: 2800000, guid: 129f337fbba715e4083dd83ac545d3f1, type: 3}
   atlasSizeLimit: 2048
   forceSquare: 0
   pixelsPerUnit: 100
