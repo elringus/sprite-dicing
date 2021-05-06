@@ -102,7 +102,7 @@ namespace SpriteDicing
             pixelsPerUnitProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnitProperty.floatValue));
             EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
             DrawPaddingSlider();
-            EditorGUILayout.PropertyField(uvInsetProperty, uvInsetContent);
+            EditorGUILayout.Slider(uvInsetProperty, 0f, .5f, uvInsetContent);
             DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
         }
