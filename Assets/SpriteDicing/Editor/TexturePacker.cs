@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,6 +21,12 @@ namespace SpriteDicing
 
         public TexturePacker (ITextureSerializer serializer, float uvInset, bool square, int sizeLimit, int unitSize, int padding)
         {
+            if (serializer is null) throw new ArgumentNullException(nameof(serializer));
+            if (uvInset < 0 || uvInset > .5f) throw new ArgumentException("UV inset should be in 0 to 0.5 range.");
+            if (sizeLimit < 1) throw new ArgumentException("Size limit should be greater than zero.");
+            if (unitSize < 1 || unitSize > sizeLimit) throw new ArgumentException("Unit size should be in 1 to size limit range.");
+            if (padding < 0 || padding > unitSize) throw new ArgumentException("Padding should be in 0 to unit size range.");
+
             this.serializer = serializer;
             this.uvInset = uvInset;
             this.square = square;
@@ -32,6 +39,8 @@ namespace SpriteDicing
 
         public List<AtlasTexture> Pack (IEnumerable<DicedTexture> dicedTextures)
         {
+            if (dicedTextures is null) throw new ArgumentNullException(nameof(dicedTextures));
+
             var atlases = new List<AtlasTexture>();
             var texturesToPack = new HashSet<DicedTexture>(dicedTextures);
             while (texturesToPack.Count > 0)
@@ -49,13 +58,15 @@ namespace SpriteDicing
                 packedTextures.Add(textureToPack);
                 packedUnits.UnionWith(textureToPack.Units);
             }
+            if (packedTextures.Count == 0)
+                throw new InvalidOperationException("Can't fit a single texture; consider increasing atlas size.");
             var atlasSize = EvaluateAtlasSize(packedUnits.Count);
             var atlasTexture = CreateAtlasTexture(atlasSize);
             var contentToUV = MapContent(packedUnits, atlasTexture);
             return new AtlasTexture(serializer.Serialize(atlasTexture), contentToUV, packedTextures);
         }
 
-        private DicedTexture FindTextureToPack (IReadOnlyCollection<DicedTexture> texturesToPack, HashSet<DicedUnit> packedUnits)
+        private DicedTexture FindTextureToPack (IEnumerable<DicedTexture> texturesToPack, HashSet<DicedUnit> packedUnits)
         {
             var optimalTexture = default(DicedTexture);
             var minUnitsToPack = int.MaxValue;
