@@ -303,13 +303,9 @@ namespace SpriteDicing
                 DeleteEmbeddedSprites();
                 var folderPath = GetOrCreateGeneratedSpritesFolder();
                 var newSprites = new List<Sprite>(sprites);
+                UpdatedDecoupledSprites(folderPath, newSprites);
                 foreach (var newSprite in newSprites)
-                {
-                    var path = Path.Combine(folderPath, $"{newSprite.name}.asset");
-                    if (AssetDatabase.LoadMainAssetAtPath(path) is Sprite oldSprite)
-                        EditorUtility.CopySerialized(newSprite, oldSprite);
-                    else AssetDatabase.CreateAsset(newSprite, path);
-                }
+                    AssetDatabase.CreateAsset(newSprite, Path.Combine(folderPath, $"{newSprite.name}.asset"));
                 generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
                 SetSpriteValues(newSprites, true);
             }
@@ -324,6 +320,19 @@ namespace SpriteDicing
             var newPath = Path.Combine(parentPath, folderName);
             Directory.CreateDirectory(newPath);
             return newPath;
+        }
+
+        private void UpdatedDecoupledSprites (string folderPath, List<Sprite> newSprites)
+        {
+            foreach (var path in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
+            {
+                if (newSprites.Find(s => s.name == Path.GetFileNameWithoutExtension(path)) is Sprite newSprite)
+                {
+                    EditorUtility.CopySerialized(newSprite, AssetDatabase.LoadAssetAtPath<Sprite>(path));
+                    newSprites.Remove(newSprite);
+                }
+                else AssetDatabase.DeleteAsset(path);
+            }
         }
 
         private void UpdatedEmbeddedSprites (List<Sprite> newSprites)
