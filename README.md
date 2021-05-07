@@ -51,6 +51,12 @@ You can optionally configure atlas generation settings via the editor inspector 
 
 All the above descriptions are available as tooltips when hovering corresponding configuration options in the editor.
 
+## UI
+
+To use the diced sprites in UI (eg, `Image` component), enable `Use Sprite Mesh`.
+
+![](https://i.gyazo.com/8f22fe0bded5ae72b5ef662e842bcacf.png)
+
 ## Animation
 
 It's possible to use diced sprites for animation. Make sure to enable `Keep Original Pivot` when generating the atlas to preserve the relative positions of the generated sprites. An example on animating diced sprites is available in the project in "Animation" scene.
