@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,6 +30,7 @@ namespace SpriteDicing
 
         private DicedSpriteAtlas targetAtlas => target as DicedSpriteAtlas;
         private string atlasPath => AssetDatabase.GetAssetPath(target);
+        private string generatedSpritesFolderGuid => generatedSpritesFolderGuidProperty.stringValue;
         private int unitSize => diceUnitSizeProperty.intValue;
         private int padding => paddingProperty.intValue;
         private float uvInset => uvInsetProperty.floatValue;
@@ -279,55 +281,92 @@ namespace SpriteDicing
             SaveDicedSprites(sprites);
         }
 
-        private void SaveDicedSprites (IReadOnlyList<Sprite> sprites)
+        private void SaveDicedSprites (IEnumerable<Sprite> sprites)
         {
-            DisplayProgressBar("Saving diced sprites...", 1f);
-
-            if (!decoupleSpriteData)
-            {
-                // Delete generated sprites folder (in case it was previously created).
-                if (!string.IsNullOrWhiteSpace(generatedSpritesFolderGuidProperty.stringValue))
-                {
-                    var folderPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuidProperty.stringValue);
-                    if (AssetDatabase.IsValidFolder(folderPath))
-                        AssetDatabase.DeleteAsset(folderPath);
-                }
-
-                // Update rebuilt sprites to preserve references and delete stale ones.
-                var spritesToAdd = new List<Sprite>(sprites);
-                for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                {
-                    var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
-                    if (!oldSprite) continue;
-                    var newSprite = spritesToAdd.Find(sprite => sprite.name == oldSprite.name);
-                    if (newSprite)
-                    {
-                        EditorUtility.CopySerialized(newSprite, oldSprite);
-                        spritesToAdd.Remove(newSprite);
-                    }
-                    else DestroyImmediate(oldSprite, true);
-                }
-                AssetDatabase.SaveAssets(); // Required to delete old sprites before adding new ones.
-                foreach (var spriteToAdd in spritesToAdd)
-                    AssetDatabase.AddObjectToAsset(spriteToAdd, target);
-                spritesProperty.SetListValues(spritesToAdd, false);
-            }
-            else
-            {
-                // Delete sprites stored in atlas asset (in case they were previously added).
-                foreach (var asset in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
-                    DestroyImmediate(asset, true);
-                AssetDatabase.SaveAssets(); // Required to remove sub-assets.
-
-                var folderPath = AssetDatabase.GetAssetPath(target).GetBeforeLast("/") + "/" + target.name;
-                var dicedSpritesFolder = new FolderAssetHelper(folderPath);
-                var savedDicedSprites = dicedSpritesFolder.SetContainedAssets(sprites);
-                generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
-                spritesProperty.SetListValues(savedDicedSprites);
-            }
-
+            if (decoupleSpriteData) SaveDecoupled();
+            else SaveEmbedded();
             serializedObject.ApplyModifiedProperties();
             AssetDatabase.SaveAssets();
+
+            void SaveEmbedded ()
+            {
+                DeleteDecoupledSprites();
+                var newSprites = new List<Sprite>(sprites);
+                UpdatedEmbeddedSprites(newSprites);
+                foreach (var sprite in newSprites)
+                    AssetDatabase.AddObjectToAsset(sprite, target);
+                SetSpriteValues(newSprites, false);
+            }
+
+            void SaveDecoupled ()
+            {
+                DeleteEmbeddedSprites();
+                var folderPath = GetOrCreateGeneratedSpritesFolder();
+                var newSprites = new List<Sprite>(sprites);
+                foreach (var newSprite in newSprites)
+                {
+                    var path = Path.Combine(folderPath, $"{newSprite.name}.asset");
+                    if (AssetDatabase.LoadMainAssetAtPath(path) is Sprite oldSprite)
+                        EditorUtility.CopySerialized(newSprite, oldSprite);
+                    else AssetDatabase.CreateAsset(newSprite, path);
+                }
+                generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
+                SetSpriteValues(newSprites, true);
+            }
+        }
+
+        private string GetOrCreateGeneratedSpritesFolder ()
+        {
+            var existingPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuid);
+            if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
+            var parentPath = Path.GetDirectoryName(atlasPath);
+            var folderName = Path.GetFileNameWithoutExtension(atlasPath);
+            var newPath = Path.Combine(parentPath, folderName);
+            Directory.CreateDirectory(newPath);
+            return newPath;
+        }
+
+        private void UpdatedEmbeddedSprites (List<Sprite> newSprites)
+        {
+            for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+            {
+                var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+                if (!oldSprite) continue;
+                if (newSprites.Find(s => s.name == oldSprite.name) is Sprite newSprite)
+                {
+                    EditorUtility.CopySerialized(newSprite, oldSprite);
+                    newSprites.Remove(newSprite);
+                }
+                else DestroyImmediate(oldSprite, true);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
+        private void DeleteDecoupledSprites ()
+        {
+            var folderPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuid);
+            if (AssetDatabase.IsValidFolder(folderPath))
+                AssetDatabase.DeleteAsset(folderPath);
+        }
+
+        private void DeleteEmbeddedSprites ()
+        {
+            foreach (var asset in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
+                DestroyImmediate(asset, true);
+            AssetDatabase.SaveAssets();
+        }
+
+        private void SetSpriteValues (IEnumerable<Sprite> values, bool clear)
+        {
+            var objectType = typeof(DicedSpriteAtlas);
+            var fieldInfo = objectType.GetField(spritesProperty.name, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fieldInfo is null) throw new Exception();
+            var list = (List<Sprite>)fieldInfo.GetValue(target);
+            if (clear) list.Clear();
+            list.AddRange(values);
+            list.RemoveAll(item => !item || item == null);
+            var copiedProperty = new SerializedObject(target).FindProperty(spritesProperty.name);
+            spritesProperty.serializedObject.CopyFromSerializedProperty(copiedProperty);
         }
 
         private void UpdateRatio (IEnumerable<SourceTexture> sourceTextures, IEnumerable<AtlasTexture> atlasTextures)
