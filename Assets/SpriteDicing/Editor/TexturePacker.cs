@@ -112,7 +112,7 @@ namespace SpriteDicing
                 var row = unitIndex / unitsPerRow;
                 var column = unitIndex++ % unitsPerRow;
                 SetPixels(column, row, unit.PaddedPixels, atlasTexture);
-                contentToUV[unit.ContentHash] = GetUV(column, row, atlasSize);
+                contentToUV[unit.ContentHash] = CropBorderUV(GetUV(column, row, atlasSize), unit.QuadVerts);
             }
             return contentToUV;
         }
@@ -139,6 +139,13 @@ namespace SpriteDicing
             var position = uv.position + Vector2.one * crop;
             var size = uv.size - Vector2.one * (crop * 2);
             return new Rect(position, size);
+        }
+
+        private Rect CropBorderUV (Rect uv, RectInt quad)
+        {
+            uv.width *= quad.width / (float)unitSize;
+            uv.height *= quad.height / (float)unitSize;
+            return uv;
         }
     }
 }

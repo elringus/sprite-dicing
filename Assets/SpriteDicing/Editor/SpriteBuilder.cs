@@ -54,7 +54,14 @@ namespace SpriteDicing
 
         private void AddDicedUnit (DicedUnit unit, Rect uv)
         {
-            AddQuad(unit.QuadVerts.min, unit.QuadVerts.max, uv.min, uv.max);
+            var rect = ScaleRect(unit.QuadVerts);
+            AddQuad(rect.min, rect.max, uv.min, uv.max);
+        }
+
+        private Rect ScaleRect (RectInt rect)
+        {
+            var scale = 1f / ppu;
+            return new Rect((Vector2)rect.position * scale, (Vector2)rect.size * scale);
         }
 
         private void AddQuad (Vector2 posMin, Vector2 posMax, Vector2 uvMin, Vector2 uvMax)

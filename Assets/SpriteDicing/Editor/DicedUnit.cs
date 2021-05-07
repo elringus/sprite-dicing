@@ -9,9 +9,9 @@ namespace SpriteDicing
     public readonly struct DicedUnit : IEquatable<DicedUnit>
     {
         /// <summary>
-        /// Positions of the quad vertices used to represent the unit in (local) space.
+        /// Positions of the quad vertices in the local texture space.
         /// </summary>
-        public Rect QuadVerts { get; }
+        public RectInt QuadVerts { get; }
         /// <summary>
         /// Colors of the diced unit, plus colors from the padding rect.
         /// </summary>
@@ -21,7 +21,7 @@ namespace SpriteDicing
         /// </summary>
         public Hash128 ContentHash { get; }
 
-        public DicedUnit (Rect quadVerts, Color[] paddedPixels, Hash128 contentHash)
+        public DicedUnit (RectInt quadVerts, Color[] paddedPixels, Hash128 contentHash)
         {
             this.QuadVerts = quadVerts;
             this.PaddedPixels = paddedPixels;

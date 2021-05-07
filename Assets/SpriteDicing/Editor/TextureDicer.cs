@@ -12,17 +12,14 @@ namespace SpriteDicing
     {
         private readonly int unitSize;
         private readonly int padding;
-        private readonly float ppu;
 
-        public TextureDicer (int unitSize, int padding, float ppu)
+        public TextureDicer (int unitSize, int padding)
         {
             if (unitSize < 1) throw new ArgumentException("Size should be greater than one.");
             if (padding < 0) throw new ArgumentException("Padding couldn't be negative.");
-            if (ppu <= 0) throw new ArgumentException("PPU should be greater than zero.");
 
             this.unitSize = unitSize;
             this.padding = padding;
-            this.ppu = ppu;
         }
 
         public DicedTexture Dice (SourceTexture source)
@@ -42,7 +39,7 @@ namespace SpriteDicing
                 if (pixels.All(p => p.a == 0)) continue;
                 var paddedRect = PadRect(pixelsRect, padding);
                 var paddedPixels = GetPixels(texture, paddedRect);
-                var quadVerts = ScaleRect(pixelsRect, ppu);
+                var quadVerts = CropOverBorders(pixelsRect, x, y, texture);
                 var hash = GetHash(unitSize, pixels);
                 var dicedUnit = new DicedUnit(quadVerts, paddedPixels, hash);
                 units.Add(dicedUnit);
@@ -70,10 +67,11 @@ namespace SpriteDicing
             return new RectInt(rect.position - delta, rect.size + delta * 2);
         }
 
-        private static Rect ScaleRect (RectInt rect, float ppu)
+        private static RectInt CropOverBorders (RectInt rect, int x, int y, Texture texture)
         {
-            var scale = 1f / ppu;
-            return new Rect((Vector2)rect.position * scale, (Vector2)rect.size * scale);
+            rect.width = Mathf.Min(rect.width, texture.width - x);
+            rect.height = Mathf.Min(rect.height, texture.height - y);
+            return rect;
         }
 
         private static Hash128 GetHash (int size, Color[] pixels)

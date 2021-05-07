@@ -77,9 +77,10 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenPaddingUVsAreMappedToNotPaddedPixels ()
+        public void BorderUVsAreCropped ()
         {
-            AreEqual(new Rect(.25f, .25f, .5f, .5f), Pack(new[] { B }, padding: 2, unitSize: 4)[0].ContentToUV.First().Value);
+            var uv = Pack(new[] { B }, padding: 1, unitSize: 2)[0].ContentToUV.First().Value;
+            AreEqual(new Rect(.25f, .25f, .25f, .25f), uv);
         }
 
         [Test]
@@ -98,7 +99,7 @@ namespace SpriteDicing.Test
             float uvInset = 0, bool square = false, int sizeLimit = 8, int unitSize = 1, int padding = 0)
         {
             // TODO: Don't use dicer here; create mock diced textures instead.
-            var dicer = new TextureDicer(unitSize, padding, 1);
+            var dicer = new TextureDicer(unitSize, padding);
             var dicedTextures = textures.Select(t => new SourceTexture(t.name, t)).Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
             var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);

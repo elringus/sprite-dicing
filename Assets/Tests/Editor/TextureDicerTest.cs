@@ -22,12 +22,6 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenPPUZeroExceptionIsThrown ()
-        {
-            Throws<ArgumentException>(() => Dice(BGRT, ppu: 0));
-        }
-
-        [Test]
         public void UnitCountEqualDoubleTextureSizeDividedByUnitSizeSquare ()
         {
             AreEqual(3, Dice(RGB1x3).Units.Count);
@@ -90,19 +84,10 @@ namespace SpriteDicing.Test
         [Test]
         public void UnitVertsAreMappedToSourceTexture ()
         {
-            var verts = Dice(BGRT, ppu: 1).Units.Select(u => u.QuadVerts).ToArray();
-            Contains(new Rect(0, 0, 1, 1), verts);
-            Contains(new Rect(0, 1, 1, 1), verts);
-            Contains(new Rect(1, 1, 1, 1), verts);
-        }
-
-        [Test]
-        public void UnitVertsAreScaledByPPU ()
-        {
-            var verts = Dice(RGB3x1, ppu: 100).Units.Select(u => u.QuadVerts).ToArray();
-            Contains(new Rect(0.00f, 0, 0.01f, 0.01f), verts);
-            Contains(new Rect(0.01f, 0, 0.01f, 0.01f), verts);
-            Contains(new Rect(0.02f, 0, 0.01f, 0.01f), verts);
+            var verts = Dice(BGRT).Units.Select(u => u.QuadVerts).ToArray();
+            Contains(new RectInt(0, 0, 1, 1), verts);
+            Contains(new RectInt(0, 1, 1, 1), verts);
+            Contains(new RectInt(1, 1, 1, 1), verts);
         }
 
         [Test]
@@ -137,16 +122,16 @@ namespace SpriteDicing.Test
         [Test]
         public void UnitsWithEqualContentHashAreEqual ()
         {
-            var unit1 = new DicedUnit(new Rect(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
-            var unit2 = new DicedUnit(new Rect(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
             AreEqual(unit1, unit2);
         }
 
         [Test]
         public void BoxedUnitsWithEqualContentHashAreEqual ()
         {
-            var unit1 = new DicedUnit(new Rect(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
-            var unit2 = new DicedUnit(new Rect(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
             IsTrue(unit1.Equals((object)unit2));
         }
 
@@ -169,10 +154,10 @@ namespace SpriteDicing.Test
             CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
         }
 
-        private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, float ppu = 100)
+        private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0)
         {
             var source = new SourceTexture(texture.name, texture);
-            return new TextureDicer(size, padding, ppu).Dice(source);
+            return new TextureDicer(size, padding).Dice(source);
         }
 
         private static Color[] Map3x3 (params Color[] colors)

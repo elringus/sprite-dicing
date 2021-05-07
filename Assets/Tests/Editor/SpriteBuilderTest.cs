@@ -40,6 +40,13 @@ namespace SpriteDicing.Test
         }
 
         [Test]
+        public void SpriteVertsAreScaledByPPU ()
+        {
+            AreEqual(Vector2.one, (Vector2)Build(new[] { B }, ppu: 1)[0].bounds.size);
+            AreEqual(Vector2.one * .5f, (Vector2)Build(new[] { B }, ppu: 2)[0].bounds.size);
+        }
+
+        [Test]
         public void TransparentAreasAreTrimmed ()
         {
             AreEqual(new Vector2(1, 2), Build(new[] { BTGT })[0].rect.size);
@@ -51,7 +58,7 @@ namespace SpriteDicing.Test
             // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
             var textureLoader = new TextureLoader();
             var sourceTextures = texturePaths.Select(textureLoader.Load);
-            var dicer = new TextureDicer(unitSize, padding, ppu);
+            var dicer = new TextureDicer(unitSize, padding);
             var dicedTextures = sourceTextures.Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
             var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);

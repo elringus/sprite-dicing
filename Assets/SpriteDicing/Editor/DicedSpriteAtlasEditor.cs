@@ -228,7 +228,7 @@ namespace SpriteDicing
 
         private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
-            var dicer = new TextureDicer(unitSize, padding, ppu);
+            var dicer = new TextureDicer(unitSize, padding);
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {
