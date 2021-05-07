@@ -1,38 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c68106294c057640a5701c6cc4e5f0e, type: 3}
-  m_Name: Kohaku
-  m_EditorClassIdentifier: 
-  sprites:
-  - {fileID: 8860754109871147811}
-  - {fileID: 4515174256798398921}
-  - {fileID: 2777281518280552509}
-  textures:
-  - {fileID: 2800000, guid: 129f337fbba715e4083dd83ac545d3f1, type: 3}
-  atlasSizeLimit: 2048
-  forceSquare: 0
-  pixelsPerUnit: 100
-  diceUnitSize: 128
-  padding: 2
-  uvInset: 0
-  defaultPivot: {x: 0.5, y: 0.5}
-  keepOriginalPivot: 0
-  decoupleSpriteData: 0
-  inputFolder: {fileID: 102900000, guid: 12f2a0a5539e3d546bbcd16952cdfaf9, type: 3}
-  includeSubfolders: 1
-  prependSubfolderNames: 1
-  generatedSpritesFolderGuid: 8d0d531598cde8b49b1e09981de20e9c
-  lastRatioValue: 1412 KB / (671 KB + 22 KB) = <color=lime>2.04</color>
---- !u!213 &2777281518280552509
+--- !u!213 &-9022843987157249772
 Sprite:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -242,6 +210,38 @@ Sprite:
   m_PhysicsShape: []
   m_Bones: []
   m_SpriteID: 
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c68106294c057640a5701c6cc4e5f0e, type: 3}
+  m_Name: Kohaku
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: 8860754109871147811}
+  - {fileID: 4515174256798398921}
+  - {fileID: -9022843987157249772}
+  textures:
+  - {fileID: 2800000, guid: 129f337fbba715e4083dd83ac545d3f1, type: 3}
+  atlasSizeLimit: 2048
+  forceSquare: 0
+  pixelsPerUnit: 100
+  diceUnitSize: 128
+  padding: 2
+  uvInset: 0
+  defaultPivot: {x: 0.5, y: 0.5}
+  keepOriginalPivot: 0
+  decoupleSpriteData: 0
+  inputFolder: {fileID: 102900000, guid: 12f2a0a5539e3d546bbcd16952cdfaf9, type: 3}
+  includeSubfolders: 1
+  prependSubfolderNames: 1
+  generatedSpritesFolderGuid: 8d0d531598cde8b49b1e09981de20e9c
+  lastRatioValue: 1412 KB / (671 KB + 22 KB) = <color=lime>2.04</color>
 --- !u!213 &4515174256798398921
 Sprite:
   m_ObjectHideFlags: 0
