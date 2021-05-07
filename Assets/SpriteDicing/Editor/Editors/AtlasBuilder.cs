@@ -116,7 +116,7 @@ namespace SpriteDicing
             {
                 DeleteDecoupledSprites();
                 var newSprites = new List<Sprite>(sprites);
-                UpdatedEmbeddedSprites(newSprites);
+                UpdateEmbeddedSprites(newSprites);
                 foreach (var sprite in newSprites)
                     AssetDatabase.AddObjectToAsset(sprite, target);
                 SetSpriteValues(newSprites, false);
@@ -127,7 +127,7 @@ namespace SpriteDicing
                 DeleteEmbeddedSprites();
                 var folderPath = GetOrCreateGeneratedSpritesFolder();
                 var newSprites = new List<Sprite>(sprites);
-                UpdatedDecoupledSprites(folderPath, newSprites);
+                UpdateDecoupledSprites(folderPath, newSprites);
                 foreach (var newSprite in newSprites)
                     AssetDatabase.CreateAsset(newSprite, Path.Combine(folderPath, $"{newSprite.name}.asset"));
                 GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
@@ -146,7 +146,7 @@ namespace SpriteDicing
             return newPath;
         }
 
-        private void UpdatedDecoupledSprites (string folderPath, List<Sprite> newSprites)
+        private void UpdateDecoupledSprites (string folderPath, List<Sprite> newSprites)
         {
             foreach (var path in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
             {
@@ -159,7 +159,7 @@ namespace SpriteDicing
             }
         }
 
-        private void UpdatedEmbeddedSprites (List<Sprite> newSprites)
+        private void UpdateEmbeddedSprites (List<Sprite> newSprites)
         {
             for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
             {
