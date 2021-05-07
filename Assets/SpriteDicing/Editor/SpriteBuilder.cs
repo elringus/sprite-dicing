@@ -45,6 +45,13 @@ namespace SpriteDicing
             return CreateSprite(dicedTexture.Source.Name, atlasTexture.Texture, pivot, renderRect);
         }
 
+        private void ResetState ()
+        {
+            vertices.Clear();
+            uvs.Clear();
+            triangles.Clear();
+        }
+
         private void AddDicedUnit (DicedUnit unit, Rect uv)
         {
             AddQuad(unit.QuadVerts.min, unit.QuadVerts.max, uv.min, uv.max);
@@ -111,13 +118,6 @@ namespace SpriteDicing
             sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.ToArray(), Allocator.Temp));
             sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
             return sprite;
-        }
-
-        private void ResetState ()
-        {
-            vertices.Clear();
-            uvs.Clear();
-            triangles.Clear();
         }
     }
 }
