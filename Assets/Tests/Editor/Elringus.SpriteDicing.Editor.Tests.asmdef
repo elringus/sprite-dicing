@@ -1,0 +1,18 @@
+{
+    "name": "Elringus.SpriteDicing.Editor.Tests",
+    "references": [
+        "GUID:88c54edcfcc58e24c8b704cdd7d780e1",
+        "GUID:81c401ef1874c8b49bf6018603cd2279"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
