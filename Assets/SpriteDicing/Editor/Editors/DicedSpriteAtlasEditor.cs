@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using static SpriteDicing.EditorProperties;
 
 namespace SpriteDicing
 {
@@ -30,57 +31,12 @@ namespace SpriteDicing
 
         private DicedSpriteAtlas targetAtlas => target as DicedSpriteAtlas;
         private string atlasPath => AssetDatabase.GetAssetPath(target);
-        private string generatedSpritesFolderGuid => generatedSpritesFolderGuidProperty.stringValue;
-        private int unitSize => diceUnitSizeProperty.intValue;
-        private int padding => paddingProperty.intValue;
-        private float uvInset => uvInsetProperty.floatValue;
-        private float ppu => pixelsPerUnitProperty.floatValue;
-        private bool forceSquare => forceSquareProperty.boolValue;
-        private int atlasSizeLimit => atlasSizeLimitProperty.intValue;
-        private UnityEngine.Object inputFolder => inputFolderProperty.objectReferenceValue;
-        private bool includeSubfolders => includeSubfoldersProperty.boolValue;
-        private bool prependSubfolderNames => prependSubfolderNamesProperty.boolValue;
-        private bool keepOriginalPivot => keepOriginalPivotProperty.boolValue;
-        private Vector2 defaultPivot => defaultPivotProperty.vector2Value;
-        private bool decoupleSpriteData => decoupleSpriteDataProperty.boolValue;
-
-        private SerializedProperty texturesProperty;
-        private SerializedProperty spritesProperty;
-        private SerializedProperty defaultPivotProperty;
-        private SerializedProperty keepOriginalPivotProperty;
-        private SerializedProperty decoupleSpriteDataProperty;
-        private SerializedProperty atlasSizeLimitProperty;
-        private SerializedProperty forceSquareProperty;
-        private SerializedProperty pixelsPerUnitProperty;
-        private SerializedProperty diceUnitSizeProperty;
-        private SerializedProperty paddingProperty;
-        private SerializedProperty uvInsetProperty;
-        private SerializedProperty inputFolderProperty;
-        private SerializedProperty includeSubfoldersProperty;
-        private SerializedProperty prependSubfolderNamesProperty;
-        private SerializedProperty generatedSpritesFolderGuidProperty;
-        private SerializedProperty lastRatioValue;
         private GUIContent ratioValueContent;
 
         private void OnEnable ()
         {
-            texturesProperty = serializedObject.FindProperty("textures");
-            spritesProperty = serializedObject.FindProperty("sprites");
-            defaultPivotProperty = serializedObject.FindProperty("defaultPivot");
-            keepOriginalPivotProperty = serializedObject.FindProperty("keepOriginalPivot");
-            decoupleSpriteDataProperty = serializedObject.FindProperty("decoupleSpriteData");
-            atlasSizeLimitProperty = serializedObject.FindProperty("atlasSizeLimit");
-            forceSquareProperty = serializedObject.FindProperty("forceSquare");
-            pixelsPerUnitProperty = serializedObject.FindProperty("pixelsPerUnit");
-            diceUnitSizeProperty = serializedObject.FindProperty("diceUnitSize");
-            paddingProperty = serializedObject.FindProperty("padding");
-            uvInsetProperty = serializedObject.FindProperty("uvInset");
-            inputFolderProperty = serializedObject.FindProperty("inputFolder");
-            includeSubfoldersProperty = serializedObject.FindProperty("includeSubfolders");
-            prependSubfolderNamesProperty = serializedObject.FindProperty("prependSubfolderNames");
-            generatedSpritesFolderGuidProperty = serializedObject.FindProperty("generatedSpritesFolderGuid");
-            lastRatioValue = serializedObject.FindProperty("lastRatioValue");
-            ratioValueContent = new GUIContent(lastRatioValue.stringValue);
+            InitializeProperties(serializedObject);
+            ratioValueContent = new GUIContent(LastRatioValue);
         }
 
         #region GUI
@@ -89,18 +45,18 @@ namespace SpriteDicing
             serializedObject.Update();
             InitializeRichStyle();
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.PropertyField(texturesProperty, true);
-            EditorGUILayout.PropertyField(spritesProperty, true);
+            EditorGUILayout.PropertyField(TexturesProperty, true);
+            EditorGUILayout.PropertyField(SpritesProperty, true);
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.LabelField(ratioContent, ratioValueContent, richLabelStyle);
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(decoupleSpriteDataProperty, decoupleSpriteDataContent);
+            EditorGUILayout.PropertyField(DecoupleSpriteDataProperty, decoupleSpriteDataContent);
             DrawPivotGUI();
             DrawSizeGUI();
-            pixelsPerUnitProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, pixelsPerUnitProperty.floatValue));
-            EditorGUILayout.IntPopup(diceUnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
+            PPUProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, PPU));
+            EditorGUILayout.IntPopup(UnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
             DrawPaddingSlider();
-            EditorGUILayout.Slider(uvInsetProperty, 0f, .5f, uvInsetContent);
+            EditorGUILayout.Slider(UVInsetProperty, 0f, .5f, uvInsetContent);
             DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
         }
@@ -114,16 +70,16 @@ namespace SpriteDicing
 
         private void DrawPaddingSlider ()
         {
-            var maxValue = diceUnitSizeProperty.intValue / 2;
-            var value = EditorGUILayout.IntSlider(paddingContent, paddingProperty.intValue, 0, maxValue);
+            var maxValue = UnitSize / 2;
+            var value = EditorGUILayout.IntSlider(paddingContent, Padding, 0, maxValue);
             var nearestEven = value % 2 == 0 ? value : Mathf.Min(value + 1, maxValue);
-            paddingProperty.intValue = nearestEven;
+            PaddingProperty.intValue = nearestEven;
         }
 
         private GUIContent GetBuildButtonContent ()
         {
             var name = targetAtlas.Sprites.Count > 0 ? "Rebuild Atlas" : "Build Atlas";
-            var tooltip = inputFolderProperty.objectReferenceValue ? "" : "Select input directory to build atlas.";
+            var tooltip = InputFolder ? "" : "Select input directory to build atlas.";
             return new GUIContent(name, tooltip);
         }
 
@@ -133,10 +89,10 @@ namespace SpriteDicing
             var rect = EditorGUILayout.GetControlRect();
             rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-            using (new EditorGUI.DisabledScope(keepOriginalPivotProperty.boolValue))
-                defaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, defaultPivotProperty.vector2Value);
+            using (new EditorGUI.DisabledScope(KeepOriginalPivot))
+                DefaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, DefaultPivot);
             rect.x += rect.width + 5;
-            ToggleLeftGUI(rect, keepOriginalPivotProperty, keepOriginalPivotContent);
+            ToggleLeftGUI(rect, KeepOriginalPivotProperty, keepOriginalPivotContent);
             EditorGUILayout.EndHorizontal();
         }
 
@@ -148,29 +104,30 @@ namespace SpriteDicing
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
             var popupValues = new[] { 1024, 2048, 4096, 8192 };
             var popupLabels = popupValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
-            EditorGUI.IntPopup(rect, atlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
+            EditorGUI.IntPopup(rect, AtlasSizeLimitProperty, popupLabels, popupValues, GUIContent.none);
             rect.x += rect.width + 5;
-            ToggleLeftGUI(rect, forceSquareProperty, forceSquareContent);
+            ToggleLeftGUI(rect, ForceSquareProperty, forceSquareContent);
             EditorGUILayout.EndHorizontal();
         }
 
         private void DrawInputFolderGUI ()
         {
-            var folderObject = EditorGUI.ObjectField(EditorGUILayout.GetControlRect(), inputFolderContent, inputFolderProperty.objectReferenceValue, typeof(DefaultAsset), false);
+            var folderObject = EditorGUI.ObjectField(EditorGUILayout.GetControlRect(),
+                inputFolderContent, InputFolder, typeof(DefaultAsset), false);
             if (folderObject == null || AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(folderObject)))
-                inputFolderProperty.objectReferenceValue = folderObject;
+                InputFolderProperty.objectReferenceValue = folderObject;
 
-            EditorGUI.BeginDisabledGroup(!inputFolderProperty.objectReferenceValue);
+            EditorGUI.BeginDisabledGroup(!InputFolder);
 
             EditorGUILayout.BeginHorizontal();
             var rect = EditorGUILayout.GetControlRect();
             rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
             EditorGUIUtility.labelWidth = 50;
-            ToggleLeftGUI(rect, includeSubfoldersProperty, includeSubfoldersContent);
+            ToggleLeftGUI(rect, IncludeSubfoldersProperty, includeSubfoldersContent);
             rect.x += rect.width + 5;
-            using (new EditorGUI.DisabledScope(!includeSubfoldersProperty.boolValue))
-                ToggleLeftGUI(rect, prependSubfolderNamesProperty, prependSubfolderNamesContent);
+            using (new EditorGUI.DisabledScope(!IncludeSubfolders))
+                ToggleLeftGUI(rect, PrependSubfolderNamesProperty, prependSubfolderNamesContent);
             EditorGUIUtility.labelWidth = 0;
             EditorGUILayout.EndHorizontal();
 
@@ -218,15 +175,15 @@ namespace SpriteDicing
         private SourceTexture[] CollectSourceTextures ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
-            var inputFolderPath = AssetDatabase.GetAssetPath(inputFolder);
-            var texturePaths = TextureFinder.FindAt(inputFolderPath, includeSubfolders);
-            var loader = new TextureLoader(prependSubfolderNames ? inputFolderPath : null);
+            var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
+            var texturePaths = TextureFinder.FindAt(inputFolderPath, IncludeSubfolders);
+            var loader = new TextureLoader(PrependSubfolderNames ? inputFolderPath : null);
             return texturePaths.Select(loader.Load).ToArray();
         }
 
         private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
-            var dicer = new TextureDicer(unitSize, padding);
+            var dicer = new TextureDicer(UnitSize, Padding);
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {
@@ -242,7 +199,7 @@ namespace SpriteDicing
             DeleteAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".asset", StringComparison.Ordinal));
             var textureSerializer = new TextureSerializer(basePath);
-            var texturePacker = new TexturePacker(textureSerializer, uvInset, forceSquare, atlasSizeLimit, unitSize, padding);
+            var texturePacker = new TexturePacker(textureSerializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
             var atlasTextures = texturePacker.Pack(dicedTextures);
             SaveAtlasTextures(atlasTextures);
             return atlasTextures;
@@ -250,27 +207,27 @@ namespace SpriteDicing
 
         private void DeleteAtlasTextures ()
         {
-            for (int i = texturesProperty.arraySize - 1; i >= 0; i--)
+            for (int i = TexturesProperty.arraySize - 1; i >= 0; i--)
             {
-                var texture = texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                var texture = TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
                 if (!texture) continue;
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
                 DestroyImmediate(texture, true);
             }
-            texturesProperty.arraySize = 0;
+            TexturesProperty.arraySize = 0;
         }
 
         private void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
         {
-            texturesProperty.arraySize = textures.Count;
+            TexturesProperty.arraySize = textures.Count;
             for (int i = 0; i < textures.Count; i++)
-                texturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
+                TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
         }
 
         private void BuildDicedSprites (IReadOnlyCollection<AtlasTexture> atlasTextures)
         {
             var sprites = new List<Sprite>();
-            var builder = new SpriteBuilder(ppu, defaultPivot, keepOriginalPivot);
+            var builder = new SpriteBuilder(PPU, DefaultPivot, KeepOriginalPivot);
             float total = atlasTextures.Sum(a => a.DicedTextures.Count), built = 0;
             foreach (var atlasTexture in atlasTextures)
             foreach (var dicedTexture in atlasTexture.DicedTextures)
@@ -283,7 +240,7 @@ namespace SpriteDicing
 
         private void SaveDicedSprites (IEnumerable<Sprite> sprites)
         {
-            if (decoupleSpriteData) SaveDecoupled();
+            if (DecoupleSpriteData) SaveDecoupled();
             else SaveEmbedded();
             serializedObject.ApplyModifiedProperties();
             AssetDatabase.SaveAssets();
@@ -306,14 +263,14 @@ namespace SpriteDicing
                 UpdatedDecoupledSprites(folderPath, newSprites);
                 foreach (var newSprite in newSprites)
                     AssetDatabase.CreateAsset(newSprite, Path.Combine(folderPath, $"{newSprite.name}.asset"));
-                generatedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
+                GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
                 SetSpriteValues(newSprites, true);
             }
         }
 
         private string GetOrCreateGeneratedSpritesFolder ()
         {
-            var existingPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuid);
+            var existingPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
             if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
             var parentPath = Path.GetDirectoryName(atlasPath);
             var folderName = Path.GetFileNameWithoutExtension(atlasPath);
@@ -337,9 +294,9 @@ namespace SpriteDicing
 
         private void UpdatedEmbeddedSprites (List<Sprite> newSprites)
         {
-            for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
+            for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
             {
-                var oldSprite = spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
+                var oldSprite = SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                 if (!oldSprite) continue;
                 if (newSprites.Find(s => s.name == oldSprite.name) is Sprite newSprite)
                 {
@@ -353,7 +310,7 @@ namespace SpriteDicing
 
         private void DeleteDecoupledSprites ()
         {
-            var folderPath = AssetDatabase.GUIDToAssetPath(generatedSpritesFolderGuid);
+            var folderPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
             if (AssetDatabase.IsValidFolder(folderPath))
                 AssetDatabase.DeleteAsset(folderPath);
         }
@@ -368,14 +325,14 @@ namespace SpriteDicing
         private void SetSpriteValues (IEnumerable<Sprite> values, bool clear)
         {
             var objectType = typeof(DicedSpriteAtlas);
-            var fieldInfo = objectType.GetField(spritesProperty.name, BindingFlags.NonPublic | BindingFlags.Instance);
+            var fieldInfo = objectType.GetField(SpritesProperty.name, BindingFlags.NonPublic | BindingFlags.Instance);
             if (fieldInfo is null) throw new Exception();
             var list = (List<Sprite>)fieldInfo.GetValue(target);
             if (clear) list.Clear();
             list.AddRange(values);
             list.RemoveAll(item => !item || item == null);
-            var copiedProperty = new SerializedObject(target).FindProperty(spritesProperty.name);
-            spritesProperty.serializedObject.CopyFromSerializedProperty(copiedProperty);
+            var copiedProperty = new SerializedObject(target).FindProperty(SpritesProperty.name);
+            SpritesProperty.serializedObject.CopyFromSerializedProperty(copiedProperty);
         }
 
         private void UpdateRatio (IEnumerable<SourceTexture> sourceTextures, IEnumerable<AtlasTexture> atlasTextures)
@@ -386,16 +343,16 @@ namespace SpriteDicing
             var ratio = sourceSize / (float)(atlasSize + dataSize);
             var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
             ratioValueContent = new GUIContent($"{sourceSize} KB / ({atlasSize} KB + {dataSize} KB) = <color={color}>{ratio:F2}</color>");
-            lastRatioValue.stringValue = ratioValueContent.text;
+            LastRatioValueProperty.stringValue = ratioValueContent.text;
             serializedObject.ApplyModifiedProperties();
             AssetDatabase.SaveAssets();
 
             long GetDataSize ()
             {
                 var size = GetAssetSize(target);
-                if (decoupleSpriteData)
-                    for (int i = spritesProperty.arraySize - 1; i >= 0; i--)
-                        size += GetAssetSize(spritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
+                if (DecoupleSpriteData)
+                    for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
+                        size += GetAssetSize(SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
                 return size / (EditorSettings.serializationMode == SerializationMode.ForceText ? 2 : 1);
             }
 
