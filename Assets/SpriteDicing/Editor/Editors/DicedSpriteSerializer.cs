@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.U2D;
 using static SpriteDicing.Editors.EditorProperties;
 
 namespace SpriteDicing.Editors
@@ -66,7 +69,7 @@ namespace SpriteDicing.Editors
                 if (newSprites.Find(s => s.name == existingSpriteName) is Sprite newSprite)
                 {
                     var existingSprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                    EditorUtility.CopySerialized(newSprite, existingSprite);
+                    CopySprite(newSprite, existingSprite);
                     newSprites[newSprites.IndexOf(newSprite)] = existingSprite;
                 }
                 else AssetDatabase.DeleteAsset(path);
@@ -94,11 +97,34 @@ namespace SpriteDicing.Editors
             {
                 if (newSprites.Find(s => s.name == existingSprite.name) is Sprite newSprite)
                 {
-                    EditorUtility.CopySerialized(newSprite, existingSprite);
+                    CopySprite(newSprite, existingSprite);
                     newSprites[newSprites.IndexOf(newSprite)] = existingSprite;
                 }
                 else UnityEngine.Object.DestroyImmediate(existingSprite, true);
             }
+        }
+
+        private static void CopySprite (Sprite newSprite, Sprite existingSprite)
+        {
+            // EditorUtility.CopySerialized() and SerializedObject.CopyFromSerializedProperty()
+            // generates excessive editor-only data, so copying the affected properties manually.
+            // https://github.com/Elringus/SpriteDicing/issues/9
+
+            var target = new SerializedObject(newSprite);
+            var existing = new SerializedObject(existingSprite);
+            existing.FindProperty("m_Rect").rectValue = target.FindProperty("m_Rect").rectValue;
+            existing.FindProperty("m_Offset").vector2Value = target.FindProperty("m_Offset").vector2Value;
+            existing.FindProperty("m_PixelsToUnits").floatValue = target.FindProperty("m_PixelsToUnits").floatValue;
+            existing.FindProperty("m_Pivot").vector2Value = target.FindProperty("m_Pivot").vector2Value;
+            existing.FindProperty("m_RD").FindPropertyRelative("texture").objectReferenceValue = target.FindProperty("m_RD").FindPropertyRelative("texture").objectReferenceValue;
+            existing.FindProperty("m_RD").FindPropertyRelative("textureRect").rectValue = target.FindProperty("m_RD").FindPropertyRelative("textureRect").rectValue;
+            existing.ApplyModifiedProperties();
+
+            existingSprite.SetVertexCount(newSprite.GetVertexCount());
+            existingSprite.SetIndices(newSprite.GetIndices());
+            existingSprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(newSprite.GetVertexAttribute<Vector3>(VertexAttribute.Position).ToArray(), Allocator.Temp));
+            existingSprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(newSprite.GetVertexAttribute<Vector2>(VertexAttribute.TexCoord0).ToArray(), Allocator.Temp));
+            existing.Update();
         }
 
         private void SetSpritesProperty (IEnumerable<Sprite> value)
