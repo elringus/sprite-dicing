@@ -87,6 +87,7 @@ namespace SpriteDicing.Editors
                 TexturesProperty.arraySize = atlasTextures.Count;
                 for (int i = 0; i < atlasTextures.Count; i++)
                     TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = atlasTextures[i].Texture;
+                serializedObject.ApplyModifiedProperties();
             }
         }
 
