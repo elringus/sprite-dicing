@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using static SpriteDicing.EditorProperties;
+using static SpriteDicing.Editors.EditorProperties;
 
-namespace SpriteDicing
+namespace SpriteDicing.Editors
 {
     public class AtlasBuilder
     {
@@ -68,27 +67,27 @@ namespace SpriteDicing
             var textureSerializer = new TextureSerializer(basePath);
             var texturePacker = new TexturePacker(textureSerializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
             var atlasTextures = texturePacker.Pack(dicedTextures);
-            SaveAtlasTextures(atlasTextures);
+            SaveAtlasTextures();
             return atlasTextures;
-        }
 
-        private void DeleteAtlasTextures ()
-        {
-            for (int i = TexturesProperty.arraySize - 1; i >= 0; i--)
+            void DeleteAtlasTextures ()
             {
-                var texture = TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                if (!texture) continue;
-                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
-                UnityEngine.Object.DestroyImmediate(texture, true);
+                for (int i = TexturesProperty.arraySize - 1; i >= 0; i--)
+                {
+                    var texture = TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                    if (!texture) continue;
+                    AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
+                    UnityEngine.Object.DestroyImmediate(texture, true);
+                }
+                TexturesProperty.arraySize = 0;
             }
-            TexturesProperty.arraySize = 0;
-        }
 
-        private void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
-        {
-            TexturesProperty.arraySize = textures.Count;
-            for (int i = 0; i < textures.Count; i++)
-                TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
+            void SaveAtlasTextures ()
+            {
+                TexturesProperty.arraySize = atlasTextures.Count;
+                for (int i = 0; i < atlasTextures.Count; i++)
+                    TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = atlasTextures[i].Texture;
+            }
         }
 
         private void BuildDicedSprites (IReadOnlyCollection<AtlasTexture> atlasTextures)
@@ -102,104 +101,7 @@ namespace SpriteDicing
                 DisplayProgressBar("Building diced sprites...", .5f + .5f * ++built / total);
                 sprites.Add(builder.Build(atlasTexture, dicedTexture));
             }
-            SaveDicedSprites(sprites);
-        }
-
-        private void SaveDicedSprites (IEnumerable<Sprite> sprites)
-        {
-            if (DecoupleSpriteData) SaveDecoupled();
-            else SaveEmbedded();
-            serializedObject.ApplyModifiedProperties();
-            AssetDatabase.SaveAssets();
-
-            void SaveEmbedded ()
-            {
-                DeleteDecoupledSprites();
-                var newSprites = new List<Sprite>(sprites);
-                UpdateEmbeddedSprites(newSprites);
-                foreach (var sprite in newSprites)
-                    AssetDatabase.AddObjectToAsset(sprite, target);
-                SetSpriteValues(newSprites, false);
-            }
-
-            void SaveDecoupled ()
-            {
-                DeleteEmbeddedSprites();
-                var folderPath = GetOrCreateGeneratedSpritesFolder();
-                var newSprites = new List<Sprite>(sprites);
-                UpdateDecoupledSprites(folderPath, newSprites);
-                foreach (var newSprite in newSprites)
-                    AssetDatabase.CreateAsset(newSprite, Path.Combine(folderPath, $"{newSprite.name}.asset"));
-                GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
-                SetSpriteValues(newSprites, true);
-            }
-        }
-
-        private string GetOrCreateGeneratedSpritesFolder ()
-        {
-            var existingPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
-            if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
-            var parentPath = Path.GetDirectoryName(atlasPath);
-            var folderName = Path.GetFileNameWithoutExtension(atlasPath);
-            var newPath = Path.Combine(parentPath, folderName);
-            Directory.CreateDirectory(newPath);
-            return newPath;
-        }
-
-        private void UpdateDecoupledSprites (string folderPath, List<Sprite> newSprites)
-        {
-            foreach (var path in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
-            {
-                if (newSprites.Find(s => s.name == Path.GetFileNameWithoutExtension(path)) is Sprite newSprite)
-                {
-                    EditorUtility.CopySerialized(newSprite, AssetDatabase.LoadAssetAtPath<Sprite>(path));
-                    newSprites.Remove(newSprite);
-                }
-                else AssetDatabase.DeleteAsset(path);
-            }
-        }
-
-        private void UpdateEmbeddedSprites (List<Sprite> newSprites)
-        {
-            for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
-            {
-                var oldSprite = SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
-                if (!oldSprite) continue;
-                if (newSprites.Find(s => s.name == oldSprite.name) is Sprite newSprite)
-                {
-                    EditorUtility.CopySerialized(newSprite, oldSprite);
-                    newSprites.Remove(newSprite);
-                }
-                else UnityEngine.Object.DestroyImmediate(oldSprite, true);
-            }
-            AssetDatabase.SaveAssets();
-        }
-
-        private void DeleteDecoupledSprites ()
-        {
-            var folderPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
-            if (AssetDatabase.IsValidFolder(folderPath))
-                AssetDatabase.DeleteAsset(folderPath);
-        }
-
-        private void DeleteEmbeddedSprites ()
-        {
-            foreach (var asset in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
-                UnityEngine.Object.DestroyImmediate(asset, true);
-            AssetDatabase.SaveAssets();
-        }
-
-        private void SetSpriteValues (IEnumerable<Sprite> values, bool clear)
-        {
-            var objectType = typeof(DicedSpriteAtlas);
-            var fieldInfo = objectType.GetField(SpritesProperty.name, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (fieldInfo is null) throw new Exception();
-            var list = (List<Sprite>)fieldInfo.GetValue(target);
-            if (clear) list.Clear();
-            list.AddRange(values);
-            list.RemoveAll(item => !item || item == null);
-            var copiedProperty = new SerializedObject(target).FindProperty(SpritesProperty.name);
-            SpritesProperty.serializedObject.CopyFromSerializedProperty(copiedProperty);
+            new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
 
         private void UpdateCompressionRatio (IEnumerable<SourceTexture> sourceTextures, IEnumerable<AtlasTexture> atlasTextures)
