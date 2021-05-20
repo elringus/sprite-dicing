@@ -223,8 +223,8 @@ MonoBehaviour:
   m_Name: Flat
   m_EditorClassIdentifier: 
   sprites:
-  - {fileID: -5935215040716934738}
   - {fileID: 1622852793440008643}
+  - {fileID: -5935215040716934738}
   textures:
   - {fileID: 2800000, guid: 45be0e6a958e2ce49a8b33cc25c8376f, type: 3}
   atlasSizeLimit: 2048
