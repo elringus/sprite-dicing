@@ -37,8 +37,10 @@ namespace SpriteDicing.Editors
             foreach (var path in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
                 UpdateExistingSprite(path);
             foreach (var sprite in newSprites)
-                AssetDatabase.CreateAsset(sprite, Path.Combine(folderPath, $"{sprite.name}.asset"));
+                if (!AssetDatabase.IsMainAsset(sprite))
+                    AssetDatabase.CreateAsset(sprite, Path.Combine(folderPath, $"{sprite.name}.asset"));
             GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
+            serializedObject.ApplyModifiedProperties();
 
             void DeleteEmbeddedSprites ()
             {
@@ -74,11 +76,12 @@ namespace SpriteDicing.Editors
         private void SerializeEmbedded (List<Sprite> newSprites)
         {
             DeleteDecoupledSprites();
-            for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
-                UpdateExistingSprite(i);
+            foreach (var sprite in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
+                UpdateExistingSprite(sprite as Sprite);
             AssetDatabase.SaveAssets();
             foreach (var sprite in newSprites)
-                AssetDatabase.AddObjectToAsset(sprite, target);
+                if (!AssetDatabase.IsSubAsset(sprite))
+                    AssetDatabase.AddObjectToAsset(sprite, target);
 
             void DeleteDecoupledSprites ()
             {
@@ -87,10 +90,8 @@ namespace SpriteDicing.Editors
                     AssetDatabase.DeleteAsset(folderPath);
             }
 
-            void UpdateExistingSprite (int index)
+            void UpdateExistingSprite (Sprite existingSprite)
             {
-                var existingSprite = SpritesProperty.GetArrayElementAtIndex(index).objectReferenceValue as Sprite;
-                if (!existingSprite) return;
                 if (newSprites.Find(s => s.name == existingSprite.name) is Sprite newSprite)
                 {
                     EditorUtility.CopySerialized(newSprite, existingSprite);
@@ -107,7 +108,7 @@ namespace SpriteDicing.Editors
             var list = (List<Sprite>)fieldInfo.GetValue(target);
             list.Clear();
             list.AddRange(value);
-            serializedObject.ApplyModifiedProperties();
+            serializedObject.Update();
         }
     }
 }
