@@ -63,7 +63,7 @@ namespace SpriteDicing.Editors
         {
             DisplayProgressBar("Packing dices...", .5f);
             DeleteAtlasTextures();
-            var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".asset", StringComparison.Ordinal));
+            var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
             var textureSerializer = new TextureSerializer(basePath);
             var texturePacker = new TexturePacker(textureSerializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
             var atlasTextures = texturePacker.Pack(dicedTextures);

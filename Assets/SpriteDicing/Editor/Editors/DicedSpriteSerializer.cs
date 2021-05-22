@@ -37,13 +37,11 @@ namespace SpriteDicing.Editors
         {
             DeleteEmbeddedSprites();
             var folderPath = GetOrCreateGeneratedSpritesFolder();
-            foreach (var path in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
-                UpdateExistingSprite(path);
+            foreach (var spritePath in Directory.GetFiles(folderPath, "*.asset", SearchOption.TopDirectoryOnly))
+                UpdateExistingSprite(spritePath);
             foreach (var sprite in newSprites)
                 if (!AssetDatabase.IsMainAsset(sprite))
                     AssetDatabase.CreateAsset(sprite, Path.Combine(folderPath, $"{sprite.name}.asset"));
-            GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(folderPath);
-            serializedObject.ApplyModifiedProperties();
 
             void DeleteEmbeddedSprites ()
             {
@@ -56,11 +54,11 @@ namespace SpriteDicing.Editors
             {
                 var existingPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
                 if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
-                var parentPath = Path.GetDirectoryName(atlasPath);
-                var folderName = Path.GetFileNameWithoutExtension(atlasPath);
-                var fullPath = Path.Combine(parentPath, folderName);
-                Directory.CreateDirectory(fullPath);
-                return fullPath;
+                var newPath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
+                Directory.CreateDirectory(newPath);
+                GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(newPath);
+                serializedObject.ApplyModifiedProperties();
+                return newPath;
             }
 
             void UpdateExistingSprite (string path)
