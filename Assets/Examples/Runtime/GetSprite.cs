@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class GetSpriteTest : MonoBehaviour
+public class GetSprite : MonoBehaviour
 {
     public DicedSpriteAtlas Atlas;
     public string SpriteName;
