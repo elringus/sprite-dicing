@@ -451,7 +451,7 @@ MonoBehaviour:
   includeSubfolders: 1
   prependSubfolderNames: 1
   generatedSpritesFolderGuid: 1a92cf279c103e14b8f303e91c151c61
-  lastRatioValue: 1412 KB / (671 KB + 16 KB) = <color=lime>2.06</color>
+  lastRatioValue: 1412 KB / (671 KB + 25 KB) = <color=lime>2.03</color>
 --- !u!213 &1779296142087038441
 Sprite:
   m_ObjectHideFlags: 0
