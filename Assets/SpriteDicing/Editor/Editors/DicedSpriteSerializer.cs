@@ -106,9 +106,9 @@ namespace SpriteDicing.Editors
 
             // Removing useless `m_AtlasRD` data added on CopySerialized().
             // https://github.com/Elringus/SpriteDicing/issues/9
-            var serializedSprite = new SerializedObject(existingSprite);
-            serializedSprite.FindProperty("m_AtlasRD").managedReferenceValue = null;
-            serializedSprite.ApplyModifiedProperties();
+            // var serializedSprite = new SerializedObject(existingSprite);
+            // serializedSprite.FindProperty("m_AtlasRD").managedReferenceValue = null; // throws unmanaged exception
+            // serializedSprite.ApplyModifiedProperties();
         }
 
         private void SetSpritesProperty (IEnumerable<Sprite> value)
