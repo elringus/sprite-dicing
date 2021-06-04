@@ -43,5 +43,14 @@ namespace SpriteDicing.Test
         {
             AreEqual(Paths.All.Count, FindAt(TextureFolderPath, true).Count);
         }
+
+        [Test]
+        public void PathsAreOrderedAlphanumerically ()
+        {
+            var paths = FindAt(TextureFolderPath, false);
+            AreEqual(Paths.RGB1x3, paths[0]);
+            AreEqual(Paths.RGB3x1, paths[1]);
+            AreEqual(Paths.RGB4x4, paths[2]);
+        }
     }
 }
