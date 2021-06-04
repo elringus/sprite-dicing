@@ -1,7 +1,5 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/elringus/spritedicing/badge)](https://www.codefactor.io/repository/github/elringus/spritedicing)
 
-**Due to a Unity bug, compression ratio is degraded on atlas rebuild; please vote on the tracker to make it fixed as soon as possible: https://issuetracker.unity3d.com/product/unity/issues/guid/1327771**
-
 This plugin is used in **Naninovel** — visual novel engine extension for Unity. [Check it out on the Asset Store!](https://u3d.as/1pg9)
 
 ## Installation
