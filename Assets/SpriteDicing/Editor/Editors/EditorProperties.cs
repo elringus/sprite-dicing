@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace SpriteDicing
+namespace SpriteDicing.Editors
 {
     public static class EditorProperties
     {

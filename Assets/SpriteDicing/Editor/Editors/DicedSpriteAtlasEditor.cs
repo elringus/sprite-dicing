@@ -1,9 +1,9 @@
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using static SpriteDicing.EditorProperties;
+using static SpriteDicing.Editors.EditorProperties;
 
-namespace SpriteDicing
+namespace SpriteDicing.Editors
 {
     [CustomEditor(typeof(DicedSpriteAtlas))]
     public class DicedSpriteAtlasEditor : Editor
