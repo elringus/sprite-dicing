@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.U2D;
 using static SpriteDicing.Editors.EditorProperties;
 
 namespace SpriteDicing.Editors
@@ -26,7 +24,7 @@ namespace SpriteDicing.Editors
 
         public void Serialize (IEnumerable<Sprite> sprites)
         {
-            var newSprites = new List<Sprite>(sprites);
+            var newSprites = sprites.OrderBy(s => s.name).ToList();
             if (DecoupleSpriteData) SerializeDecoupled(newSprites);
             else SerializeEmbedded(newSprites);
             SetSpritesProperty(newSprites);
@@ -106,25 +104,11 @@ namespace SpriteDicing.Editors
         {
             EditorUtility.CopySerialized(newSprite, existingSprite);
 
-            // EditorUtility.CopySerialized() and SerializedObject.CopyFromSerializedProperty()
-            // generates excessive editor-only data, so copying the affected properties manually.
+            // Removing useless `m_AtlasRD` data added on CopySerialized().
             // https://github.com/Elringus/SpriteDicing/issues/9
-
-            // var target = new SerializedObject(newSprite);
-            // var existing = new SerializedObject(existingSprite);
-            // existing.FindProperty("m_Rect").rectValue = target.FindProperty("m_Rect").rectValue;
-            // existing.FindProperty("m_Offset").vector2Value = target.FindProperty("m_Offset").vector2Value;
-            // existing.FindProperty("m_PixelsToUnits").floatValue = target.FindProperty("m_PixelsToUnits").floatValue;
-            // existing.FindProperty("m_Pivot").vector2Value = target.FindProperty("m_Pivot").vector2Value;
-            // existing.FindProperty("m_RD").FindPropertyRelative("texture").objectReferenceValue = target.FindProperty("m_RD").FindPropertyRelative("texture").objectReferenceValue;
-            // existing.FindProperty("m_RD").FindPropertyRelative("textureRect").rectValue = target.FindProperty("m_RD").FindPropertyRelative("textureRect").rectValue;
-            // existing.ApplyModifiedProperties();
-            //
-            // existingSprite.SetVertexCount(newSprite.GetVertexCount());
-            // existingSprite.SetIndices(newSprite.GetIndices());
-            // existingSprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(newSprite.GetVertexAttribute<Vector3>(VertexAttribute.Position).ToArray(), Allocator.Temp));
-            // existingSprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(newSprite.GetVertexAttribute<Vector2>(VertexAttribute.TexCoord0).ToArray(), Allocator.Temp));
-            // existing.Update();
+            var serializedSprite = new SerializedObject(existingSprite);
+            serializedSprite.FindProperty("m_AtlasRD").managedReferenceValue = null;
+            serializedSprite.ApplyModifiedProperties();
         }
 
         private void SetSpritesProperty (IEnumerable<Sprite> value)
