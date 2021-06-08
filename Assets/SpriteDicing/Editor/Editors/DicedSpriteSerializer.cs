@@ -25,6 +25,7 @@ namespace SpriteDicing.Editors
         public void Serialize (IEnumerable<Sprite> sprites)
         {
             var newSprites = sprites.OrderBy(s => s.name).ToList();
+            newSprites.ForEach(ResetSpriteEditorData);
             if (DecoupleSpriteData) SerializeDecoupled(newSprites);
             else SerializeEmbedded(newSprites);
             SetSpritesProperty(newSprites);
@@ -65,7 +66,7 @@ namespace SpriteDicing.Editors
                 if (newSprites.Find(s => s.name == existingSpriteName) is Sprite newSprite)
                 {
                     var existingSprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-                    CopySprite(newSprite, existingSprite);
+                    EditorUtility.CopySerialized(newSprite, existingSprite);
                     newSprites[newSprites.IndexOf(newSprite)] = existingSprite;
                 }
                 else AssetDatabase.DeleteAsset(path);
@@ -93,22 +94,11 @@ namespace SpriteDicing.Editors
             {
                 if (newSprites.Find(s => s.name == existingSprite.name) is Sprite newSprite)
                 {
-                    CopySprite(newSprite, existingSprite);
+                    EditorUtility.CopySerialized(newSprite, existingSprite);
                     newSprites[newSprites.IndexOf(newSprite)] = existingSprite;
                 }
                 else UnityEngine.Object.DestroyImmediate(existingSprite, true);
             }
-        }
-
-        private static void CopySprite (Sprite newSprite, Sprite existingSprite)
-        {
-            EditorUtility.CopySerialized(newSprite, existingSprite);
-
-            // Removing useless `m_AtlasRD` data added on CopySerialized().
-            // https://github.com/Elringus/SpriteDicing/issues/9
-            // var serializedSprite = new SerializedObject(existingSprite);
-            // serializedSprite.FindProperty("m_AtlasRD").managedReferenceValue = null; // throws unmanaged exception
-            // serializedSprite.ApplyModifiedProperties();
         }
 
         private void SetSpritesProperty (IEnumerable<Sprite> value)
@@ -119,6 +109,22 @@ namespace SpriteDicing.Editors
             list.Clear();
             list.AddRange(value);
             serializedObject.Update();
+        }
+
+        private static void ResetSpriteEditorData (Sprite sprite)
+        {
+            // Required to prevent reported compression ratio inconsistency
+            // on atlas rebuild. https://github.com/Elringus/SpriteDicing/issues/9
+            var serializedSprite = new SerializedObject(sprite);
+            var atlasRD = serializedSprite.FindProperty("m_AtlasRD");
+            var subMeshes = atlasRD.FindPropertyRelative("m_SubMeshes");
+            subMeshes.ClearArray();
+            var indexContainer = atlasRD.FindPropertyRelative("m_IndexBuffer");
+            var vertexData = atlasRD.FindPropertyRelative("m_VertexData");
+            var vertexDataCount = vertexData.FindPropertyRelative("m_VertexCount");
+            indexContainer.ClearArray();
+            vertexDataCount.intValue = 0;
+            serializedSprite.ApplyModifiedProperties();
         }
     }
 }
