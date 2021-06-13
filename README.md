@@ -33,14 +33,13 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 You can optionally configure atlas generation settings via the editor inspector window.
 
-![](https://i.gyazo.com/d47adf4dab2cb358f226d1af9d3c5b4b.png)
+![](https://i.gyazo.com/252de40911101e488a7e8e65a61924cd.png)
 
 | Option | Description
 | --- | --- |
-| Generated Data Size | Total amount of the generated sprites data (vertices, UVs and triangles). Reduce by increasing Dice Unit Size. |
+| Decouple Sprite Data | Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset. |
 | Default Pivot | Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually. |
 | Keep Original | Whether to preserve original sprites pivot (usable for animations). |
-| Decouple Sprite Data | Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset. |
 | Atlas Size Limit | Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached. |
 | Force Square | The generated atlas textures will always be square. Less efficient, but required for PVRTC compression. |
 | Pixels Per Unit | How many pixels in the sprite correspond to the unit in the world. |
