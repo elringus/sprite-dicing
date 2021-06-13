@@ -12,19 +12,19 @@ Minimum supported Unity version: 2019.3
 
 ## Description
 
-Sprite Dicing is an editor extension for [Unity game engine](https://unity3d.com/) which allows to split up a set of large sprite textures into small chunks, discard identical ones, bake them into atlas textures and then seamlessly reconstruct the original sprites at runtime for render. 
+Sprite Dicing is an extension for [Unity game engine](https://unity3d.com/) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime. 
 
-This technique allows to significantly reduce build size, in cases when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where you have multiple textures per character, each portraying a different emotion; most of the textures space will be occupied with the identical data, and only a small area will vary:
+The technique allows significantly reducing build size when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where multiple textures per character are used, each portraying a different emotion; most of the texture space is occupied with identical data, while only a small area varies:
 
 ![](https://i.gyazo.com/af08d141e7a08b6a8e2ef60c07332bbf.png)
 
-These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique chunks, having the size of just **2.4MB**. We can now discard the original five textures and use the atlas to render the original sprites, effectively compressing source textures data by **86.3%**.
+These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique areas of the original textures and consume just **2.4MB**, effectively compressing the textures by **86.3%**.
 
 ## How to use
 
 1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atlas` menu command, select it;
-2. Specify `Input Folder` — project directory, containing the source textures to process. You can simply drag-drop a folder from the project hierarchy window into the field;
-3. Press `Build Atlas` button and wait for the generation procedure to finish;
+2. Specify `Input Folder` — project directory, containing the source textures to process. You can drag-drop a folder from the project hierarchy window or select one with object picker;
+3. Press `Build Atlas` button and wait for the procedure to finish;
 4. Generated sprites will appear inside the atlas asset; select any of them and drop to the scene.
 
 ![](https://i.gyazo.com/faddf19580d8e6c9e0660d61976b2bef.gif)
@@ -61,6 +61,6 @@ To use the diced sprites in UI (eg, `Image` component), enable `Use Sprite Mesh`
 
 ## Animation
 
-It's possible to use diced sprites for animation. Make sure to enable `Keep Original Pivot` when generating the atlas to preserve the relative positions of the generated sprites. An example on animating diced sprites is available in the project in "Animation" scene.
+It's possible to use diced sprites for animation. Make sure to enable `Keep Original Pivot` when generating the atlas to preserve relative positions of the generated sprites. An example on animating diced sprites is available in "Animation" scene.
 
 ![](https://i.gyazo.com/9df7af39368a7b17f067a03a50c41509.gif)
