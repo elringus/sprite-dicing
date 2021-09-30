@@ -54,7 +54,7 @@ All the above descriptions are available as tooltips when hovering corresponding
 
 ## UI
 
-To use the diced sprites in UI (eg, `Image` component), enable `Use Sprite Mesh`.
+To use the diced sprites in UI (eg, `Image` component), enable `Use Sprite Mesh`. In case the option is not available, make sure to assign a source image.
 
 ![](https://i.gyazo.com/8f22fe0bded5ae72b5ef662e842bcacf.png)
 
