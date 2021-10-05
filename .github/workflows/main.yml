@@ -34,13 +34,13 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           unityVersion: 2019.4.30f1
-          testMode: playmode
+          testMode: editmode
           customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions generateAdditionalMetrics
       
       - name: Upload XML report to Codecov
         uses: codecov/codecov-action@v2
         with:
-          name: PlayMode
+          name: EditMode
           flags: automated
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage-results/**/*.xml
