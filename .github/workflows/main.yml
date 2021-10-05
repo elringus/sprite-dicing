@@ -36,7 +36,7 @@ jobs:
           unityVersion: 2019.4.30f1
           testMode: editmode
           customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions "useProjectSettings;generateAdditionalMetrics"
-      
+
       - name: Upload XML report to Codecov
         uses: codecov/codecov-action@v2
         with:
