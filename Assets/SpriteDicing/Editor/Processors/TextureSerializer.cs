@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -24,7 +23,7 @@ namespace SpriteDicing
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
             var maxSize = Mathf.Max(texture.width, texture.height);
             ApplyImportSettings(filePath, Mathf.NextPowerOfTwo(maxSize));
-            UnityEngine.Object.DestroyImmediate(texture);
+            Object.DestroyImmediate(texture);
             return png;
         }
 
@@ -49,8 +48,7 @@ namespace SpriteDicing
 
         private static void ApplyImportSettings (string filePath, int maxSize)
         {
-            var importer = AssetImporter.GetAtPath(filePath) as TextureImporter;
-            if (importer is null) throw new Exception($"Failed to get texture importer for `{filePath}`.");
+            var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
             importer.textureType = TextureImporterType.Default;
             importer.alphaIsTransparency = true;
             importer.mipmapEnabled = false;
