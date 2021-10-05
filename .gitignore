@@ -3,6 +3,8 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Uu]ser[Ss]ettings/
+/[Cc]ode[Cc]overage/
 /Assets/AssetStoreTools*
 /Assets/@Transient*
 /Assets/NovelSaveData*
