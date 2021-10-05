@@ -42,5 +42,4 @@ jobs:
         with:
           name: EditMode
           flags: automated
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage-results/**/*.xml
