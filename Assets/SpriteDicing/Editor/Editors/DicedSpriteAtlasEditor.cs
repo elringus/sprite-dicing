@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using static SpriteDicing.Editors.EditorProperties;
@@ -131,7 +130,7 @@ namespace SpriteDicing.Editors
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUIUtility.labelWidth);
             if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
-                new AtlasBuilder(serializedObject, SynchronizationContext.Current).Build();
+                new AtlasBuilder(serializedObject).Build();
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();

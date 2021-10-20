@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using UnityEngine;
 
 namespace SpriteDicing
@@ -13,20 +12,18 @@ namespace SpriteDicing
     {
         private readonly int unitSize;
         private readonly int padding;
-        private readonly SynchronizationContext syncContext;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
 
         private int width, height;
         private Color[] pixels;
 
-        public TextureDicer (int unitSize, int padding, SynchronizationContext syncContext)
+        public TextureDicer (int unitSize, int padding)
         {
             if (unitSize < 1) throw new ArgumentException("Size should be greater than one.");
             if (padding < 0) throw new ArgumentException("Padding couldn't be negative.");
 
             this.unitSize = unitSize;
             this.padding = padding;
-            this.syncContext = syncContext ?? throw new ArgumentNullException(nameof(syncContext));
         }
 
         public DicedTexture Dice (SourceTexture source)
@@ -45,7 +42,7 @@ namespace SpriteDicing
             units.Clear();
             width = source.Texture.width;
             height = source.Texture.height;
-            pixels = ReadPixelsOnMainThread(source.Texture);
+            pixels = UnityContext.Invoke(() => source.Texture.GetPixels());
         }
 
         private void DiceAt (int x, int y)
@@ -56,17 +53,8 @@ namespace SpriteDicing
             var paddedRect = PadRect(pixelsRect);
             var paddedPixels = GetPixels(paddedRect);
             var quadVerts = CropOverBorders(pixelsRect, x, y);
-            var hash = GetHash(unitSize, pixels);
+            var hash = UnityContext.Invoke(() => GetHash(unitSize, pixels));
             units.Add(new DicedUnit(quadVerts, paddedPixels, hash));
-        }
-
-        private Color[] ReadPixelsOnMainThread (Texture2D texture)
-        {
-            if (SynchronizationContext.Current == syncContext)
-                return texture.GetPixels();
-            var result = Array.Empty<Color>();
-            syncContext.Send(_ => result = texture.GetPixels(), null);
-            return result;
         }
 
         private Color[] GetPixels (RectInt rect)
