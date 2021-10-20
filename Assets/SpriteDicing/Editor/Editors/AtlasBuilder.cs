@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using static SpriteDicing.Editors.EditorProperties;
@@ -10,12 +11,14 @@ namespace SpriteDicing.Editors
 {
     public class AtlasBuilder
     {
+        private readonly SynchronizationContext syncContext;
         private readonly SerializedObject serializedObject;
         private readonly DicedSpriteAtlas target;
         private readonly string atlasPath;
 
-        public AtlasBuilder (SerializedObject serializedObject)
+        public AtlasBuilder (SerializedObject serializedObject, SynchronizationContext syncContext)
         {
+            this.syncContext = syncContext;
             this.serializedObject = serializedObject;
             target = serializedObject.targetObject as DicedSpriteAtlas;
             atlasPath = AssetDatabase.GetAssetPath(target);
@@ -49,7 +52,7 @@ namespace SpriteDicing.Editors
 
         private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
-            var dicer = new TextureDicer(UnitSize, Padding);
+            var dicer = new TextureDicer(UnitSize, Padding, syncContext);
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {

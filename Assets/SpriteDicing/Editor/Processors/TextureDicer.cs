@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace SpriteDicing
@@ -12,24 +13,27 @@ namespace SpriteDicing
     {
         private readonly int unitSize;
         private readonly int padding;
+        private readonly SynchronizationContext syncContext;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
 
-        private Texture2D texture;
+        private int width, height;
+        private Color[] pixels;
 
-        public TextureDicer (int unitSize, int padding)
+        public TextureDicer (int unitSize, int padding, SynchronizationContext syncContext)
         {
             if (unitSize < 1) throw new ArgumentException("Size should be greater than one.");
             if (padding < 0) throw new ArgumentException("Padding couldn't be negative.");
 
             this.unitSize = unitSize;
             this.padding = padding;
+            this.syncContext = syncContext ?? throw new ArgumentNullException(nameof(syncContext));
         }
 
         public DicedTexture Dice (SourceTexture source)
         {
             PrepareToDice(source);
-            var unitCountX = Mathf.CeilToInt((float)texture.width / unitSize);
-            var unitCountY = Mathf.CeilToInt((float)texture.height / unitSize);
+            var unitCountX = Mathf.CeilToInt((float)width / unitSize);
+            var unitCountY = Mathf.CeilToInt((float)height / unitSize);
             for (int unitX = 0; unitX < unitCountX; unitX++)
             for (int unitY = 0; unitY < unitCountY; unitY++)
                 DiceAt(unitX * unitSize, unitY * unitSize);
@@ -39,7 +43,9 @@ namespace SpriteDicing
         private void PrepareToDice (SourceTexture source)
         {
             units.Clear();
-            texture = source.Texture;
+            width = source.Texture.width;
+            height = source.Texture.height;
+            pixels = ReadPixelsOnMainThread(source.Texture);
         }
 
         private void DiceAt (int x, int y)
@@ -54,10 +60,17 @@ namespace SpriteDicing
             units.Add(new DicedUnit(quadVerts, paddedPixels, hash));
         }
 
-        /// <returns>Flattened 2D array, where pixels are laid out left to right, bottom to top.</returns>
+        private Color[] ReadPixelsOnMainThread (Texture2D texture)
+        {
+            if (SynchronizationContext.Current == syncContext)
+                return texture.GetPixels();
+            var result = Array.Empty<Color>();
+            syncContext.Send(_ => result = texture.GetPixels(), null);
+            return result;
+        }
+
         private Color[] GetPixels (RectInt rect)
         {
-            // TODO: GetPixels() from texture and reuse the array.
             var endX = rect.x + rect.width;
             var endY = rect.y + rect.height;
             var colors = new Color[rect.width * rect.height];
@@ -75,8 +88,8 @@ namespace SpriteDicing
 
         private RectInt CropOverBorders (RectInt rect, int x, int y)
         {
-            rect.width = Mathf.Min(rect.width, texture.width - x);
-            rect.height = Mathf.Min(rect.height, texture.height - y);
+            rect.width = Mathf.Min(rect.width, width - x);
+            rect.height = Mathf.Min(rect.height, height - y);
             return rect;
         }
 

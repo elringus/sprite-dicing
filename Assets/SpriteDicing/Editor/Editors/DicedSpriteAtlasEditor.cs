@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 using static SpriteDicing.Editors.EditorProperties;
@@ -26,8 +27,6 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
         private static GUIStyle richLabelStyle;
 
-        private void OnEnable () => InitializeProperties(serializedObject);
-
         public override void OnInspectorGUI ()
         {
             serializedObject.Update();
@@ -42,6 +41,8 @@ namespace SpriteDicing.Editors
             DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
         }
+
+        private void OnEnable () => InitializeProperties(serializedObject);
 
         private void InitializeRichStyle ()
         {
@@ -130,7 +131,7 @@ namespace SpriteDicing.Editors
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUIUtility.labelWidth);
             if (GUILayout.Button(GetBuildButtonContent(), EditorStyles.miniButton))
-                new AtlasBuilder(serializedObject).Build();
+                new AtlasBuilder(serializedObject, SynchronizationContext.Current).Build();
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
