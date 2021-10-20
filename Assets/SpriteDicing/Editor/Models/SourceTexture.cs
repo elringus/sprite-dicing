@@ -17,15 +17,15 @@ namespace SpriteDicing
         /// </summary>
         public Texture2D Texture { get; }
         /// <summary>
-        /// Sprite asset associated with the texture (if any or null).
+        /// Custom pivot assigned to the texture or none.
         /// </summary>
-        public Sprite Sprite { get; }
+        public Vector2? Pivot { get; }
 
-        public SourceTexture (string name, Texture2D texture, Sprite sprite = null)
+        public SourceTexture (string name, Texture2D texture, Vector2? pivot = null)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Texture = texture ? texture : throw new ArgumentNullException(nameof(texture));
-            Sprite = sprite;
+            Pivot = pivot;
         }
     }
 }

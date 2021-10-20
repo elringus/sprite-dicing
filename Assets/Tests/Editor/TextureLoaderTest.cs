@@ -40,15 +40,15 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenNoAssociatedSpriteItsNull ()
+        public void WhenNoAssociatedSpritePivotHasNoValue ()
         {
-            IsNull(Load(RGB1x3).Sprite);
+            IsFalse(Load(RGB1x3).Pivot.HasValue);
         }
 
         [Test]
-        public void WhenAssociatedSpriteExistItsLoaded ()
+        public void WhenAssociatedSpriteExistPivotHasValue ()
         {
-            IsTrue(Load(RGB4x4).Sprite);
+            IsTrue(Load(RGB4x4).Pivot.HasValue);
         }
 
         [Test]
