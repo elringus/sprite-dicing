@@ -94,6 +94,15 @@ namespace SpriteDicing.Test
         {
             AreEqual(new Rect(.1f, .1f, .8f, .8f), Pack(new[] { B }, uvInset: .2f)[0].ContentToUV.First().Value);
         }
+        
+        [Test]
+        public void SlackPixelsAreClear ()
+        {
+            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 4, square: true)[0];
+            AreEqual(Color.clear, atlas.Texture.GetPixel(4, 1));
+            AreEqual(Color.clear, atlas.Texture.GetPixel(4, 2));
+            AreEqual(Color.clear, atlas.Texture.GetPixel(4, 3));
+        }
 
         private static List<AtlasTexture> Pack (Texture2D[] textures,
             float uvInset = 0, bool square = false, int sizeLimit = 8, int unitSize = 1, int padding = 0)
