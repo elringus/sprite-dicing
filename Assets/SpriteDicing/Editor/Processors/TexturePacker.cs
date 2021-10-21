@@ -104,24 +104,30 @@ namespace SpriteDicing
         private Dictionary<Hash128, Rect> MapContent (HashSet<DicedUnit> packedUnits, Texture2D atlasTexture)
         {
             var contentToUV = new Dictionary<Hash128, Rect>();
-            var atlasSize = new Vector2(atlasTexture.width, atlasTexture.height);
+            var atlasSize = new Vector2Int(atlasTexture.width, atlasTexture.height);
             var unitsPerRow = atlasTexture.width / paddedUnitSize;
             var unitIndex = 0;
+            var atlasPixels = new Color[atlasTexture.width * atlasTexture.height];
             foreach (var unit in packedUnits)
             {
                 var row = unitIndex / unitsPerRow;
                 var column = unitIndex++ % unitsPerRow;
-                SetPixels(column, row, unit.PaddedPixels, atlasTexture);
+                SetPixelsToAtlas(column, row, atlasSize, unit.PaddedPixels, atlasPixels);
                 contentToUV[unit.ContentHash] = CropBorderUV(GetUV(column, row, atlasSize), unit.QuadVerts);
             }
+            atlasTexture.SetPixels(atlasPixels);
             return contentToUV;
         }
 
-        private void SetPixels (int column, int row, Color[] pixels, Texture2D texture)
+        private void SetPixelsToAtlas (int column, int row, Vector2Int atlasSize, Color[] pixelsToSet, Color[] atlasPixels)
         {
-            var x = column * paddedUnitSize;
-            var y = row * paddedUnitSize;
-            texture.SetPixels(x, y, paddedUnitSize, paddedUnitSize, pixels);
+            var startX = column * paddedUnitSize;
+            var startY = row * paddedUnitSize;
+            var endX = startX + paddedUnitSize;
+            var endY = startY + paddedUnitSize;
+            for (int y = startY, i = 0; y < endY; y++)
+            for (int x = startX; x < endX; x++, i++)
+                atlasPixels[x + atlasSize.x * y] = pixelsToSet[i];
         }
 
         private Rect GetUV (int column, int row, Vector2 atlasSize)
