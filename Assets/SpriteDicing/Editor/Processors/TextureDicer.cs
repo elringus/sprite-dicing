@@ -61,11 +61,18 @@ namespace SpriteDicing
         {
             var endX = rect.x + rect.width;
             var endY = rect.y + rect.height;
-            var colors = new Color[rect.width * rect.height];
+            var pixels = new Color[rect.width * rect.height];
             for (int y = rect.y, i = 0; y < endY; y++)
             for (int x = rect.x; x < endX; x++, i++)
-                colors[i] = texture.GetPixel(x, y);
-            return colors;
+                pixels[i] = SamplePixelAt(x, y);
+            return pixels;
+        }
+
+        private Color SamplePixelAt (int x, int y)
+        {
+            x = Mathf.Clamp(x, 0, width - 1);
+            y = Mathf.Clamp(y, 0, height - 1);
+            return pixels[x + width * y];
         }
 
         private RectInt PadRect (RectInt rect)
