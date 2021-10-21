@@ -104,30 +104,30 @@ namespace SpriteDicing
         private Dictionary<Hash128, Rect> MapContent (HashSet<DicedUnit> packedUnits, Texture2D atlasTexture)
         {
             var contentToUV = new Dictionary<Hash128, Rect>();
+            var atlasPixels = new Color[atlasTexture.width * atlasTexture.height];
             var atlasSize = new Vector2Int(atlasTexture.width, atlasTexture.height);
             var unitsPerRow = atlasTexture.width / paddedUnitSize;
             var unitIndex = 0;
-            var atlasPixels = new Color[atlasTexture.width * atlasTexture.height];
             foreach (var unit in packedUnits)
             {
                 var row = unitIndex / unitsPerRow;
                 var column = unitIndex++ % unitsPerRow;
-                SetPixelsToAtlas(column, row, atlasSize, unit.PaddedPixels, atlasPixels);
+                SetAtlasPixels(unit.PaddedPixels, column, row, atlasPixels, atlasTexture.width);
                 contentToUV[unit.ContentHash] = CropBorderUV(GetUV(column, row, atlasSize), unit.QuadVerts);
             }
-            atlasTexture.SetPixels(atlasPixels);
+            UnityContext.Invoke(() => atlasTexture.SetPixels(atlasPixels));
             return contentToUV;
         }
 
-        private void SetPixelsToAtlas (int column, int row, Vector2Int atlasSize, Color[] pixelsToSet, Color[] atlasPixels)
+        private void SetAtlasPixels (Color[] pixels, int column, int row, Color[] atlasPixels, int atlasWidth)
         {
             var startX = column * paddedUnitSize;
             var startY = row * paddedUnitSize;
             var endX = startX + paddedUnitSize;
             var endY = startY + paddedUnitSize;
             for (int y = startY, i = 0; y < endY; y++)
-            for (int x = startX; x < endX; x++, i++)
-                atlasPixels[x + atlasSize.x * y] = pixelsToSet[i];
+            for (int x = column * paddedUnitSize; x < endX; x++, i++)
+                atlasPixels[x + atlasWidth * y] = pixels[i];
         }
 
         private Rect GetUV (int column, int row, Vector2 atlasSize)

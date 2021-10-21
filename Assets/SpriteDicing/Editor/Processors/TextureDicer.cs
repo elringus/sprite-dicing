@@ -14,8 +14,8 @@ namespace SpriteDicing
         private readonly int padding;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
 
-        private int width, height;
-        private Color[] pixels;
+        private int sourceWidth, sourceHeight;
+        private Color[] sourcePixels;
 
         public TextureDicer (int unitSize, int padding)
         {
@@ -29,8 +29,8 @@ namespace SpriteDicing
         public DicedTexture Dice (SourceTexture source)
         {
             PrepareToDice(source);
-            var unitCountX = Mathf.CeilToInt((float)width / unitSize);
-            var unitCountY = Mathf.CeilToInt((float)height / unitSize);
+            var unitCountX = Mathf.CeilToInt((float)sourceWidth / unitSize);
+            var unitCountY = Mathf.CeilToInt((float)sourceHeight / unitSize);
             for (int unitX = 0; unitX < unitCountX; unitX++)
             for (int unitY = 0; unitY < unitCountY; unitY++)
                 DiceAt(unitX * unitSize, unitY * unitSize);
@@ -40,39 +40,39 @@ namespace SpriteDicing
         private void PrepareToDice (SourceTexture source)
         {
             units.Clear();
-            width = source.Texture.width;
-            height = source.Texture.height;
-            pixels = UnityContext.Invoke(() => source.Texture.GetPixels());
+            sourceWidth = source.Texture.width;
+            sourceHeight = source.Texture.height;
+            sourcePixels = UnityContext.Invoke(() => source.Texture.GetPixels());
         }
 
         private void DiceAt (int x, int y)
         {
-            var pixelsRect = new RectInt(x, y, unitSize, unitSize);
-            var pixels = GetPixels(pixelsRect);
+            var rect = new RectInt(x, y, unitSize, unitSize);
+            var pixels = GetSourcePixels(rect);
             if (pixels.All(p => p.a == 0)) return;
-            var paddedRect = PadRect(pixelsRect);
-            var paddedPixels = GetPixels(paddedRect);
-            var quadVerts = CropOverBorders(pixelsRect, x, y);
+            var paddedRect = PadRect(rect);
+            var paddedPixels = GetSourcePixels(paddedRect);
+            var quadVerts = CropOverBorders(rect, x, y);
             var hash = UnityContext.Invoke(() => GetHash(unitSize, pixels));
             units.Add(new DicedUnit(quadVerts, paddedPixels, hash));
         }
 
-        private Color[] GetPixels (RectInt rect)
+        private Color[] GetSourcePixels (RectInt rect)
         {
             var endX = rect.x + rect.width;
             var endY = rect.y + rect.height;
             var pixels = new Color[rect.width * rect.height];
             for (int y = rect.y, i = 0; y < endY; y++)
             for (int x = rect.x; x < endX; x++, i++)
-                pixels[i] = SamplePixelAt(x, y);
+                pixels[i] = GetSourcePixel(x, y);
             return pixels;
         }
 
-        private Color SamplePixelAt (int x, int y)
+        private Color GetSourcePixel (int x, int y)
         {
-            x = Mathf.Clamp(x, 0, width - 1);
-            y = Mathf.Clamp(y, 0, height - 1);
-            return pixels[x + width * y];
+            x = Mathf.Clamp(x, 0, sourceWidth - 1);
+            y = Mathf.Clamp(y, 0, sourceHeight - 1);
+            return sourcePixels[x + sourceWidth * y];
         }
 
         private RectInt PadRect (RectInt rect)
@@ -83,8 +83,8 @@ namespace SpriteDicing
 
         private RectInt CropOverBorders (RectInt rect, int x, int y)
         {
-            rect.width = Mathf.Min(rect.width, width - x);
-            rect.height = Mathf.Min(rect.height, height - y);
+            rect.width = Mathf.Min(rect.width, sourceWidth - x);
+            rect.height = Mathf.Min(rect.height, sourceHeight - y);
             return rect;
         }
 
