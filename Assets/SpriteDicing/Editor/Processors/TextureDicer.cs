@@ -42,7 +42,7 @@ namespace SpriteDicing
             units.Clear();
             sourceWidth = source.Texture.width;
             sourceHeight = source.Texture.height;
-            sourcePixels = UnityContext.Invoke(() => source.Texture.GetPixels());
+            sourcePixels = source.Texture.GetPixels();
         }
 
         private void DiceAt (int x, int y)
@@ -53,7 +53,7 @@ namespace SpriteDicing
             var paddedRect = PadRect(rect);
             var paddedPixels = GetSourcePixels(paddedRect);
             var quadVerts = CropOverBorders(rect, x, y);
-            var hash = UnityContext.Invoke(() => GetHash(unitSize, pixels));
+            var hash = GetHash(unitSize, pixels);
             units.Add(new DicedUnit(quadVerts, paddedPixels, hash));
         }
 

@@ -137,13 +137,11 @@ namespace SpriteDicing.Editors
 
         private void DisplayProgressBar (string activity, float progress)
         {
-            UnityContext.InvokeAsync(() => {
-                if (!buildStartTime.HasValue) buildStartTime = EditorApplication.timeSinceStartup;
-                var elapsed = TimeSpan.FromSeconds(EditorApplication.timeSinceStartup - buildStartTime.Value);
-                var title = $"Building Diced Atlas ({elapsed:mm\\:ss})";
-                if (EditorUtility.DisplayCancelableProgressBar(title, activity, progress))
-                    throw new OperationCanceledException("Diced sprite atlas building was canceled by the user.");
-            });
+            if (!buildStartTime.HasValue) buildStartTime = EditorApplication.timeSinceStartup;
+            var elapsed = TimeSpan.FromSeconds(EditorApplication.timeSinceStartup - buildStartTime.Value);
+            var title = $"Building Diced Atlas ({elapsed:mm\\:ss})";
+            if (EditorUtility.DisplayCancelableProgressBar(title, activity, progress))
+                throw new OperationCanceledException("Diced sprite atlas building was canceled by the user.");
         }
     }
 }

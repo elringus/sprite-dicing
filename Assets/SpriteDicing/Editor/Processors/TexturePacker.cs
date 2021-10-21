@@ -115,7 +115,7 @@ namespace SpriteDicing
                 SetAtlasPixels(unit.PaddedPixels, column, row, atlasPixels, atlasTexture.width);
                 contentToUV[unit.ContentHash] = CropBorderUV(GetUV(column, row, atlasSize), unit.QuadVerts);
             }
-            UnityContext.Invoke(() => atlasTexture.SetPixels(atlasPixels));
+            atlasTexture.SetPixels(atlasPixels);
             return contentToUV;
         }
 
