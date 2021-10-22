@@ -38,7 +38,7 @@ namespace SpriteDicing
             foreach (var unit in dicedTexture.Units)
                 AddDicedUnit(unit, atlasTexture.ContentToUV[unit.ContentHash]);
             var spriteRect = EvaluateSpriteRect();
-            var originalPivot = GetOriginalPivot(spriteRect, dicedTexture.Source.Sprite);
+            var originalPivot = GetOriginalPivot(spriteRect, dicedTexture.Source.Pivot);
             var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
             ApplyPivotChange(spriteRect, pivot);
             var renderRect = EvaluateSpriteRect(ppu);
@@ -100,10 +100,10 @@ namespace SpriteDicing
             return new Rect(minVertPos * scale, spriteSize * scale);
         }
 
-        private Vector2 GetOriginalPivot (Rect rect, Sprite sourceSprite)
+        private Vector2 GetOriginalPivot (Rect rect, Vector2? sourcePivot)
         {
-            if (!sourceSprite) return -rect.min / rect.size;
-            return (sourceSprite.pivot / ppu - rect.min) / rect.size;
+            if (!sourcePivot.HasValue) return -rect.min / rect.size;
+            return (sourcePivot.Value / ppu - rect.min) / rect.size;
         }
 
         private void ApplyPivotChange (Rect rect, Vector2 newPivot)

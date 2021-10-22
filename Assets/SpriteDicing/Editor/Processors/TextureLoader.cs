@@ -27,8 +27,8 @@ namespace SpriteDicing
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             if (!texture) throw new Exception($"Failed to load `{texturePath}` texture.");
             EnsureReadable(texturePath);
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
-            return new SourceTexture(name, texture, sprite);
+            var pivot = GetSpritePivotOrNull(texturePath);
+            return new SourceTexture(name, texture, pivot);
         }
 
         private string BuildName (string path)
@@ -36,6 +36,12 @@ namespace SpriteDicing
             if (nameRoot is null) return Path.GetFileNameWithoutExtension(path);
             if (!path.Contains(nameRoot)) throw new Exception($"Name root `{nameRoot}` is not valid for `{path}` path.");
             return Path.GetFileNameWithoutExtension(path.Substring(nameRoot.Length + 1).Replace("/", "."));
+        }
+
+        private Vector2? GetSpritePivotOrNull (string texturePath)
+        {
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
+            return sprite ? sprite.pivot : (Vector2?)null;
         }
 
         private static void EnsureReadable (string path)

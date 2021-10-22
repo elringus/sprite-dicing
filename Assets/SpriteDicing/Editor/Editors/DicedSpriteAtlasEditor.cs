@@ -26,8 +26,6 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
         private static GUIStyle richLabelStyle;
 
-        private void OnEnable () => InitializeProperties(serializedObject);
-
         public override void OnInspectorGUI ()
         {
             serializedObject.Update();
@@ -42,6 +40,8 @@ namespace SpriteDicing.Editors
             DrawInputFolderGUI();
             serializedObject.ApplyModifiedProperties();
         }
+
+        private void OnEnable () => InitializeProperties(serializedObject);
 
         private void InitializeRichStyle ()
         {
