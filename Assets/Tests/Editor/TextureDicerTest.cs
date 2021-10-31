@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers.Textures;
+using static SpriteDicing.Test.Helpers.Colors;
 
 namespace SpriteDicing.Test
 {
@@ -95,9 +96,9 @@ namespace SpriteDicing.Test
         {
             var pixels = Dice(B, padding: 1).Units.First().PaddedPixels;
             var expected = Map3x3(
-                Color.blue, Color.blue, Color.blue,
-                Color.blue, Color.blue, Color.blue,
-                Color.blue, Color.blue, Color.blue);
+                Blue, Blue, Blue,
+                Blue, Blue, Blue,
+                Blue, Blue, Blue);
             AreEqual(expected, pixels);
         }
 
@@ -106,9 +107,9 @@ namespace SpriteDicing.Test
         {
             var pixels = Dice(BGRT, padding: 1).Units.Select(u => u.PaddedPixels).ToArray();
             var expected = Map3x3(
-                Color.blue, Color.blue, Color.green,
-                Color.blue, Color.blue, Color.green,
-                Color.red, Color.red, new Color(1, 0, 0, 0));
+                Blue, Blue, Green,
+                Blue, Blue, Green,
+                Red, Red, new Color32(255, 0, 0, 0));
             Contains(expected, pixels);
         }
 
@@ -122,16 +123,16 @@ namespace SpriteDicing.Test
         [Test]
         public void UnitsWithEqualContentHashAreEqual ()
         {
-            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
-            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Black }, new Hash128(1, 1));
             AreEqual(unit1, unit2);
         }
 
         [Test]
         public void BoxedUnitsWithEqualContentHashAreEqual ()
         {
-            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Color.green }, new Hash128(1, 1));
-            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Color.black }, new Hash128(1, 1));
+            var unit1 = new DicedUnit(new RectInt(0, 0, 1, 1), new[] { Green }, new Hash128(1, 1));
+            var unit2 = new DicedUnit(new RectInt(1, 1, 1, 1), new[] { Black }, new Hash128(1, 1));
             IsTrue(unit1.Equals((object)unit2));
         }
 
@@ -160,7 +161,7 @@ namespace SpriteDicing.Test
             return new TextureDicer(size, padding).Dice(source);
         }
 
-        private static Color[] Map3x3 (params Color[] colors)
+        private static Color32[] Map3x3 (params Color32[] colors)
         {
             return new[] {
                 colors[6], colors[7], colors[8],

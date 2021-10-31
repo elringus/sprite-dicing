@@ -104,7 +104,7 @@ namespace SpriteDicing
         private Dictionary<Hash128, Rect> MapContent (HashSet<DicedUnit> packedUnits, Texture2D atlasTexture)
         {
             var contentToUV = new Dictionary<Hash128, Rect>();
-            var atlasPixels = new Color[atlasTexture.width * atlasTexture.height];
+            var atlasPixels = new Color32[atlasTexture.width * atlasTexture.height];
             var atlasSize = new Vector2Int(atlasTexture.width, atlasTexture.height);
             var unitsPerRow = atlasTexture.width / paddedUnitSize;
             var unitIndex = 0;
@@ -115,11 +115,12 @@ namespace SpriteDicing
                 SetAtlasPixels(unit.PaddedPixels, column, row, atlasPixels, atlasTexture.width);
                 contentToUV[unit.ContentHash] = CropBorderUV(GetUV(column, row, atlasSize), unit.QuadVerts);
             }
-            atlasTexture.SetPixels(atlasPixels);
+            if (atlasPixels.Length > 0)
+                atlasTexture.SetPixels32(atlasPixels);
             return contentToUV;
         }
 
-        private void SetAtlasPixels (Color[] pixels, int column, int row, Color[] atlasPixels, int atlasWidth)
+        private void SetAtlasPixels (Color32[] pixels, int column, int row, Color32[] atlasPixels, int atlasWidth)
         {
             var startX = column * paddedUnitSize;
             var startY = row * paddedUnitSize;

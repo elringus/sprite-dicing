@@ -15,13 +15,13 @@ namespace SpriteDicing
         /// <summary>
         /// Colors of the diced unit, plus colors from the padding rect.
         /// </summary>
-        public Color[] PaddedPixels { get; }
+        public Color32[] PaddedPixels { get; }
         /// <summary>
         /// Hash based on the non-padded pixels of the unit.
         /// </summary>
         public Hash128 ContentHash { get; }
 
-        public DicedUnit (RectInt quadVerts, Color[] paddedPixels, Hash128 contentHash)
+        public DicedUnit (RectInt quadVerts, Color32[] paddedPixels, Hash128 contentHash)
         {
             this.QuadVerts = quadVerts;
             this.PaddedPixels = paddedPixels;
