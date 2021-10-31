@@ -13,6 +13,7 @@ namespace SpriteDicing
         private readonly int unitSize;
         private readonly int padding;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
+        private readonly Texture2D hashTexture;
 
         private int sourceWidth, sourceHeight;
         private Color32[] sourcePixels;
@@ -24,6 +25,7 @@ namespace SpriteDicing
 
             this.unitSize = unitSize;
             this.padding = padding;
+            hashTexture = new Texture2D(unitSize, unitSize);
         }
 
         public DicedTexture Dice (SourceTexture source)
@@ -88,13 +90,12 @@ namespace SpriteDicing
             return rect;
         }
 
-        private static Hash128 GetHash (int size, Color32[] pixels)
+        private Hash128 GetHash (int size, Color32[] pixels)
         {
             // TODO: Find out how Unity builds image content hash and replicate.
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            texture.SetPixels32(pixels);
-            texture.Apply();
-            return texture.imageContentsHash;
+            hashTexture.SetPixels32(pixels);
+            hashTexture.Apply();
+            return hashTexture.imageContentsHash;
         }
     }
 }
