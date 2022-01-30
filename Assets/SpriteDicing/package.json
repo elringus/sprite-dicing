@@ -1,6 +1,6 @@
 {
   "name": "com.elringus.spritedicing",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "displayName": "SpriteDicing",
   "description": "Unity extension for reusing sprite texture areas.",
   "unity": "2019.4",
