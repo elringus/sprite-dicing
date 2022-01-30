@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -50,7 +49,7 @@ namespace SpriteDicing
         {
             var rect = new RectInt(x, y, unitSize, unitSize);
             var pixels = GetSourcePixels(rect);
-            if (pixels.All(p => p.a == 0)) return;
+            if (AreAllPixelsTransparent(pixels)) return;
             var paddedRect = PadRect(rect);
             var paddedPixels = GetSourcePixels(paddedRect);
             var quadVerts = CropOverBorders(rect, x, y);
@@ -71,8 +70,10 @@ namespace SpriteDicing
 
         private Color32 GetSourcePixel (int x, int y)
         {
-            x = Mathf.Clamp(x, 0, sourceWidth - 1);
-            y = Mathf.Clamp(y, 0, sourceHeight - 1);
+            if (x < 0) x = 0;
+            else if (x >= sourceWidth) x = sourceWidth - 1;
+            if (y < 0) y = 0;
+            else if (y >= sourceHeight) y = sourceHeight - 1;
             return sourcePixels[x + sourceWidth * y];
         }
 
@@ -87,6 +88,14 @@ namespace SpriteDicing
             rect.width = Mathf.Min(rect.width, sourceWidth - x);
             rect.height = Mathf.Min(rect.height, sourceHeight - y);
             return rect;
+        }
+
+        private static bool AreAllPixelsTransparent (Color32[] pixels)
+        {
+            for (int i = 0; i < pixels.Length; i++)
+                if (pixels[i].a > 0)
+                    return false;
+            return true;
         }
 
         private static unsafe Hash128 GetHash (Color32[] pixels)
