@@ -1,3 +1,5 @@
+name: stale
+
 on:
   workflow_dispatch:
   schedule:
