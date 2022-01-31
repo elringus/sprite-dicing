@@ -1,4 +1,4 @@
-name: test and cover
+name: cover
 
 on:
   workflow_dispatch:
@@ -12,6 +12,7 @@ on:
 jobs:
 
   cover:
+    name: test and cover
     runs-on: ubuntu-latest
     steps:
 

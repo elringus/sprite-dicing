@@ -1,4 +1,4 @@
-name: check code quality
+name: codeql
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   analyze:
-    name: analyze
+    name: analyze code quality
     runs-on: ubuntu-latest
     permissions:
       actions: read

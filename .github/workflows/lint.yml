@@ -1,11 +1,12 @@
-name: lint editorconfig
+name: lint
 
 on:
   push:
   pull_request:
 
 jobs:
-  lint-editor:
+  lint:
+    name: lint editorconfig
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

@@ -1,5 +1,3 @@
-name: close stale issues
-
 on:
   workflow_dispatch:
   schedule:
@@ -7,6 +5,7 @@ on:
 
 jobs:
   stale:
+    name: close stale issues
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v4
