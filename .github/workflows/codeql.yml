@@ -25,9 +25,16 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v2
+    - name: cache Library
+      uses: actions/cache@v2
+      with:
+        path: Library
+        key: Library
     - name: initialize codeql
       uses: github/codeql-action/init@v1
       with:
         languages: ${{ matrix.language }}
+    - name: build
+      uses: game-ci/unity-builder@v2.0.0-alpha-14
     - name: analyze
       uses: github/codeql-action/analyze@v1
