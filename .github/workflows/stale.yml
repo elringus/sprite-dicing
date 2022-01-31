@@ -1,0 +1,22 @@
+name: close stale issues
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '45 3 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        id: stale
+        with:
+          stale-issue-label: stale
+          stale-pr-label: stale
+          stale-issue-message: 'This issue is stale because it has been open 14 days with no activity. It will be automatically closed in 7 days.'
+          stale-pr-message: 'This pull request is stale because it has been open 14 days with no activity. It will be automatically closed in 7 days.'
+          days-before-stale: 14
+          days-before-close: 7
+          exempt-issue-labels: 'bug,enhancement'
+          exempt-pr-labels: 'bug,enhancement'
