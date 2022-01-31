@@ -13,7 +13,7 @@ Minimum supported Unity version: 2019.3
 
 ## Description
 
-Sprite Dicing is an extension for [Unity game engine](https://unity3d.com/) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime. 
+Sprite Dicing is an extension for [Unity game engine](https://unity3d.com/) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
 
 The technique allows significantly reducing build size when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where multiple textures per character are used, each portraying a different emotion; most of the texture space is occupied with identical data, while only a small area varies:
 
