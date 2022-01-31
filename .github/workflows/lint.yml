@@ -16,4 +16,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: editorconfig
       run: |
-          docker run --rm --volume=$PWD:/check mstruebing/editorconfig-checker ec --exclude "ProjectSettings\\|\.meta$|\.asset$|\.unity$|\.asmdef$"
+          docker run --rm --volume=$PWD:/check mstruebing/editorconfig-checker ec --exclude "\.meta$|\.asset$|\.unity$|\.asmdef$|ProjectSettings"
