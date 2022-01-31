@@ -115,4 +115,4 @@ namespace SpriteDicing.Test
             return packer.Pack(dicedTextures);
         }
     }
-}
+} 
