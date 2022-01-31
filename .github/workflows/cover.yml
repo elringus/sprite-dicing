@@ -1,5 +1,3 @@
-name: cover
-
 on:
   workflow_dispatch:
   push:
