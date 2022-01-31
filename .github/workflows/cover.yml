@@ -1,4 +1,4 @@
-name: CI
+name: cover
 
 on:
   workflow_dispatch:
@@ -11,17 +11,13 @@ on:
 
 jobs:
 
-  runTests:
-
-    name: Run Tests
+  cover:
+    name: test and cover
     runs-on: ubuntu-latest
-
     steps:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          lfs: true
 
       - name: Cache Library
         uses: actions/cache@v2
@@ -34,7 +30,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          unityVersion: 2019.4.30f1
+          unityVersion: 2019.4.35f1
           testMode: editmode
           customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions "useProjectSettings;generateAdditionalMetrics"
 

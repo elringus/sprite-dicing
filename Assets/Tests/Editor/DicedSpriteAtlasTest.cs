@@ -15,7 +15,7 @@ namespace SpriteDicing.Test
         {
             var r = Sprite.Create(R, Rect.zero, Vector2.zero);
             var b = Sprite.Create(B, Rect.zero, Vector2.zero);
-            var atlas = CreateWith(new[] { r, b }, null);
+            var atlas = CreateWith(new[] { r, b });
             IsTrue(atlas.Sprites.Contains(r));
             IsTrue(atlas.Sprites.Contains(b));
         }
@@ -39,7 +39,7 @@ namespace SpriteDicing.Test
         {
             var sprite = Sprite.Create(B, Rect.zero, Vector2.zero);
             sprite.name = nameof(CanGetSpriteByName);
-            var atlas = CreateWith(new[] { sprite }, null);
+            var atlas = CreateWith(new[] { sprite });
             AreEqual(sprite, atlas.GetSprite(nameof(CanGetSpriteByName)));
         }
 

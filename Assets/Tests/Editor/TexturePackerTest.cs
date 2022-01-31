@@ -94,7 +94,7 @@ namespace SpriteDicing.Test
         {
             AreEqual(new Rect(.1f, .1f, .8f, .8f), Pack(new[] { B }, uvInset: .2f)[0].ContentToUV.First().Value);
         }
-        
+
         [Test]
         public void SlackPixelsAreClear ()
         {

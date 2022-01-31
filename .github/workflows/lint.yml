@@ -1,0 +1,19 @@
+name: lint
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: lint editorconfig
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: editorconfig
+      run: |
+          docker run --rm --volume=$PWD:/check mstruebing/editorconfig-checker ec --exclude "\.meta$|\.asset$|\.unity$|\.asmdef$|ProjectSettings"

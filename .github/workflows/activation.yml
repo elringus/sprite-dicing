@@ -1,9 +1,11 @@
-name: Acquire activation file
+name: activate
+
 on:
   workflow_dispatch: {}
+
 jobs:
-  activation:
-    name: Request manual activation file 🔑
+  activate:
+    name: activate unity
     runs-on: ubuntu-latest
     steps:
       # Request manual activation file

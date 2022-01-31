@@ -14,7 +14,7 @@ namespace SpriteDicing.Editors
         private readonly DicedSpriteAtlas target;
         private readonly string atlasPath;
 
-        private double? buildStartTime = null;
+        private double? buildStartTime;
 
         public AtlasBuilder (SerializedObject serializedObject)
         {

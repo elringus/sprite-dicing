@@ -37,8 +37,6 @@ namespace SpriteDicing
 
         private static void SaveAsPNG (Texture2D texture, string filePath)
         {
-            var wrapMode = texture.wrapMode;
-            var alphaIsTransparency = texture.alphaIsTransparency;
             var bytes = texture.EncodeToPNG();
             using (var fileStream = File.Create(filePath))
                 fileStream.Write(bytes, 0, bytes.Length);
