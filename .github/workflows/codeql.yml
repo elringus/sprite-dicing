@@ -36,5 +36,9 @@ jobs:
         languages: ${{ matrix.language }}
     - name: build
       uses: game-ci/unity-builder@v2.0.0-alpha-14
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      with:
+        unityVersion: 2019.4.35f1
     - name: analyze
       uses: github/codeql-action/analyze@v1
