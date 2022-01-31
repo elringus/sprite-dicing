@@ -30,7 +30,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
-          unityVersion: 2019.4.30f1
+          unityVersion: 2019.4.35f1
           testMode: editmode
           customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions "useProjectSettings;generateAdditionalMetrics"
 
