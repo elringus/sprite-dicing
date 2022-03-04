@@ -1,7 +1,9 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/elringus/spritedicing/badge)](https://www.codefactor.io/repository/github/elringus/spritedicing)
 [![codecov](https://codecov.io/gh/Elringus/SpriteDicing/branch/master/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/Elringus/SpriteDicing)
 
-This plugin is used in **Naninovel** — visual novel engine extension for Unity. [Check it out on the Asset Store!](https://u3d.as/1pg9)
+This plugin is used in [**Naninovel** — visual novel engine](https://naninovel.com).
+
+[![](https://i.gyazo.com/beff8b30e48acd7e61c52751b6da503b.png)](https://naninovel.com)
 
 ## Installation
 
