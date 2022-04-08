@@ -68,11 +68,13 @@ namespace SpriteDicing.Editors
         private List<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
             DisplayProgressBar("Packing dices...", .5f);
+            var settings = new TextureSettings();
+            settings.TryImportExisting(TexturesProperty.GetArrayElementAtIndex(0).objectReferenceValue as Texture);
             DeleteAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
-            var textureSerializer = new TextureSerializer(basePath);
-            var texturePacker = new TexturePacker(textureSerializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
-            var atlasTextures = texturePacker.Pack(dicedTextures);
+            var serializer = new TextureSerializer(basePath, settings);
+            var packer = new TexturePacker(serializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
+            var atlasTextures = packer.Pack(dicedTextures);
             SaveAtlasTextures();
             return atlasTextures;
 

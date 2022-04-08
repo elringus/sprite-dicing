@@ -10,10 +10,12 @@ namespace SpriteDicing
     public class TextureSerializer : ITextureSerializer
     {
         private readonly string basePath;
+        private readonly TextureSettings settings;
 
-        public TextureSerializer (string basePath)
+        public TextureSerializer (string basePath, TextureSettings settings)
         {
             this.basePath = basePath;
+            this.settings = settings;
         }
 
         public Texture2D Serialize (Texture2D texture)
@@ -21,8 +23,8 @@ namespace SpriteDicing
             var filePath = BuildFilePath();
             SaveAsPNG(texture, filePath);
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
-            var maxSize = Mathf.Max(texture.width, texture.height);
-            ApplyImportSettings(filePath, Mathf.NextPowerOfTwo(maxSize));
+            var maxSize = Mathf.NextPowerOfTwo(Mathf.Max(texture.width, texture.height));
+            ApplyImportSettings(filePath, maxSize);
             Object.DestroyImmediate(texture);
             return png;
         }
@@ -35,7 +37,7 @@ namespace SpriteDicing
             return path;
         }
 
-        private static void SaveAsPNG (Texture2D texture, string filePath)
+        private void SaveAsPNG (Texture2D texture, string filePath)
         {
             var bytes = texture.EncodeToPNG();
             using (var fileStream = File.Create(filePath))
@@ -44,13 +46,10 @@ namespace SpriteDicing
             AssetDatabase.Refresh();
         }
 
-        private static void ApplyImportSettings (string filePath, int maxSize)
+        private void ApplyImportSettings (string filePath, int maxSize)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
-            importer.textureType = TextureImporterType.Default;
-            importer.alphaIsTransparency = true;
-            importer.mipmapEnabled = false;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            settings.ApplyExistingOrDefault(importer);
             importer.maxTextureSize = maxSize;
             AssetDatabase.ImportAsset(filePath);
         }
