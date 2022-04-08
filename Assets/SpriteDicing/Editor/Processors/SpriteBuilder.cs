@@ -37,7 +37,7 @@ namespace SpriteDicing
             ResetState();
             foreach (var unit in dicedTexture.Units)
                 AddDicedUnit(unit, atlasTexture.ContentToUV[unit.ContentHash]);
-            var spriteRect = EvaluateSpriteRect();
+            var spriteRect = EvaluateSpriteRect(1);
             var originalPivot = GetOriginalPivot(spriteRect, dicedTexture.Source.Pivot);
             var pivot = keepOriginalPivot ? originalPivot : defaultPivot;
             ApplyPivotChange(spriteRect, pivot);
@@ -90,8 +90,10 @@ namespace SpriteDicing
             triangles.Add((ushort)idx2);
         }
 
-        private Rect EvaluateSpriteRect (float scale = 1)
+        private Rect EvaluateSpriteRect (float scale)
         {
+            if (vertices.Count == 0) return new Rect(Vector2.zero, Vector2.one * scale);
+
             var minVertPos = new Vector2(vertices.Min(v => v.x), vertices.Min(v => v.y));
             var maxVertPos = new Vector2(vertices.Max(v => v.x), vertices.Max(v => v.y));
             var spriteSizeX = Mathf.Abs(maxVertPos.x - minVertPos.x);
