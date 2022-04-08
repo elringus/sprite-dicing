@@ -33,6 +33,10 @@ namespace SpriteDicing.Editors
                 BuildDicedSprites(atlasTextures);
                 UpdateCompressionRatio(sourceTextures, atlasTextures);
             }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to build diced sprite atlas. {e}");
+            }
             finally
             {
                 EditorUtility.ClearProgressBar();
