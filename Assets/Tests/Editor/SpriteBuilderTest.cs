@@ -52,6 +52,14 @@ namespace SpriteDicing.Test
             AreEqual(new Vector2(1, 2), Build(new[] { BTGT })[0].rect.size);
         }
 
+        [Test]
+        public void WhenEmptyTextureDefaultSpriteIsGenerated ()
+        {
+            var sprite = Build(new[] { TTTT })[0];
+            AreEqual(Vector2.zero, sprite.rect.position);
+            AreEqual(Vector2.one, sprite.rect.size);
+        }
+
         private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, int sizeLimit = 8,
             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false)
         {
