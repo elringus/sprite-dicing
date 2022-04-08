@@ -23,7 +23,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: Library
-          key: Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
 
       - name: Run tests and generate Coverage XML report
         uses: game-ci/unity-test-runner@v2
