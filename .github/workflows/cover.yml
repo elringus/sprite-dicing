@@ -32,6 +32,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2019.4.35f1
           testMode: editmode
           customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions "useProjectSettings;generateAdditionalMetrics"
