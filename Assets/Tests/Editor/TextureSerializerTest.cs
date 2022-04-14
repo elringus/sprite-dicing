@@ -74,6 +74,46 @@ namespace SpriteDicing.Test
         }
 
         [Test]
+        public void ExistingPlatformSpecificSettingsArePreserved ()
+        {
+            var otherPlatform = "Standalone";
+            var otherTexture = Serialize();
+            var otherImporter = GetImporter(otherTexture);
+            var otherSettings = new TextureImporterPlatformSettings {
+                name = otherPlatform,
+                overridden = true,
+                textureCompression = TextureImporterCompression.Compressed
+            };
+            otherImporter.SetPlatformTextureSettings(otherSettings);
+            otherImporter.SaveAndReimport();
+
+            textureSettings.TryImportExisting(otherTexture);
+            var importer = GetImporter(Serialize());
+            var settings = importer.GetPlatformTextureSettings(otherPlatform);
+            AreEqual(TextureImporterCompression.Compressed, settings.textureCompression);
+        }
+
+        [Test]
+        public void NonOverriddenPlatformSpecificSettingsAreIgnored ()
+        {
+            var otherPlatform = "Standalone";
+            var otherTexture = Serialize();
+            var otherImporter = GetImporter(otherTexture);
+            var otherSettings = new TextureImporterPlatformSettings {
+                name = otherPlatform,
+                overridden = false,
+                textureCompression = TextureImporterCompression.Compressed
+            };
+            otherImporter.SetPlatformTextureSettings(otherSettings);
+            otherImporter.SaveAndReimport();
+
+            textureSettings.TryImportExisting(otherTexture);
+            var importer = GetImporter(Serialize());
+            var settings = importer.GetPlatformTextureSettings(otherPlatform);
+            AreEqual(TextureImporterCompression.Uncompressed, settings.textureCompression);
+        }
+
+        [Test]
         public void SettingsFromInvalidObjectAreIgnored ()
         {
             var obj = new UnityEngine.Object();
