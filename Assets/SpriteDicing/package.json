@@ -1,11 +1,11 @@
 {
   "name": "com.elringus.spritedicing",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "displayName": "SpriteDicing",
-  "description": "Unity extension for reusing sprite texture areas.",
+  "description": "Allows dicing sprite textures into atlases to eliminate identical parts.",
   "unity": "2019.4",
   "author": {
     "name": "Elringus",
-    "url": "https://elringus.me"
+    "url": "https://github.com/Elringus"
   }
 }

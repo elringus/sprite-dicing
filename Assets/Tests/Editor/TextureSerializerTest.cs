@@ -13,6 +13,7 @@ namespace SpriteDicing.Test
         private const string tempRoot = Helpers.TextureFolderPath + "/" + tempFolder;
 
         private string basePath;
+        private TextureSettings textureSettings;
         private TextureSerializer serializer;
 
         [SetUp]
@@ -20,7 +21,8 @@ namespace SpriteDicing.Test
         {
             AssetDatabase.CreateFolder(Helpers.TextureFolderPath, tempFolder);
             basePath = $"{tempRoot}/{Guid.NewGuid():N}";
-            serializer = new TextureSerializer(basePath);
+            textureSettings = new TextureSettings();
+            serializer = new TextureSerializer(basePath, textureSettings);
         }
 
         [TearDown]
@@ -46,7 +48,7 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void ImportSettingsAreApplied ()
+        public void DefaultImportSettingsAreApplied ()
         {
             var importer = GetImporter(Serialize());
             AreEqual(TextureImporterType.Default, importer.textureType);
@@ -54,6 +56,69 @@ namespace SpriteDicing.Test
             IsFalse(importer.mipmapEnabled);
             AreEqual(TextureImporterCompression.Uncompressed, importer.textureCompression);
             AreEqual(1, importer.maxTextureSize);
+        }
+
+        [Test]
+        public void ExistingImportSettingsArePreserved ()
+        {
+            var otherTexture = Serialize();
+            var otherImporter = GetImporter(otherTexture);
+            otherImporter.alphaIsTransparency = false;
+            otherImporter.textureCompression = TextureImporterCompression.Compressed;
+            otherImporter.SaveAndReimport();
+
+            textureSettings.TryImportExisting(otherTexture);
+            var importer = GetImporter(Serialize());
+            IsFalse(importer.alphaIsTransparency);
+            AreEqual(TextureImporterCompression.Compressed, importer.textureCompression);
+        }
+
+        [Test]
+        public void ExistingPlatformSpecificSettingsArePreserved ()
+        {
+            var otherPlatform = "Standalone";
+            var otherTexture = Serialize();
+            var otherImporter = GetImporter(otherTexture);
+            var otherSettings = new TextureImporterPlatformSettings {
+                name = otherPlatform,
+                overridden = true,
+                textureCompression = TextureImporterCompression.Compressed
+            };
+            otherImporter.SetPlatformTextureSettings(otherSettings);
+            otherImporter.SaveAndReimport();
+
+            textureSettings.TryImportExisting(otherTexture);
+            var importer = GetImporter(Serialize());
+            var settings = importer.GetPlatformTextureSettings(otherPlatform);
+            AreEqual(TextureImporterCompression.Compressed, settings.textureCompression);
+        }
+
+        [Test]
+        public void NonOverriddenPlatformSpecificSettingsAreIgnored ()
+        {
+            var otherPlatform = "Standalone";
+            var otherTexture = Serialize();
+            var otherImporter = GetImporter(otherTexture);
+            var otherSettings = new TextureImporterPlatformSettings {
+                name = otherPlatform,
+                overridden = false,
+                textureCompression = TextureImporterCompression.Compressed
+            };
+            otherImporter.SetPlatformTextureSettings(otherSettings);
+            otherImporter.SaveAndReimport();
+
+            textureSettings.TryImportExisting(otherTexture);
+            var importer = GetImporter(Serialize());
+            var settings = importer.GetPlatformTextureSettings(otherPlatform);
+            AreEqual(TextureImporterCompression.Uncompressed, settings.textureCompression);
+        }
+
+        [Test]
+        public void SettingsFromInvalidObjectAreIgnored ()
+        {
+            var obj = new UnityEngine.Object();
+            textureSettings.TryImportExisting(obj as Texture);
+            DoesNotThrow(() => Serialize());
         }
 
         [Test]
