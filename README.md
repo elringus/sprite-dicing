@@ -1,9 +1,20 @@
+# SpriteDicing
+
 [![CodeFactor](https://www.codefactor.io/repository/github/elringus/spritedicing/badge)](https://www.codefactor.io/repository/github/elringus/spritedicing)
 [![codecov](https://codecov.io/gh/Elringus/SpriteDicing/branch/master/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/Elringus/SpriteDicing)
 
-This plugin is used in [**Naninovel** — visual novel engine](https://naninovel.com).
+<a href="https://naninovel.com">
+  <p align="center">Sprite Dicing is used in <strong>Naninovel</strong> — visual novel engine. Check it out!</p>
+  <p align="center"><img src="https://raw.githubusercontent.com/Elringus/CDN/main/naninovel-banner-wide.png"></p>
+</a>
 
-[![](https://i.gyazo.com/beff8b30e48acd7e61c52751b6da503b.png)](https://naninovel.com)
+Sprite Dicing is an extension for [Unity game engine](https://unity3d.com) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
+
+The solution significantly reduces build size when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where multiple textures per character are used, each portraying a different emotion; most of the texture space is occupied with identical data, while only a small area varies:
+
+![](https://i.gyazo.com/af08d141e7a08b6a8e2ef60c07332bbf.png)
+
+These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique areas of the original textures and consume just **2.4MB**, effectively compressing the textures by **86.3%**.
 
 ## Installation
 
@@ -13,22 +24,12 @@ Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package vi
 
 Minimum supported Unity version: 2019.3
 
-## Description
-
-Sprite Dicing is an extension for [Unity game engine](https://unity3d.com/) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
-
-The technique allows significantly reducing build size when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where multiple textures per character are used, each portraying a different emotion; most of the texture space is occupied with identical data, while only a small area varies:
-
-![](https://i.gyazo.com/af08d141e7a08b6a8e2ef60c07332bbf.png)
-
-These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique areas of the original textures and consume just **2.4MB**, effectively compressing the textures by **86.3%**.
-
-## How to use
+## Usage
 
 1. Create a `DicedSpriteAtlas` asset using `Assets -> Create -> Diced Sprite Atlas` menu command, select it;
 2. Specify `Input Folder` — project directory, containing the source textures to process. You can drag-drop a folder from the project hierarchy window or select one with object picker;
-3. Press `Build Atlas` button and wait for the procedure to finish;
-4. Generated sprites will appear inside the atlas asset; select any of them and drop to the scene.
+3. Click `Build Atlas` button and wait for the procedure to finish;
+4. Generated sprites will appear inside the atlas asset; drag and drop them on scene like regular sprites.
 
 ![](https://i.gyazo.com/faddf19580d8e6c9e0660d61976b2bef.gif)
 
@@ -54,6 +55,14 @@ You can optionally configure atlas generation settings via the editor inspector 
 | Prepend Names | Whether to prepend sprite names with the subfolder name; eg: `SubfolderName.SpriteName`. |
 
 All the above descriptions are available as tooltips when hovering corresponding configuration options in the editor.
+
+## Compression Ratio
+
+When inspecting atlas asset, notice `Compression Ratio` line; it shows the ratio between source textures size and generated data (atlas textures + sprite meshes).
+
+![](https://i.gyazo.com/c104f864bb4ce2b33760616ced9a9276.png)
+
+When close to 1 or lower, the value will be in yellow/red color indicating the generated data size is close to or even larger then the source and you should either change atlas generation configuration (eg, increase dice unit size) or not use the solution at all.
 
 ## UI
 
