@@ -68,17 +68,25 @@ namespace SpriteDicing.Editors
         private List<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
         {
             DisplayProgressBar("Packing dices...", .5f);
-            var settings = new TextureSettings();
-            settings.TryImportExisting(TexturesProperty.GetArrayElementAtIndex(0).objectReferenceValue as Texture);
-            DeleteAtlasTextures();
+            var textureSettings = GetExistingAtlasTextureSettings();
+            DeleteExistingAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
-            var serializer = new TextureSerializer(basePath, settings);
+            var serializer = new TextureSerializer(basePath, textureSettings);
             var packer = new TexturePacker(serializer, UVInset, ForceSquare, AtlasSizeLimit, UnitSize, Padding);
             var atlasTextures = packer.Pack(dicedTextures);
-            SaveAtlasTextures();
+            SaveAtlasTextures(atlasTextures);
             return atlasTextures;
 
-            void DeleteAtlasTextures ()
+            TextureSettings GetExistingAtlasTextureSettings ()
+            {
+                var settings = new TextureSettings();
+                if (TexturesProperty.arraySize <= 0) return settings;
+                var texture = TexturesProperty.GetArrayElementAtIndex(0).objectReferenceValue as Texture;
+                if (texture) settings.TryImportExisting(texture);
+                return settings;
+            }
+
+            void DeleteExistingAtlasTextures ()
             {
                 for (int i = TexturesProperty.arraySize - 1; i >= 0; i--)
                 {
@@ -90,11 +98,11 @@ namespace SpriteDicing.Editors
                 TexturesProperty.arraySize = 0;
             }
 
-            void SaveAtlasTextures ()
+            void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
             {
-                TexturesProperty.arraySize = atlasTextures.Count;
-                for (int i = 0; i < atlasTextures.Count; i++)
-                    TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = atlasTextures[i].Texture;
+                TexturesProperty.arraySize = textures.Count;
+                for (int i = 0; i < textures.Count; i++)
+                    TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
                 serializedObject.ApplyModifiedProperties();
             }
         }
