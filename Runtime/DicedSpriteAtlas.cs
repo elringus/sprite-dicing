@@ -27,6 +27,7 @@ namespace SpriteDicing
         #pragma warning disable 0169, 0414, 1635, IDE0052
         [SerializeField] private int atlasSizeLimit = 2048;
         [SerializeField] private bool forceSquare;
+        [SerializeField] private bool forcePot;
         [SerializeField] private float pixelsPerUnit = 100f;
         [SerializeField] private int diceUnitSize = 64;
         [SerializeField] private int padding = 2;

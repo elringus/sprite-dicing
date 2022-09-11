@@ -13,7 +13,8 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
         private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
         private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached.");
-        private static readonly GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
+        private static readonly GUIContent forceSquareContent = new GUIContent("Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
+        private static readonly GUIContent forcePotContent = new GUIContent("POT", "The generated atlas textures will always be POT. Less efficient, but required for some GPUs.");
         private static readonly GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
         private static readonly GUIContent diceUnitSizeContent = new GUIContent("Dice Unit Size", "The size of a single diced unit.");
         private static readonly GUIContent paddingContent = new GUIContent("Padding", "The size of a pixel border to add between adjacent diced units inside atlas. Increase to prevent texture bleeding artifacts (usually appear as thin gaps between diced units). Larger values will consume more texture space, but yield better anti-bleeding results. Minimum value of 2 is recommended in most cases. When 2 is not enough to prevent bleeding, consider adding a bit of `UV Inset` before increasing the padding.");
@@ -101,7 +102,11 @@ namespace SpriteDicing.Editors
             var popupLabels = atlasLimitValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
             EditorGUI.IntPopup(rect, AtlasSizeLimitProperty, popupLabels, atlasLimitValues, GUIContent.none);
             rect.x += rect.width + 5;
+            rect.width = 60;
             ToggleLeftGUI(rect, ForceSquareProperty, forceSquareContent);
+            rect.x += rect.width + 5;
+            rect.width = 60;
+            ToggleLeftGUI(rect, ForcePotProperty, forcePotContent);
             EditorGUILayout.EndHorizontal();
         }
 
