@@ -60,7 +60,7 @@ namespace SpriteDicing.Test
             AreEqual(Vector2.one, sprite.rect.size);
         }
 
-        private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, int sizeLimit = 8,
+        private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false)
         {
             // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
@@ -69,7 +69,7 @@ namespace SpriteDicing.Test
             var dicer = new TextureDicer(unitSize, padding);
             var dicedTextures = sourceTextures.Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
-            var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);
+            var packer = new TexturePacker(serializer, uvInset, square, pot, sizeLimit, unitSize, padding);
             var atlasTextures = packer.Pack(dicedTextures);
             var builder = new SpriteBuilder(ppu, pivot, keepOriginalPivot);
             var sprites = new List<Sprite>();

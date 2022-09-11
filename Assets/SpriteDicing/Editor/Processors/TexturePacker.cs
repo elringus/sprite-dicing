@@ -13,13 +13,14 @@ namespace SpriteDicing
         private readonly ITextureSerializer serializer;
         private readonly float uvInset;
         private readonly bool square;
+        private readonly bool pot;
         private readonly int sizeLimit;
         private readonly int unitSize;
         private readonly int padding;
         private readonly int paddedUnitSize;
         private readonly int unitsPerAtlasLimit;
 
-        public TexturePacker (ITextureSerializer serializer, float uvInset, bool square, int sizeLimit, int unitSize, int padding)
+        public TexturePacker (ITextureSerializer serializer, float uvInset, bool square, bool pot, int sizeLimit, int unitSize, int padding)
         {
             if (serializer is null) throw new ArgumentNullException(nameof(serializer));
             if (uvInset < 0 || uvInset > .5f) throw new ArgumentException("UV inset should be in 0 to 0.5 range.");
@@ -30,6 +31,7 @@ namespace SpriteDicing
             this.serializer = serializer;
             this.uvInset = uvInset;
             this.square = square;
+            this.pot = pot;
             this.sizeLimit = sizeLimit;
             this.unitSize = unitSize;
             this.padding = padding;
@@ -83,14 +85,38 @@ namespace SpriteDicing
         private Vector2Int EvaluateAtlasSize (int unitsCount)
         {
             var size = Vector2Int.one * Mathf.CeilToInt(Mathf.Sqrt(unitsCount));
-            if (square) return size * paddedUnitSize;
+            
+            if (pot)
+            {
+                for (var potWidth = 512; potWidth <= sizeLimit; potWidth *= 2)
+                {
+                    for (var potHeight = 512; potHeight <= Mathf.Min(potWidth, sizeLimit); potHeight *= 2)
+                    {
+                        if (potWidth * potHeight >= size.x * size.y * paddedUnitSize * paddedUnitSize)
+                        {
+                            if (square)
+                                return new Vector2Int(Mathf.Max(potWidth, potHeight), Mathf.Max(potWidth, potHeight));
+                            
+                            return new Vector2Int(potWidth, potHeight);
+                        }
+                    }
+                }
+            }
+            
+            if (square)
+                return size * paddedUnitSize;
+            
             for (var width = size.x; width > 0; width--)
             {
-                var height = Mathf.CeilToInt(unitsCount / (float)width);
-                if (height * paddedUnitSize > sizeLimit) break;
+                var height = Mathf.CeilToInt(unitsCount / (float) width);
+                
+                if (height * paddedUnitSize > sizeLimit)
+                    break;
+                
                 if (width * height < size.x * size.y)
                     size = new Vector2Int(width, height);
             }
+            
             return size * paddedUnitSize;
         }
 
