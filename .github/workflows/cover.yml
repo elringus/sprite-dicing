@@ -35,11 +35,12 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2019.4.35f1
           testMode: editmode
-          customParameters: -debugCodeOptimization -enableCodeCoverage -coverageResultsPath ./coverage-results -coverageOptions "useProjectSettings;generateAdditionalMetrics"
+          customParameters: -debugCodeOptimization -enableCodeCoverage -coverageOptions "useProjectSettings;generateAdditionalMetrics"
 
       - name: Upload XML report to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           name: EditMode
           flags: automated
-          files: coverage-results/**/*.xml
+          root_dir: /github/workspace/CodeCoverage
+          fail_ci_if_error: true
