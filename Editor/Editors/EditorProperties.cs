@@ -18,6 +18,7 @@ namespace SpriteDicing.Editors
         public static bool KeepOriginalPivot => KeepOriginalPivotProperty.boolValue;
         public static Vector2 DefaultPivot => DefaultPivotProperty.vector2Value;
         public static bool DecoupleSpriteData => DecoupleSpriteDataProperty.boolValue;
+        public static bool TrimTransparent => TrimTransparentProperty.boolValue;
         public static string LastRatioValue => LastRatioValueProperty.stringValue;
 
         public static SerializedProperty TexturesProperty { get; private set; }
@@ -25,6 +26,7 @@ namespace SpriteDicing.Editors
         public static SerializedProperty DefaultPivotProperty { get; private set; }
         public static SerializedProperty KeepOriginalPivotProperty { get; private set; }
         public static SerializedProperty DecoupleSpriteDataProperty { get; private set; }
+        public static SerializedProperty TrimTransparentProperty { get; private set; }
         public static SerializedProperty AtlasSizeLimitProperty { get; private set; }
         public static SerializedProperty ForceSquareProperty { get; private set; }
         public static SerializedProperty PPUProperty { get; private set; }
@@ -44,6 +46,7 @@ namespace SpriteDicing.Editors
             DefaultPivotProperty = serializedObject.FindProperty("defaultPivot");
             KeepOriginalPivotProperty = serializedObject.FindProperty("keepOriginalPivot");
             DecoupleSpriteDataProperty = serializedObject.FindProperty("decoupleSpriteData");
+            TrimTransparentProperty = serializedObject.FindProperty("trimTransparent");
             AtlasSizeLimitProperty = serializedObject.FindProperty("atlasSizeLimit");
             ForceSquareProperty = serializedObject.FindProperty("forceSquare");
             PPUProperty = serializedObject.FindProperty("pixelsPerUnit");

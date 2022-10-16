@@ -34,6 +34,7 @@ namespace SpriteDicing
         [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
         [SerializeField] private bool keepOriginalPivot;
         [SerializeField] private bool decoupleSpriteData;
+        [SerializeField] private bool trimTransparent = true;
         [SerializeField] private Object inputFolder;
         [SerializeField] private bool includeSubfolders;
         [SerializeField] private bool prependSubfolderNames;
