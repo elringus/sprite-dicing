@@ -12,10 +12,10 @@ namespace SpriteDicing
     {
         private readonly int unitSize;
         private readonly int padding;
+        private readonly bool trimTransparent;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
 
         private int sourceWidth, sourceHeight;
-        private bool trimTransparent;
         private Color32[] sourcePixels;
 
         public TextureDicer (int unitSize, int padding, bool trimTransparent)
