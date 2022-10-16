@@ -447,6 +447,7 @@ MonoBehaviour:
   defaultPivot: {x: 0.5, y: 0.5}
   keepOriginalPivot: 1
   decoupleSpriteData: 0
+  trimTransparent: 1
   inputFolder: {fileID: 102900000, guid: 4c8fa8e4b51f8594088d53aa38429ba3, type: 3}
   includeSubfolders: 0
   prependSubfolderNames: 0
