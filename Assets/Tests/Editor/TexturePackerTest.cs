@@ -108,7 +108,7 @@ namespace SpriteDicing.Test
             float uvInset = 0, bool square = false, int sizeLimit = 8, int unitSize = 1, int padding = 0)
         {
             // TODO: Don't use dicer here; create mock diced textures instead.
-            var dicer = new TextureDicer(unitSize, padding);
+            var dicer = new TextureDicer(unitSize, padding, true);
             var dicedTextures = textures.Select(t => new SourceTexture(t.name, t)).Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
             var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);

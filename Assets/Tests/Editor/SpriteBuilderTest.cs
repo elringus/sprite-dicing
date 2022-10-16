@@ -66,7 +66,7 @@ namespace SpriteDicing.Test
             // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
             var textureLoader = new TextureLoader();
             var sourceTextures = texturePaths.Select(textureLoader.Load);
-            var dicer = new TextureDicer(unitSize, padding);
+            var dicer = new TextureDicer(unitSize, padding, true);
             var dicedTextures = sourceTextures.Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
             var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);

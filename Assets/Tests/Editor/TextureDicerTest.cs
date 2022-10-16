@@ -46,11 +46,19 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void TransparentDicesAreIgnored ()
+        public void TransparentDicesAreIgnoredWhenTrimEnabled ()
         {
-            IsEmpty(Dice(TTTT).Units);
-            IsFalse(Dice(BGRT).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
-            IsFalse(Dice(BTGR).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
+            IsEmpty(Dice(TTTT, trim: true).Units);
+            IsFalse(Dice(BGRT, trim: true).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
+            IsFalse(Dice(BTGR, trim: true).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
+        }
+
+        [Test]
+        public void TransparentDicesArePreservedWhenTrimDisabled ()
+        {
+            IsNotEmpty(Dice(TTTT, trim: false).Units);
+            IsTrue(Dice(BGRT, trim: false).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
+            IsTrue(Dice(BTGR, trim: false).Units.Any(u => u.PaddedPixels.Any(p => p.a == 0)));
         }
 
         [Test]
@@ -155,10 +163,10 @@ namespace SpriteDicing.Test
             CollectionAssert.IsSubsetOf(dicedTexture.UniqueUnits, dicedTexture.Units);
         }
 
-        private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0)
+        private static DicedTexture Dice (Texture2D texture, int size = 1, int padding = 0, bool trim = true)
         {
             var source = new SourceTexture(texture.name, texture);
-            return new TextureDicer(size, padding).Dice(source);
+            return new TextureDicer(size, padding, trim).Dice(source);
         }
 
         private static Color32[] Map3x3 (params Color32[] colors)
