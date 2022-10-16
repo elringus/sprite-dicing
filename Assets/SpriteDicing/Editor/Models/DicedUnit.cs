@@ -23,9 +23,9 @@ namespace SpriteDicing
 
         public DicedUnit (RectInt quadVerts, Color32[] paddedPixels, Hash128 contentHash)
         {
-            this.QuadVerts = quadVerts;
-            this.PaddedPixels = paddedPixels;
-            this.ContentHash = contentHash;
+            QuadVerts = quadVerts;
+            PaddedPixels = paddedPixels;
+            ContentHash = contentHash;
         }
 
         public bool Equals (DicedUnit other) => ContentHash.Equals(other.ContentHash);

@@ -12,6 +12,7 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
         private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
         private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
+        private static readonly GUIContent trimTransparentContent = new GUIContent("Trim Transparent", "Improves compression ratio by discarding fully-transparent diced units, but may also change sprite dimensions. Disable to preserve original texture dimensions.");
         private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached.");
         private static readonly GUIContent forceSquareContent = new GUIContent("Force Square", "The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.");
         private static readonly GUIContent pixelsPerUnitContent = new GUIContent("Pixels Per Unit", "How many pixels in the sprite correspond to the unit in the world.");
@@ -31,6 +32,7 @@ namespace SpriteDicing.Editors
             serializedObject.Update();
             InitializeRichStyle();
             DrawDataGUI();
+            EditorGUILayout.PropertyField(TrimTransparentProperty, trimTransparentContent);
             DrawPivotGUI();
             DrawSizeGUI();
             PPUProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, PPU));

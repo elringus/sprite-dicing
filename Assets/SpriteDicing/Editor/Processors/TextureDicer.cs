@@ -12,18 +12,20 @@ namespace SpriteDicing
     {
         private readonly int unitSize;
         private readonly int padding;
+        private readonly bool trimTransparent;
         private readonly List<DicedUnit> units = new List<DicedUnit>();
 
         private int sourceWidth, sourceHeight;
         private Color32[] sourcePixels;
 
-        public TextureDicer (int unitSize, int padding)
+        public TextureDicer (int unitSize, int padding, bool trimTransparent)
         {
             if (unitSize < 1) throw new ArgumentException("Size should be greater than one.");
             if (padding < 0) throw new ArgumentException("Padding couldn't be negative.");
 
             this.unitSize = unitSize;
             this.padding = padding;
+            this.trimTransparent = trimTransparent;
         }
 
         public DicedTexture Dice (SourceTexture source)
@@ -49,7 +51,7 @@ namespace SpriteDicing
         {
             var rect = new RectInt(x, y, unitSize, unitSize);
             var pixels = GetSourcePixels(rect);
-            if (AreAllPixelsTransparent(pixels)) return;
+            if (trimTransparent && AreAllPixelsTransparent(pixels)) return;
             var paddedRect = PadRect(rect);
             var paddedPixels = GetSourcePixels(paddedRect);
             var quadVerts = CropOverBorders(rect, x, y);

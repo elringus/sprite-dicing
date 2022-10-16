@@ -42,6 +42,7 @@ You can optionally configure atlas generation settings via the editor inspector 
 | Option | Description
 | --- | --- |
 | Decouple Sprite Data | Whether to save sprite assets in a separate folder instead of adding them as childs of the atlas asset. |
+| Trim Transparent | Improves compression ratio by discarding fully-transparent diced units, but may also change sprite dimensions. Disable to preserve original texture dimensions. |
 | Default Pivot | Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually. |
 | Keep Original | Whether to preserve original sprites pivot (usable for animations). |
 | Atlas Size Limit | Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached. |

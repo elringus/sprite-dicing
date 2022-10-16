@@ -55,7 +55,7 @@ namespace SpriteDicing.Editors
 
         private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
         {
-            var dicer = new TextureDicer(UnitSize, Padding);
+            var dicer = new TextureDicer(UnitSize, Padding, TrimTransparent);
             var dicedTextures = new List<DicedTexture>();
             for (int i = 0; i < sourceTextures.Count; i++)
             {
