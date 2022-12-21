@@ -5,6 +5,7 @@
     "com.unity.test-framework": "1.1.31",
     "com.unity.testtools.codecoverage": "1.1.1",
     "com.unity.ugui": "1.0.0",
+    "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.imgui": "1.0.0"
   }
 }
