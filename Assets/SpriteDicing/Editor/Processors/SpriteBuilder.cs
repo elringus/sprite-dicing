@@ -118,8 +118,13 @@ namespace SpriteDicing
 
         private Sprite CreateSprite (string name, Texture texture, Vector2 pivot, Rect renderRect)
         {
+            #if UNITY_2022_2_OR_NEWER
+            // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape, secondaryTexture)
+            var args = new object[] { texture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false, null };
+            #else
             // (texture, rect, pivot, pixelsPerUnit, extrude, meshType, border, generateFallbackPhysicsShape)
             var args = new object[] { texture, renderRect, pivot, ppu, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
+            #endif
             var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
             sprite.name = name;
             sprite.SetVertexCount(vertices.Count);
