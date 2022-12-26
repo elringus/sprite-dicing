@@ -1,11 +1,11 @@
 {
-  "name": "com.elringus.spritedicing",
-  "version": "1.8.0",
-  "displayName": "SpriteDicing",
-  "description": "Compress sprite textures by eliminating identical areas.",
-  "unity": "2019.4",
-  "author": {
-    "name": "Elringus",
-    "url": "https://github.com/Elringus"
-  }
+    "name": "com.elringus.spritedicing",
+    "version": "1.9.0",
+    "displayName": "SpriteDicing",
+    "description": "Compress sprite textures by eliminating identical areas.",
+    "unity": "2019.4",
+    "author": {
+        "name": "Elringus",
+        "url": "https://github.com/Elringus"
+    }
 }
