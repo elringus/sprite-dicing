@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Cache Library
+      - name: Cache library
         uses: actions/cache@v2
         with:
           path: Library
@@ -27,20 +27,19 @@ jobs:
           restore-keys: |
             Library-
 
-      - name: Run tests and generate Coverage XML report
+      - name: Run tests and generate coverage report
         uses: game-ci/unity-test-runner@v2
+        id: tests
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          unityVersion: 2019.4.35f1
           testMode: editmode
-          customParameters: -debugCodeOptimization -enableCodeCoverage -coverageOptions "useProjectSettings;generateAdditionalMetrics"
+          coverageOptions: useProjectSettings;generateAdditionalMetrics
+          customParameters: -debugCodeOptimization -enableCodeCoverage
 
-      - name: Upload XML report to Codecov
+      - name: Upload coverage report
         uses: codecov/codecov-action@v3
         with:
-          name: EditMode
-          flags: automated
-          root_dir: /github/workspace/CodeCoverage
+          files: ${{ steps.tests.outputs.coveragePath }}/**/*.xml
           fail_ci_if_error: true
