@@ -105,7 +105,9 @@ namespace SpriteDicing.Editors
             EditorGUI.IntPopup(rect, AtlasSizeLimitProperty, popupLabels, atlasLimitValues, GUIContent.none);
             rect.x += rect.width + 5;
             rect.width = 60;
+            EditorGUI.BeginDisabledGroup(ForcePot);
             ToggleLeftGUI(rect, ForceSquareProperty, forceSquareContent);
+            EditorGUI.EndDisabledGroup();
             rect.x += rect.width + 5;
             rect.width = 60;
             ToggleLeftGUI(rect, ForcePotProperty, forcePotContent);

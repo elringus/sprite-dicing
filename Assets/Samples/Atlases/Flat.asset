@@ -440,6 +440,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 45be0e6a958e2ce49a8b33cc25c8376f, type: 3}
   atlasSizeLimit: 2048
   forceSquare: 0
+  forcePot: 0
   pixelsPerUnit: 100
   diceUnitSize: 16
   padding: 2

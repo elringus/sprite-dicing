@@ -58,7 +58,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenForcingSquareAtlasTextureIsSquare ()
         {
-            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 4, square: true)[0];
+            var atlas = Pack(new[] { RGB4x4, B }, square: true)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
         }
 
@@ -74,6 +74,14 @@ namespace SpriteDicing.Test
         {
             var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 6, square: false, padding: 1)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
+        }
+
+        [Test]
+        public void WhenForcingPowerOfTwoAtlasTextureIsPowerOfTwo ()
+        {
+            var atlas = Pack(new[] { UIC4x4, RGB4x4 }, pot: true)[0];
+            AreEqual(8, atlas.Texture.width);
+            AreEqual(8, atlas.Texture.height);
         }
 
         [Test]
@@ -105,7 +113,7 @@ namespace SpriteDicing.Test
         }
 
         private static List<AtlasTexture> Pack (Texture2D[] textures, float uvInset = 0, bool square = false,
-            bool pot = false, int sizeLimit = 8, int unitSize = 1, int padding = 0)
+            bool pot = false, int sizeLimit = 1024, int unitSize = 1, int padding = 0)
         {
             // TODO: Don't use dicer here; create mock diced textures instead.
             var dicer = new TextureDicer(unitSize, padding, true);

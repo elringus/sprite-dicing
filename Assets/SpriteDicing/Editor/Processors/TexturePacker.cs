@@ -85,6 +85,7 @@ namespace SpriteDicing
         private Vector2Int EvaluateAtlasSize (int unitsCount)
         {
             var size = Vector2Int.one * Mathf.CeilToInt(Mathf.Sqrt(unitsCount));
+            if (pot) return Vector2Int.one * Mathf.NextPowerOfTwo(size.x * paddedUnitSize);
             if (square) return size * paddedUnitSize;
             for (var width = size.x; width > 0; width--)
             {
