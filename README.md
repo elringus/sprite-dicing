@@ -47,7 +47,7 @@ You can optionally configure atlas generation settings via the editor inspector 
 | Keep Original | Whether to preserve original sprites pivot (usable for animations). |
 | Atlas Size Limit | Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached. |
 | Square | The generated atlas textures will always be square. Less efficient, but required for PVRTC compression. |
-| POT | The generated atlas textures will always have width and height of power of two. Less efficient, but required for some GPUs. |
+| POT | The generated atlas textures will always have width and height of power of two. Extremely inefficient, but may be required by some older GPUs. |
 | Pixels Per Unit | How many pixels in the sprite correspond to the unit in the world. |
 | Dice Unit Size | The size of a single diced unit. |
 | Padding | The size of a pixel border to add between adjacent diced units inside atlas. Increase to prevent texture bleeding artifacts (usually appear as thin gaps between diced units). Larger values will consume more texture space, but yield better anti-bleeding results. Minimum value of 2 is recommended in most cases. When 2 is not enough to prevent bleeding, consider adding a bit of `UV Inset` before increasing the padding. |
