@@ -11,6 +11,7 @@ namespace SpriteDicing.Editors
         public static float UVInset => UVInsetProperty.floatValue;
         public static float PPU => PPUProperty.floatValue;
         public static bool ForceSquare => ForceSquareProperty.boolValue;
+        public static bool ForcePot => ForcePotProperty.boolValue;
         public static int AtlasSizeLimit => AtlasSizeLimitProperty.intValue;
         public static Object InputFolder => InputFolderProperty.objectReferenceValue;
         public static bool IncludeSubfolders => IncludeSubfoldersProperty.boolValue;
@@ -29,6 +30,7 @@ namespace SpriteDicing.Editors
         public static SerializedProperty TrimTransparentProperty { get; private set; }
         public static SerializedProperty AtlasSizeLimitProperty { get; private set; }
         public static SerializedProperty ForceSquareProperty { get; private set; }
+        public static SerializedProperty ForcePotProperty { get; private set; }
         public static SerializedProperty PPUProperty { get; private set; }
         public static SerializedProperty UnitSizeProperty { get; private set; }
         public static SerializedProperty PaddingProperty { get; private set; }
@@ -49,6 +51,7 @@ namespace SpriteDicing.Editors
             TrimTransparentProperty = serializedObject.FindProperty("trimTransparent");
             AtlasSizeLimitProperty = serializedObject.FindProperty("atlasSizeLimit");
             ForceSquareProperty = serializedObject.FindProperty("forceSquare");
+            ForcePotProperty = serializedObject.FindProperty("forcePot");
             PPUProperty = serializedObject.FindProperty("pixelsPerUnit");
             UnitSizeProperty = serializedObject.FindProperty("diceUnitSize");
             PaddingProperty = serializedObject.FindProperty("padding");

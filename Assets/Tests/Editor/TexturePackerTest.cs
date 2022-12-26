@@ -21,8 +21,8 @@ namespace SpriteDicing.Test
             Throws<ArgumentException>(() => Pack(Array.Empty<Texture2D>(), padding: -1));
             Throws<ArgumentException>(() => Pack(Array.Empty<Texture2D>(), unitSize: 1, padding: 2));
             // ReSharper disable ObjectCreationAsStatement
-            Throws<ArgumentNullException>(() => new TexturePacker(null, 0, false, 1, 1, 0));
-            Throws<ArgumentNullException>(() => new TexturePacker(new MockTextureSerializer(), 0, false, 1, 1, 0).Pack(null));
+            Throws<ArgumentNullException>(() => new TexturePacker(null, 0, false, false, 1, 1, 0));
+            Throws<ArgumentNullException>(() => new TexturePacker(new MockTextureSerializer(), 0, false, false, 1, 1, 0).Pack(null));
             Throws<ArgumentNullException>(() => new AtlasTexture(null, new Dictionary<Hash128, Rect>(), Array.Empty<DicedTexture>()));
             Throws<ArgumentNullException>(() => new AtlasTexture(Texture2D.redTexture, null, Array.Empty<DicedTexture>()));
             Throws<ArgumentNullException>(() => new AtlasTexture(Texture2D.redTexture, new Dictionary<Hash128, Rect>(), null));
@@ -39,7 +39,7 @@ namespace SpriteDicing.Test
         public void DicedTexturesArePreserved ()
         {
             var dicedTexture = new DicedTexture(new SourceTexture("B", B), Array.Empty<DicedUnit>());
-            var atlasTexture = new TexturePacker(new MockTextureSerializer(), 0, false, 1, 1, 0).Pack(new[] { dicedTexture })[0];
+            var atlasTexture = new TexturePacker(new MockTextureSerializer(), 0, false, false, 1, 1, 0).Pack(new[] { dicedTexture })[0];
             AreEqual(dicedTexture, atlasTexture.DicedTextures[0]);
         }
 
@@ -58,7 +58,7 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenForcingSquareAtlasTextureIsSquare ()
         {
-            var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 4, square: true)[0];
+            var atlas = Pack(new[] { RGB4x4, B }, square: true)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
         }
 
@@ -74,6 +74,14 @@ namespace SpriteDicing.Test
         {
             var atlas = Pack(new[] { RGB4x4, B }, sizeLimit: 6, square: false, padding: 1)[0];
             IsTrue(atlas.Texture.width == atlas.Texture.height);
+        }
+
+        [Test]
+        public void WhenForcingPowerOfTwoAtlasTextureIsPowerOfTwo ()
+        {
+            var atlas = Pack(new[] { UIC4x4, RGB4x4 }, pot: true)[0];
+            AreEqual(8, atlas.Texture.width);
+            AreEqual(8, atlas.Texture.height);
         }
 
         [Test]
@@ -104,14 +112,14 @@ namespace SpriteDicing.Test
             AreEqual(Color.clear, atlas.Texture.GetPixel(4, 3));
         }
 
-        private static List<AtlasTexture> Pack (Texture2D[] textures,
-            float uvInset = 0, bool square = false, int sizeLimit = 8, int unitSize = 1, int padding = 0)
+        private static List<AtlasTexture> Pack (Texture2D[] textures, float uvInset = 0, bool square = false,
+            bool pot = false, int sizeLimit = 1024, int unitSize = 1, int padding = 0)
         {
             // TODO: Don't use dicer here; create mock diced textures instead.
             var dicer = new TextureDicer(unitSize, padding, true);
             var dicedTextures = textures.Select(t => new SourceTexture(t.name, t)).Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
-            var packer = new TexturePacker(serializer, uvInset, square, sizeLimit, unitSize, padding);
+            var packer = new TexturePacker(serializer, uvInset, square, pot, sizeLimit, unitSize, padding);
             return packer.Pack(dicedTextures);
         }
     }
