@@ -127,11 +127,25 @@ namespace SpriteDicing
             #endif
             var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
             sprite.name = name;
+            if (vertices.Count > 0) SetMesh(sprite);
+            else SetEmptyMesh(sprite);
+            return sprite;
+        }
+
+        private void SetMesh (Sprite sprite)
+        {
             sprite.SetVertexCount(vertices.Count);
             sprite.SetIndices(new NativeArray<ushort>(triangles.ToArray(), Allocator.Temp));
             sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices.ToArray(), Allocator.Temp));
             sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs.ToArray(), Allocator.Temp));
-            return sprite;
+        }
+
+        private void SetEmptyMesh (Sprite sprite)
+        {
+            sprite.SetVertexCount(1);
+            sprite.SetIndices(new NativeArray<ushort>(new ushort[] { 0 }, Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(new[] { Vector3.zero }, Allocator.Temp));
+            sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(new[] { Vector2.zero }, Allocator.Temp));
         }
     }
 }
