@@ -53,20 +53,41 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenEmptyTextureDefaultSpriteIsGenerated ()
+        public void WhenEmptyAndTrimEnabledSpriteHasDefaultRect ()
         {
-            var sprite = Build(new[] { TTTT })[0];
+            var sprite = Build(new[] { TTTT }, trim: true)[0];
             AreEqual(Vector2.zero, sprite.rect.position);
             AreEqual(Vector2.one, sprite.rect.size);
         }
 
+        [Test]
+        public void WhenEmptyAndTrimEnabledSpriteHasSimpleMesh ()
+        {
+            var sprite = Build(new[] { TTTT }, trim: true)[0];
+            AreEqual(1, sprite.vertices.Length);
+            AreEqual(Vector2.zero, sprite.vertices[0]);
+            AreEqual(1, sprite.triangles.Length);
+            AreEqual(0, sprite.triangles[0]);
+            AreEqual(1, sprite.uv.Length);
+            AreEqual(Vector2.zero, sprite.uv[0]);
+        }
+
+        [Test]
+        public void WhenEmptyAndTrimDisabledSpriteHasNormalMesh ()
+        {
+            var sprite = Build(new[] { TTTT }, trim: false)[0];
+            AreEqual(16, sprite.vertices.Length);
+            AreEqual(24, sprite.triangles.Length);
+            AreEqual(16, sprite.uv.Length);
+        }
+
         private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
-            int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false)
+            int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false, bool trim = true)
         {
             // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
             var textureLoader = new TextureLoader();
             var sourceTextures = texturePaths.Select(textureLoader.Load);
-            var dicer = new TextureDicer(unitSize, padding, true);
+            var dicer = new TextureDicer(unitSize, padding, trim);
             var dicedTextures = sourceTextures.Select(dicer.Dice);
             var serializer = new MockTextureSerializer();
             var packer = new TexturePacker(serializer, uvInset, square, pot, sizeLimit, unitSize, padding);
