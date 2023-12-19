@@ -4,11 +4,6 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/elringus/spritedicing/badge)](https://www.codefactor.io/repository/github/elringus/spritedicing)
 [![codecov](https://codecov.io/gh/Elringus/SpriteDicing/branch/master/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/Elringus/SpriteDicing)
 
-<a href="https://naninovel.com">
-  <p align="center">Sprite Dicing is used in <strong>Naninovel</strong> — visual novel engine. Check it out!</p>
-  <p align="center"><img src="https://raw.githubusercontent.com/Elringus/CDN/main/naninovel-banner-wide.png"></p>
-</a>
-
 Sprite Dicing is an extension for [Unity game engine](https://unity3d.com) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
 
 The solution significantly reduces build size when multiple textures with identical areas are used. Consider a [visual novel](https://en.wikipedia.org/wiki/Visual_novel) type of game, where multiple textures per character are used, each portraying a different emotion; most of the texture space is occupied with identical data, while only a small area varies:
@@ -16,6 +11,11 @@ The solution significantly reduces build size when multiple textures with identi
 ![](https://i.gyazo.com/af08d141e7a08b6a8e2ef60c07332bbf.png)
 
 These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique areas of the original textures and consume just **2.4MB**, effectively compressing the textures by **86.3%**.
+
+<a href="https://naninovel.com">
+  <p align="center">Sprite Dicing is used in <strong>Naninovel</strong> — visual novel engine. Check it out!</p>
+  <p align="center"><img src="https://raw.githubusercontent.com/Elringus/CDN/main/naninovel-banner-wide.png"></p>
+</a>
 
 ## Installation
 
