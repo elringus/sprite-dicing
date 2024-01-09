@@ -13,12 +13,12 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 <a href="https://naninovel.com">
   <p align="center">Sprite Dicing is used in <strong>Naninovel</strong> — visual novel engine. Check it out!</p>
-  <p align="center"><img src="https://raw.githubusercontent.com/Elringus/CDN/main/naninovel-banner-wide.png"></p>
+  <p align="center"><img src="https://raw.githubusercontent.com/elringus/cdn/main/naninovel-banner-wide.png"></p>
 </a>
 
 ## Installation
 
-Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package via the following git URL: `https://github.com/Elringus/SpriteDicing.git#package` or download and import [SpriteDicing.unitypackage](https://github.com/Elringus/SpriteDicing/raw/master/SpriteDicing.unitypackage) manually.
+Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package via the following git URL: `https://github.com/elringus/sprite-dicing.git#package` or download and import [SpriteDicing.unitypackage](https://github.com/elringus/sprite-dicing/raw/master/SpriteDicing.unitypackage) manually.
 
 ![](https://i.gyazo.com/b54e9daa9a483d9bf7f74f0e94b2d38a.gif)
 
