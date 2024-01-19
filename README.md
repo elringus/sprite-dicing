@@ -1,7 +1,7 @@
 # SpriteDicing
 
 [![CodeFactor](https://www.codefactor.io/repository/github/elringus/sprite-dicing/badge)](https://www.codefactor.io/repository/github/elringus/sprite-dicing)
-[![codecov](https://codecov.io/gh/elringus/sprite-dicing/branch/master/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/elringus/sprite-dicing)
+[![codecov](https://codecov.io/gh/elringus/sprite-dicing/branch/main/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/elringus/sprite-dicing)
 
 Sprite Dicing is an extension for [Unity game engine](https://unity3d.com) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
 
@@ -18,7 +18,7 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 ## Installation
 
-Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package via the following git URL: `https://github.com/elringus/sprite-dicing.git#package` or download and import [SpriteDicing.unitypackage](https://github.com/elringus/sprite-dicing/raw/master/SpriteDicing.unitypackage) manually.
+Use [UPM](https://docs.unity3d.com/Manual/upm-ui.html) to install the package via the following git URL: `https://github.com/elringus/sprite-dicing.git#package` or download and import [SpriteDicing.unitypackage](https://github.com/elringus/sprite-dicing/raw/main/SpriteDicing.unitypackage) manually.
 
 ![](https://i.gyazo.com/b54e9daa9a483d9bf7f74f0e94b2d38a.gif)
 
