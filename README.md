@@ -1,7 +1,17 @@
-# SpriteDicing
+<p align="center">
+  <a href="https://github.com/elringus/sprite-dicing" target="_blank" rel="noopener noreferrer">
+    <img width="200" src="https://raw.githubusercontent.com/elringus/sprite-dicing/main/.github/favicon.svg" alt="SpriteDicing">
+  </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://openupm.com/packages/com.elringus.spritedicing"><img src="https://img.shields.io/npm/v/com.elringus.spritedicing?label=upm&registry_uri=https://package.openupm.com"/></a>
+  <a href="https://codefactor.io/repository/github/elringus/sprite-dicing/overview/main"><img src="https://codefactor.io/repository/github/elringus/sprite-dicing/badge/main" alt="codefactor"></a>
+  <a href="https://codecov.io/gh/elringus/sprite-dicing"><img src="https://codecov.io/gh/elringus/sprite-dicing/branch/main/graph/badge.svg?token=DBUTGP0Q7C" alt="codecov"></a>
+</p>
+<br/>
 
-[![CodeFactor](https://www.codefactor.io/repository/github/elringus/sprite-dicing/badge)](https://www.codefactor.io/repository/github/elringus/sprite-dicing)
-[![codecov](https://codecov.io/gh/elringus/sprite-dicing/branch/main/graph/badge.svg?token=DBUTGP0Q7C)](https://codecov.io/gh/elringus/sprite-dicing)
+# Reuse repeating texture regions
 
 Sprite Dicing is an extension for [Unity game engine](https://unity3d.com) allowing to split a set of sprite textures into dices, discard identical ones, bake unique dices into atlas textures and then seamlessly reconstruct the original sprites at runtime.
 
