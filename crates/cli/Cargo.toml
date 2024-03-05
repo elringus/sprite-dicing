@@ -1,0 +1,4 @@
+[package]
+name = "cli"
+publish = false
+edition = "2021"
