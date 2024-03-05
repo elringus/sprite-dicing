@@ -1,26 +1,26 @@
 ---
 layout: home
 markdownStyles: false
-title: Convert media links to optimized HTML
-titleTemplate: imgit • :title
+title: Reuse repeating texture regions
+titleTemplate: SpriteDicing • :title
 
 hero:
-  name: imgit
-  text: Convert media links to optimized HTML
-  tagline: Images, video and YouTube&#58; fetch, encode, scale, lazyload – for best UX and <a href="https://web.dev/vitals" target="_blank">Web Vitals</a>.
+  name: SpriteDicing
+  text: Reuse repeating<br>texture regions
+  tagline: Cross-engine tool for lossless compression<br>of sprite textures with identical areas.
   actions:
     - theme: brand
       text: Get Started
       link: /guide/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/elringus/imgit
+      link: https://github.com/elringus/sprite-dicing
   image:
-    src: /img/hero.webp
-    alt: imgit
+    src: /favicon.svg
+    alt: SpriteDicing
 ---
 
-<div class="features">
+<!-- <div class="features">
     <div class="container">
         <div class="items" style="margin: -8px">
             <div class="items">
@@ -29,29 +29,29 @@ hero:
                         <article class="box">
                             <div class="box-title">
                                 <div class="icon">✨</div>
-                                <h2 class="title">Transformative</h2>
+                                <h2 class="title">High-level Interoperation</h2>
                             </div>
-                            <p class="details">Builds optimized HTML for arbitrary image, video and YouTube syntax, such as URLs, markdown or JSX tags.</p></article>
+                            <p class="details">Generates JavaScript bindings and type declarations for your C# APIs facilitating seamless interop between the domain and UI.</p></article>
                     </div>
                 </div>
                 <div class="grid-3 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">⚡</div>
-                                <h2 class="title">Accelerating</h2>
+                                <div class="icon">📦</div>
+                                <h2 class="title">Embed or Sideload</h2>
                             </div>
-                            <p class="details">Encodes to the modern AV1/AVIF format compressing by up to 90% without noticeable quality loss. Supports GPU acceleration.</p></article>
+                            <p class="details">Choose between embedding all the C# binaries into single-file ES module for portability or sideload for best performance and build size.</p></article>
                     </div>
                 </div>
                 <div class="grid-3 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">♻️</div>
-                                <h2 class="title">Polyglot</h2>
+                                <div class="icon">🗺️</div>
+                                <h2 class="title">Runs Everywhere</h2>
                             </div>
-                            <p class="details">Works with most known media formats: JPEG, PNG, APNG, SVG, GIF, WEBP, WEBM, MP4, AVI, MOV, MKV, BMP, TIFF, TGA and even PSD.</p></article>
+                            <p class="details">Node, Deno, Bun, web browsers and even constrained environments, such as VS Code extensions — your app will work everywhere.</p></article>
                     </div>
                 </div>
             </div>
@@ -60,65 +60,65 @@ hero:
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🌊</div>
-                                <h2 class="title">Smooth</h2>
+                                <div class="icon">⚡</div>
+                                <h2 class="title">Interop Interfaces</h2>
                             </div>
-                            <p class="details">Generates tiny blurred covers from the source content to be beautifully crossfaded into HD originals once lazy-loaded.</p></article>
+                            <p class="details">Manually author interop APIs via static C# methods or simply feed Bootsharp your domain-specific interfaces — it'll figure the rest.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">📐</div>
-                                <h2 class="title">Adaptive</h2>
+                                <div class="icon">🏷️</div>
+                                <h2 class="title">Instance Bindings</h2>
                             </div>
-                            <p class="details">Optionally scales down the content to specified threshold while preserving high-resolution variants for high-DPI displays.</p></article>
+                            <p class="details">When an interface value is specified in interop API, instance binding is generated allowing to interoperate on stateful objects.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🌐</div>
-                                <h2 class="title">Outgoing</h2>
+                                <div class="icon">🛠️</div>
+                                <h2 class="title">Customizable</h2>
                             </div>
-                            <p class="details">Fetches from remote sources, such as image hostings. Uploads optimized content to designated endpoint, such as CDN.</p></article>
+                            <p class="details">Configure namespaces for emitted bindings, function and event names, C# -> TypeScript type mappings and more.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🗺️</div>
-                                <h2 class="title">Omnipresent</h2>
+                                <div class="icon">🔥</div>
+                                <h2 class="title">Modern .NET</h2>
                             </div>
-                            <p class="details">Built-in plugins for Astro, SvelteKit, SolidStart, VitePress, Nuxt and Remix. Adapters for Node, Deno and Bun runtimes.</p></article>
+                            <p class="details">Supports latest runtime features: WASM multi-threading, AOT compilation, assembly trimming, streaming module instantiation.</p></article>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <style>
 :root {
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #ee3248 30%, #ffba3c);
-  --vp-home-hero-image-background-image: linear-gradient(-45deg, #6719b7 50%, #ee3248 50%);
-  --vp-home-hero-image-filter: blur(44px);
+    --vp-home-hero-name-color: transparent;
+    --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #ff5d00 30%, #ffdd3a);
+    --vp-home-hero-image-background-image: linear-gradient(140deg, #ff5d00 60%, #5f00bf 40%);
+    --vp-home-hero-image-filter: blur(60px) opacity(0.66);
 }
 
 @media (min-width: 640px) {
-  :root {
-    --vp-home-hero-image-filter: blur(56px);
-  }
+    :root {
+        --vp-home-hero-image-filter: blur(80px) opacity(0.66);
+    }
 }
 
 @media (min-width: 960px) {
-  :root {
-    --vp-home-hero-image-filter: blur(68px);
-  }
+    :root {
+        --vp-home-hero-image-filter: blur(100px) opacity(0.66);
+    }
 
     .VPHome .name .clip {
         line-height: 64px;
@@ -160,11 +160,11 @@ hero:
     padding-top: 5px;
     padding-bottom: 5px;
     padding-right: 15px;
-    background-color: var(--vp-c-brand-1);
+    background-color: #df5100;
 }
 
 .VPHome .VPButton.medium.brand:hover {
-    background-color: var(--vp-c-brand-2);
+    background-color: #ef6a1d;
 }
 
 .VPHome .VPButton.medium.brand::after {
