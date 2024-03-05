@@ -1,4 +1,8 @@
 [package]
 name = "cli"
-publish = false
 edition = "2021"
+version = "0.0.0"
+publish = false
+
+[dependencies]
+sprite-dicing = { path = "../lib" }
