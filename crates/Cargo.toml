@@ -1,6 +1,7 @@
-[package]
-name = "sprite-dicing"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-[dependencies]
+members = [
+    "lib",
+    "abi",
+    "cli",
+]

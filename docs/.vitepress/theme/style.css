@@ -1,0 +1,187 @@
+/** https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css */
+
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    /* noinspection CssUnknownTarget */
+    src: url(/fonts/inter.woff2) format("woff2");
+}
+
+@font-face {
+    font-family: "JetBrains";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    /* noinspection CssUnknownTarget */
+    src: url(/fonts/jb.woff2) format("woff2");
+}
+
+:root {
+    --vp-font-family-base: "Inter", sans-serif;
+    --vp-font-family-mono: "JetBrains", monospace;
+    font-optical-sizing: auto;
+
+    /* Main highlight/link color (light mode). */
+    --vp-c-brand-1: #d22c40;
+    /* Link hover color (light mode). */
+    --vp-c-brand-2: #be2033;
+}
+
+.dark {
+    /* Main highlight/link color (dark mode). */
+    --vp-c-brand-1: #ee3248;
+    /* Link hover color (dark mode). */
+    --vp-c-brand-2: #f35d44;
+}
+
+.dark .dark-only,
+.light-only {
+    display: flex !important;
+}
+
+.dark .light-only,
+.dark-only {
+    display: none !important;
+}
+
+.attr {
+    display: block;
+    text-align: right;
+    font-size: 11px;
+    opacity: 0.65;
+    transition: opacity 0.25s;
+    font-family: "JetBrains", monospace;
+    user-select: none;
+}
+
+.attr:hover {
+    opacity: 1;
+}
+
+pre {
+    font-variant-ligatures: none;
+}
+
+.vp-doc a {
+    text-underline-position: from-font;
+}
+
+.external-link-icon {
+    margin-left: -1px;
+    margin-right: 2px;
+}
+
+details summary {
+    font-weight: 500;
+    color: var(--vp-c-brand-1);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.25s, opacity 0.25s;
+    text-underline-position: from-font;
+    cursor: pointer;
+}
+
+details summary:hover {
+    color: var(--vp-c-brand-2);
+}
+
+.vp-doc th, .vp-doc td, .vp-doc tr {
+    border: inherit !important;
+}
+
+table {
+    --border: 1px solid var(--vp-c-divider);
+    width: fit-content;
+    border-radius: 8px;
+    border-spacing: 0;
+    border-collapse: separate !important;
+    border: var(--border) !important;
+    overflow: hidden;
+}
+
+table th:not(:last-child),
+table td:not(:last-child) {
+    border-right: var(--border) !important;
+}
+
+table > thead > tr:not(:last-child) > th,
+table > thead > tr:not(:last-child) > td,
+table > tbody > tr:not(:last-child) > th,
+table > tbody > tr:not(:last-child) > td,
+table > tfoot > tr:not(:last-child) > th,
+table > tfoot > tr:not(:last-child) > td,
+table > tr:not(:last-child) > td,
+table > tr:not(:last-child) > th,
+table > thead:not(:last-child),
+table > tbody:not(:last-child),
+table > tfoot:not(:last-child) {
+    border-bottom: var(--border) !important;
+}
+
+/* Stretch YouTube embeds with small thumbnails. */
+.imgit-youtube {
+    width: 100% !important;
+}
+
+[data-imgit-container],
+[data-imgit-container] img,
+[data-imgit-container] video {
+    border-radius: 8px;
+}
+
+/**
+ * Navbar blur effect
+ * -------------------------------------------------------------------------- */
+
+/* remove default opaque bg from navbar */
+.content-body {
+    background: none !important;
+}
+
+/* remove opacity gradient under navbar */
+.curtain,
+.aside-curtain {
+    display: none !important;
+}
+
+/* a hack for logo title to keep sidebar bg color */
+@media (min-width: 960px) {
+    .VPNavBar.has-sidebar div.title {
+        background: var(--vp-sidebar-bg-color) !important;
+    }
+}
+
+/* a bit of tint to make navbar not as transparent */
+.VPNavBar:not(.top) {
+    background: rgba(255, 255, 255, 0.75) !important;
+}
+
+.dark .VPNavBar:not(.top) {
+    background: rgba(30, 30, 32, 0.5) !important;
+}
+
+/* the blur effect */
+.VPNavBar:not(.top)::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: saturate(180%) blur(5px);
+    z-index: -1;
+}
+
+.VPNavBar.top::after {
+    opacity: 0;
+}
+
+.VPNavBar.top {
+    background-color: transparent;
+}
+
+.VPNavBar {
+    transition: border-bottom-color 0.25s, background-color 0.25s, opacity 0.25s;
+}

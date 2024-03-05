@@ -2,3 +2,7 @@
 name = "sprite-dicing"
 version = "0.1.0"
 edition = "2021"
+description = "Cross-engine tool for lossless compression of sprite textures with identical areas."
+license = "MIT"
+authors = ["Artyom Sovetnikov (Elringus)"]
+documentation = "https://docs.rs/bitflags"
