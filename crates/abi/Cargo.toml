@@ -1,11 +1,11 @@
 [package]
 name = "abi"
-edition = "2021"
 version = "0.0.0"
+edition = "2021"
 publish = false
 
 [dependencies]
-sprite-dicing = { path = "../lib" }
+sprite-dicing = { path = "../lib", features = ["fs"] }
 
 [lib]
 crate-type = ["cdylib"]
