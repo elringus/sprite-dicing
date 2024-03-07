@@ -12,19 +12,6 @@ pub use fs::*;
 pub use models::*;
 use std::error::Error;
 
-/// Dices specified sprites with  producing atlas textures containing unique
-/// 
-/// # Arguments 
-/// 
-/// * `sprites`: 
-/// 
-/// returns: Result<DiceResult, Box<dyn Error, Global>> 
-/// 
-/// # Examples 
-/// 
-/// ```
-/// 
-/// ```
 pub fn dice(sprites: Vec<SourceSprite>) -> Result<DiceResult, Box<dyn Error>> {
     Ok(DiceResult {
         atlases: Vec::new(),
