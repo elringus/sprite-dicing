@@ -108,6 +108,12 @@ table > tfoot:not(:last-child) {
     border-bottom: var(--border) !important;
 }
 
+[data-imgit-container],
+[data-imgit-container] img,
+[data-imgit-container] video {
+    border-radius: 8px;
+}
+
 /**
  * Navbar blur effect
  * -------------------------------------------------------------------------- */
