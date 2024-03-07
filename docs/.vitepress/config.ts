@@ -58,5 +58,5 @@ export default defineConfig({
             ]
         }
     },
-    sitemap: { hostname: "https://sprite-dicing.netlify.app" }
+    sitemap: { hostname: "https://dicing.elringus.me" }
 });
