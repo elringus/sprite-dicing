@@ -58,5 +58,5 @@ export default defineConfig({
             ]
         }
     },
-    // sitemap: { hostname: "https://imgit.dev" }
+    sitemap: { hostname: "https://dicing.elringus.me" }
 });
