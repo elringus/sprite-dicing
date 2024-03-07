@@ -12,7 +12,7 @@ pub use fs::*;
 pub use models::*;
 use std::error::Error;
 
-pub fn dice(sprites: Vec<SourceSprite>) -> Result<DiceResult, Box<dyn Error>> {
+pub fn dice(sprites: Vec<SourceSprite>, prefs: Prefs) -> Result<DiceResult, Box<dyn Error>> {
     Ok(DiceResult {
         atlases: Vec::new(),
         sprites: Vec::new(),
