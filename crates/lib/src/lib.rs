@@ -1,4 +1,4 @@
-//! Provides API for generating atlas textures and diced sprite meshes from/to raw pixels.
+//! Provides APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
 //! When `fs` feature is enabled, additionally provides APIs to read and decode textures of
 //! various formats from the file system as well as to save generated atlases into textures
 //! of various formats and to write diced sprite meshes into Wavefront OBJ files.
@@ -49,7 +49,7 @@ use std::error::Error;
 ///     // Unique ID as set in the associated source sprite.
 ///     _ = sprite.id;
 ///     // Atlas texture containing all the unique pixels for the sprite.
-///     _ = generated.atlases[sprite.atlas_index]?;
+///     _ = &generated.atlases[sprite.atlas_index];
 ///     // Mesh vertex positions in local space (scaled by PPU specified in prefs).
 ///     _ = sprite.vertices;
 ///     // Atlas texture coordinates mapped to the mesh vertices.
