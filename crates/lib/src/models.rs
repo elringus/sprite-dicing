@@ -1,6 +1,6 @@
 //! Common data models.
 
-use image::{GenericImageView, Rgba};
+use image::DynamicImage;
 
 /// Preferences for a dicing operation.
 pub struct Prefs {
@@ -12,7 +12,7 @@ pub struct Prefs {
     /// but yield better anti-bleeding results.
     pub padding: u16,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates. Can be used in
-    /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't 
+    /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't
     /// consume texture space, but higher values could visually distort the rendered sprite.
     pub uv_inset: f32,
     /// Improves compression ratio by discarding fully-transparent dices, but may also change
@@ -30,9 +30,25 @@ pub struct Prefs {
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
     /// Higher values will make sprite larger in conventional space units.
     pub ppu: u16,
-    /// Relative position of the sprite origin point on the generated mesh. Used when pivot in
-    /// [SourceSprite] is not specified with fallback to center `(0.5,0.5)`.
-    pub pivot: Option<Pivot>,
+    /// Relative position of the sprite origin point on the generated mesh.
+    /// Used as a fallback default when pivot in [SourceSprite] is not specified.
+    pub pivot: Pivot,
+}
+
+impl Default for Prefs {
+    fn default() -> Self {
+        Self {
+            dice_size: 64,
+            padding: 2,
+            uv_inset: 0.0,
+            trim_transparent: true,
+            atlas_size_limit: 2048,
+            atlas_square: false,
+            atlas_pot: false,
+            ppu: 100,
+            pivot: Pivot { x: 0.5, y: 0.5 },
+        }
+    }
 }
 
 /// Original sprite specified as input for a dicing operation.
@@ -40,16 +56,16 @@ pub struct SourceSprite {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
     /// Texture containing all the pixels of the sprite.
-    pub texture: Box<dyn GenericImageView<Pixel = Rgba<u8>>>,
+    pub texture: DynamicImage,
     /// Relative position of the sprite origin point on the generated mesh. When not specified,
-    /// will use default pivot specified in [Prefs] with fallback to center `(0.5,0.5)`.
+    /// will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
 }
 
 /// Result of a dicing operation.
 pub struct DiceResult {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
-    pub atlases: Vec<Box<dyn GenericImageView<Pixel = Rgba<u8>>>>,
+    pub atlases: Vec<DynamicImage>,
     /// Generated diced sprites containing mesh data and refs to the associated atlas.
     pub sprites: Vec<DicedSprite>,
 }
@@ -59,8 +75,8 @@ pub struct DiceResult {
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
-    /// Generated atlas texture containing all the pixels for this sprite.
-    pub atlas: Box<dyn GenericImageView<Pixel = Rgba<u8>>>,
+    /// Index of atlas texture in [DiceResult] containing all the unique pixels for this sprite.
+    pub atlas_index: usize,
     /// Local position of the generated sprite mesh vertices.
     pub vertices: Vec<VertexPosition>,
     /// Atlas texture coordinates mapped to the [vertices] vector.
@@ -98,24 +114,24 @@ pub struct TextureCoordinate {
     pub v: f32,
 }
 
-/// A rect inside original sprite associated with a rect inside generated atlas texture
-/// with the pixels content.
-pub(crate) struct Dice {
-    /// Position and dimensions of the dice inside original sprite.
-    pub local: Rect,
-    /// Rect inside associated atlas texture with pixels content of the dice.
-    pub atlas: Rect,
-}
-
-/// A rectangular subset of a sprite texture represented via XY offsets from the top-left
-/// corner of the texture rectangle, as well as width and height.
-pub(crate) struct Rect {
-    /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
-    pub x: u16,
-    /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
-    pub y: u16,
-    /// Width of the rect, in pixels.
-    pub width: u16,
-    /// Height of the rect, in pixels.
-    pub height: u16,
-}
+// /// A rect inside original sprite associated with a rect inside generated atlas texture
+// /// with the pixels content.
+// pub(crate) struct Dice {
+//     /// Position and dimensions of the dice inside original sprite.
+//     pub local: Rect,
+//     /// Rect inside associated atlas texture with pixels content of the dice.
+//     pub atlas: Rect,
+// }
+//
+// /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
+// /// corner of the texture rectangle, as well as width and height.
+// pub(crate) struct Rect {
+//     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
+//     pub x: u16,
+//     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
+//     pub y: u16,
+//     /// Width of the rect, in pixels.
+//     pub width: u16,
+//     /// Height of the rect, in pixels.
+//     pub height: u16,
+// }
