@@ -98,7 +98,7 @@ pub struct Pivot {
     pub y: f32,
 }
 
-/// Represents position of a mesh vertex in a space coordinated with conventional units.
+/// Represents position of a mesh vertex in a local space coordinated with conventional units.
 pub struct VertexPosition {
     /// Position over horizontal (X) axis, in conventional units.
     pub x: f32,
