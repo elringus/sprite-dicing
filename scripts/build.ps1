@@ -11,3 +11,4 @@ cp target/aarch64-apple-darwin/release/libabi.dylib target/dist/sprite-dicing.dy
 cp target/x86_64-pc-windows-msvc/release/cli.exe target/dist/dice-windows-x64.exe
 cp target/x86_64-unknown-linux-gnu/release/cli target/dist/dice-linux-x64
 cp target/aarch64-apple-darwin/release/cli target/dist/dice-mac-arm
+echo "Build finished."

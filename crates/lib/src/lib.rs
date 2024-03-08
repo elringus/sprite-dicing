@@ -3,6 +3,7 @@
 //! various formats from the file system as well as to save generated atlases into textures
 //! of various formats and to write diced sprite meshes into Wavefront OBJ files.
 
+mod dicer;
 #[cfg(feature = "fs")]
 mod fs;
 mod models;
@@ -62,8 +63,9 @@ use std::error::Error;
 /// }
 /// ```
 pub fn dice(sprites: Vec<SourceSprite>, prefs: Prefs) -> Result<DiceResult, Box<dyn Error>> {
-    _ = sprites;
-    _ = prefs;
+    let dicer = dicer::new(&prefs);
+    let diced = sprites.iter().map(|s| dicer.dice(s)).collect::<Vec<_>>();
+    _ = diced;
     Ok(DiceResult {
         atlases: Vec::new(),
         sprites: Vec::new(),

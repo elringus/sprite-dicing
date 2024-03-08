@@ -1,6 +1,6 @@
 //! Common data models.
 
-use image::DynamicImage;
+use image::{DynamicImage, SubImage};
 
 /// Preferences for a dicing operation.
 pub struct Prefs {
@@ -114,24 +114,35 @@ pub struct TextureCoordinate {
     pub v: f32,
 }
 
-// /// A rect inside original sprite associated with a rect inside generated atlas texture
-// /// with the pixels content.
-// pub(crate) struct Dice {
-//     /// Position and dimensions of the dice inside original sprite.
-//     pub local: Rect,
-//     /// Rect inside associated atlas texture with pixels content of the dice.
-//     pub atlas: Rect,
-// }
-//
-// /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
-// /// corner of the texture rectangle, as well as width and height.
-// pub(crate) struct Rect {
-//     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
-//     pub x: u16,
-//     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
-//     pub y: u16,
-//     /// Width of the rect, in pixels.
-//     pub width: u16,
-//     /// Height of the rect, in pixels.
-//     pub height: u16,
-// }
+/// Product of dicing a [SourceSprite]'s texture.
+pub(crate) struct DicedTexture<'a> {
+    /// Source input sprite which was diced.
+    pub source: &'a SourceSprite,
+    /// Associated diced units.
+    pub units: Vec<DiceUnit<'a>>,
+    /// Associated diced units with distinct content.
+    pub unique_units: Vec<DiceUnit<'a>>,
+}
+
+/// A chunk diced from a source texture.
+pub(crate) struct DiceUnit<'a> {
+    /// Position and dimensions of the unit inside source sprite texture.
+    pub rect: PixelRect,
+    /// Pixels of the diced unit.
+    pub view: SubImage<&'a DynamicImage>,
+    /// Pixels of the diced unit, plus colors from the padding rect.
+    pub padded_view: SubImage<&'a DynamicImage>,
+}
+
+/// A rectangular subset of a sprite texture represented via XY offsets from the top-left
+/// corner of the texture rectangle, as well as width and height.
+pub(crate) struct PixelRect {
+    /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
+    pub x: u16,
+    /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
+    pub y: u16,
+    /// Width of the rect, in pixels.
+    pub width: u16,
+    /// Height of the rect, in pixels.
+    pub height: u16,
+}
