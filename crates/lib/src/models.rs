@@ -4,56 +4,103 @@ use image::{GenericImageView, Rgba};
 
 /// Preferences for a dicing operation.
 pub struct Prefs {
-    /// The size of a single diced unit. Larger values result in less generated mesh overhead,
-    /// but may also diminish number of reused texture regions.
-    dice_size: u16,
-    /// The size of a pixel border to add between adjacent diced units inside atlas textures.
+    /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
+    /// overhead, but may also diminish number of reused texture regions.
+    pub dice_size: u16,
+    /// The size of border, in pixels, to add between adjacent diced units inside atlas textures.
     /// Increase to prevent texture bleeding artifacts. Larger values consume more texture space,
     /// but yield better anti-bleeding results.
-    padding: u16,
+    pub padding: u16,
+    /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates. Can be used in
+    /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't 
+    /// consume texture space, but higher values could visually distort the rendered sprite.
+    pub uv_inset: f32,
     /// Improves compression ratio by discarding fully-transparent dices, but may also change
     /// sprite dimensions. Disable to preserve original sprite texture dimensions.
-    trim_transparent: bool,
+    pub trim_transparent: bool,
     /// Maximum size (width or height) of a single generated atlas texture; will generate
     /// multiple textures when the limit is reached.
-    atlas_size_limit: u16,
+    pub atlas_size_limit: u16,
     /// The generated atlas textures will always be square. Less efficient, but required for
     /// PVRTC compression.
-    atlas_square: bool,
-    /// The generated atlas textures will always have width and height of power of two.
-    /// Extremely inefficient, but may be required by some older GPUs.
-    atlas_pot: bool,
+    pub atlas_square: bool,
+    /// The generated atlas textures will always have width and height be power of two.
+    /// Extremely inefficient, but required by some older GPUs.
+    pub atlas_pot: bool,
+    /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
+    /// Higher values will make sprite larger in conventional space units.
+    pub ppu: u16,
+    /// Relative position of the sprite origin point on the generated mesh. Used when pivot in
+    /// [SourceSprite] is not specified with fallback to center `(0.5,0.5)`.
+    pub pivot: Option<Pivot>,
+}
+
+/// Original sprite specified as input for a dicing operation.
+pub struct SourceSprite {
+    /// Unique identifier of the sprite among others in a dicing operation.
+    pub id: String,
+    /// Texture containing all the pixels of the sprite.
+    pub texture: Box<dyn GenericImageView<Pixel = Rgba<u8>>>,
+    /// Relative position of the sprite origin point on the generated mesh. When not specified,
+    /// will use default pivot specified in [Prefs] with fallback to center `(0.5,0.5)`.
+    pub pivot: Option<Pivot>,
 }
 
 /// Result of a dicing operation.
 pub struct DiceResult {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
     pub atlases: Vec<Box<dyn GenericImageView<Pixel = Rgba<u8>>>>,
-    /// Generated diced sprites containing local sprite rects and refs to atlas content.
+    /// Generated diced sprites containing mesh data and refs to the associated atlas.
     pub sprites: Vec<DicedSprite>,
 }
 
-/// Original (non-diced) sprite specified as input for a dicing operation.
-pub struct SourceSprite {
-    /// Unique identifier of the sprite among others in a dicing operation.
-    pub id: String,
-    /// Texture containing all the pixels of the sprite.
-    pub texture: Box<dyn GenericImageView<Pixel = Rgba<u8>>>,
-}
-
-/// Generated dicing product of a [SourceSprite].
+/// Generated dicing product of a [SourceSprite] containing mesh data and reference to the
+/// associated atlas texture required to reconstruct and render sprite at runtime.
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
     /// Generated atlas texture containing all the pixels for this sprite.
     pub atlas: Box<dyn GenericImageView<Pixel = Rgba<u8>>>,
-    /// Generated dices of the sprite.
-    pub dices: Vec<Dice>,
+    /// Local position of the generated sprite mesh vertices.
+    pub vertices: Vec<VertexPosition>,
+    /// Atlas texture coordinates mapped to the [vertices] vector.
+    pub uvs: Vec<TextureCoordinate>,
+    /// Mesh face (triangle) indices to the [vertices] and [uvs] vectors.
+    pub indices: Vec<usize>,
+    /// Relative position of the sprite origin point on the generated mesh.
+    pub pivot: Pivot,
+}
+
+/// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
+/// from top-left corner of the sprite mesh rectangle.
+pub struct Pivot {
+    /// Relative distance from the left mesh border (x-axis), where 0 is left border,
+    /// 0.5 — center and 1.0 is the right border.
+    pub x: f32,
+    /// Relative distance from the top mesh border (y-axis), where 0 is top border,
+    /// 0.5 — center and 1.0 is the bottom border.
+    pub y: f32,
+}
+
+/// Represents position of a mesh vertex in a space coordinated with conventional units.
+pub struct VertexPosition {
+    /// Position over horizontal (X) axis, in conventional units.
+    pub x: f32,
+    /// Position over vertical (Y) axis, in conventional units.
+    pub y: f32,
+}
+
+/// Represents position on a texture, relative to its dimensions.
+pub struct TextureCoordinate {
+    /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
+    pub u: f32,
+    /// Position over vertical axis, relative to texture height, in 0.0 to 1.0 range.
+    pub v: f32,
 }
 
 /// A rect inside original sprite associated with a rect inside generated atlas texture
 /// with the pixels content.
-pub struct Dice {
+pub(crate) struct Dice {
     /// Position and dimensions of the dice inside original sprite.
     pub local: Rect,
     /// Rect inside associated atlas texture with pixels content of the dice.
@@ -62,7 +109,7 @@ pub struct Dice {
 
 /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
 /// corner of the texture rectangle, as well as width and height.
-pub struct Rect {
+pub(crate) struct Rect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
     pub x: u16,
     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
