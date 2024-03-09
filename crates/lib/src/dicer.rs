@@ -28,6 +28,8 @@ impl Dicer {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fixtures;
+    use image::Rgba;
 
     #[test]
     fn keeps_source_ref() {
@@ -37,5 +39,10 @@ mod tests {
             pivot: None,
         };
         assert_eq!("foo", new(&Prefs::default()).dice(&source).source.id);
+    }
+
+    #[test]
+    fn foo() {
+        assert_eq!(Rgba([0, 0, 255, 255]), fixtures::B[(0, 0)]);
     }
 }

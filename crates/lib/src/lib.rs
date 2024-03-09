@@ -7,6 +7,7 @@ mod dicer;
 #[cfg(feature = "fs")]
 mod fs;
 mod models;
+mod fixtures;
 
 #[cfg(feature = "fs")]
 pub use fs::*;
