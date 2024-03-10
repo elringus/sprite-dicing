@@ -28,7 +28,7 @@ impl Dicer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fixtures;
+    use crate::fixtures as fx;
     use image::Rgba;
 
     #[test]
@@ -43,6 +43,6 @@ mod tests {
 
     #[test]
     fn foo() {
-        assert_eq!(Rgba([0, 0, 255, 255]), fixtures::B[(0, 0)]);
+        assert_eq!(Rgba([0, 0, 255, 255]), fx::B[(0, 0)]);
     }
 }
