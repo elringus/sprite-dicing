@@ -6,7 +6,7 @@ use image::{DynamicImage, SubImage};
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
-    pub dice_size: u16,
+    pub unit_size: u16,
     /// The size of border, in pixels, to add between adjacent diced units inside atlas textures.
     /// Increase to prevent texture bleeding artifacts. Larger values consume more texture space,
     /// but yield better anti-bleeding results.
@@ -38,7 +38,7 @@ pub struct Prefs {
 impl Default for Prefs {
     fn default() -> Self {
         Self {
-            dice_size: 64,
+            unit_size: 64,
             padding: 2,
             uv_inset: 0.0,
             trim_transparent: true,
@@ -52,11 +52,11 @@ impl Default for Prefs {
 }
 
 /// Original sprite specified as input for a dicing operation.
-pub struct SourceSprite {
+pub struct SourceSprite<'a> {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
     /// Texture containing all the pixels of the sprite.
-    pub texture: DynamicImage,
+    pub texture: &'a DynamicImage,
     /// Relative position of the sprite origin point on the generated mesh. When not specified,
     /// will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
@@ -117,15 +117,15 @@ pub struct TextureCoordinate {
 /// Product of dicing a [SourceSprite]'s texture.
 pub(crate) struct DicedTexture<'a> {
     /// Source input sprite which was diced.
-    pub source: &'a SourceSprite,
+    pub source: &'a SourceSprite<'a>,
     /// Associated diced units.
-    pub units: Vec<DiceUnit<'a>>,
+    pub units: Vec<DicedUnit<'a>>,
     /// Associated diced units with distinct content.
-    pub unique_units: Vec<DiceUnit<'a>>,
+    pub unique_units: Vec<DicedUnit<'a>>,
 }
 
 /// A chunk diced from a source texture.
-pub(crate) struct DiceUnit<'a> {
+pub(crate) struct DicedUnit<'a> {
     /// Position and dimensions of the unit inside source sprite texture.
     pub rect: PixelRect,
     /// Pixels of the diced unit.

@@ -1,13 +1,15 @@
+#![allow(dead_code)] // TODO: Remove.
+
 //! Provides APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
 //! When `fs` feature is enabled, additionally provides APIs to read and decode textures of
 //! various formats from the file system as well as to save generated atlases into textures
 //! of various formats and to write diced sprite meshes into Wavefront OBJ files.
 
 mod dicer;
+mod fixtures;
 #[cfg(feature = "fs")]
 mod fs;
 mod models;
-mod fixtures;
 
 #[cfg(feature = "fs")]
 pub use fs::*;
@@ -33,8 +35,8 @@ use std::error::Error;
 ///
 /// // Collect source sprite textures to dice.
 /// let source_sprites = vec![
-///     SourceSprite { id: "1".to_owned(), texture: open("1.png")?, pivot: None },
-///     SourceSprite { id: "2".to_owned(), texture: open("2.png")?, pivot: None },
+///     SourceSprite { id: "1".to_owned(), texture: &open("1.png")?, pivot: None },
+///     SourceSprite { id: "2".to_owned(), texture: &open("2.png")?, pivot: None },
 ///     // ...
 /// ];
 ///
@@ -64,7 +66,7 @@ use std::error::Error;
 /// }
 /// ```
 pub fn dice(sprites: Vec<SourceSprite>, prefs: Prefs) -> Result<DiceResult, Box<dyn Error>> {
-    let dicer = dicer::new(&prefs);
+    let dicer = dicer::new(&prefs)?;
     let diced = sprites.iter().map(|s| dicer.dice(s)).collect::<Vec<_>>();
     _ = diced;
     Ok(DiceResult {
