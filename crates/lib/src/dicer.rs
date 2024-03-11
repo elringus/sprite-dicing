@@ -1,8 +1,8 @@
 use crate::models::*;
 use image::{DynamicImage, GenericImageView, RgbaImage, SubImage};
 use std::cmp;
-use std::collections::HashSet;
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::collections::{hash_map::DefaultHasher, HashSet};
+use std::hash::{Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
 pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {

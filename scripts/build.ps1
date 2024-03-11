@@ -1,4 +1,3 @@
-cd crates
 if (Test-Path target/dist) { rm -r target/dist }
 cargo build -p=abi -p=cli -r --target=x86_64-pc-windows-msvc
 docker run --rm -t -v $pwd\:/io -w /io messense/cargo-zigbuild sh -c "
