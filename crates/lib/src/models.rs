@@ -1,16 +1,16 @@
 //! Common data models.
 
-use image::{DynamicImage, SubImage};
+use image::{DynamicImage, RgbaImage};
 
 /// Preferences for a dicing operation.
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
-    pub unit_size: u16,
+    pub unit_size: u32,
     /// The size of border, in pixels, to add between adjacent diced units inside atlas textures.
     /// Increase to prevent texture bleeding artifacts. Larger values consume more texture space,
     /// but yield better anti-bleeding results.
-    pub padding: u16,
+    pub padding: u32,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates. Can be used in
     /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't
     /// consume texture space, but higher values could visually distort the rendered sprite.
@@ -20,7 +20,7 @@ pub struct Prefs {
     pub trim_transparent: bool,
     /// Maximum size (width or height) of a single generated atlas texture; will generate
     /// multiple textures when the limit is reached.
-    pub atlas_size_limit: u16,
+    pub atlas_size_limit: u32,
     /// The generated atlas textures will always be square. Less efficient, but required for
     /// PVRTC compression.
     pub atlas_square: bool,
@@ -29,7 +29,7 @@ pub struct Prefs {
     pub atlas_pot: bool,
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
     /// Higher values will make sprite larger in conventional space units.
-    pub ppu: u16,
+    pub ppu: u32,
     /// Relative position of the sprite origin point on the generated mesh.
     /// Used as a fallback default when pivot in [SourceSprite] is not specified.
     pub pivot: Pivot,
@@ -115,34 +115,32 @@ pub struct TextureCoordinate {
 }
 
 /// Product of dicing a [SourceSprite]'s texture.
-pub(crate) struct DicedTexture<'a> {
-    /// Source input sprite which was diced.
-    pub source: &'a SourceSprite<'a>,
+pub(crate) struct DicedTexture {
+    /// Unique identifier of the sprite among others in a dicing operation.
+    pub id: String,
     /// Associated diced units.
-    pub units: Vec<DicedUnit<'a>>,
-    /// Associated diced units with distinct content.
-    pub unique_units: Vec<DicedUnit<'a>>,
+    pub units: Vec<DicedUnit>,
 }
 
 /// A chunk diced from a source texture.
-pub(crate) struct DicedUnit<'a> {
-    /// Position and dimensions of the unit inside source sprite texture.
+pub(crate) struct DicedUnit {
+    /// Position and dimensions of the unit inside source texture.
     pub rect: PixelRect,
-    /// Pixels of the diced unit.
-    pub view: SubImage<&'a DynamicImage>,
-    /// Pixels of the diced unit, plus colors from the padding rect.
-    pub padded_view: SubImage<&'a DynamicImage>,
+    /// Pixels chopped from the source texture, including padding.
+    pub img: RgbaImage,
+    /// Hash based on the non-padded pixels of the unit.
+    pub hash: u64,
 }
 
 /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
 /// corner of the texture rectangle, as well as width and height.
 pub(crate) struct PixelRect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
-    pub x: u16,
+    pub x: u32,
     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
-    pub y: u16,
+    pub y: u32,
     /// Width of the rect, in pixels.
-    pub width: u16,
+    pub width: u32,
     /// Height of the rect, in pixels.
-    pub height: u16,
+    pub height: u32,
 }

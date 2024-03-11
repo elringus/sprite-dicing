@@ -14,7 +14,6 @@ mod models;
 #[cfg(feature = "fs")]
 pub use fs::*;
 pub use models::*;
-use std::error::Error;
 
 /// Splits specified sprite textures into chunks, discards identical ones, joins unique
 /// chunks into atlas textures and generates sprite meshes with texture coordinates mapped
@@ -41,7 +40,7 @@ use std::error::Error;
 /// ];
 ///
 /// // Dice source sprites with default preferences.
-/// let generated = dice(source_sprites, Prefs::default())?;
+/// let generated = dice(&source_sprites, &Prefs::default())?;
 ///
 /// // Write generated atlas textures to file system.
 /// for (index, atlas) in generated.atlases.iter().enumerate() {
@@ -65,8 +64,8 @@ use std::error::Error;
 ///     // ... (actual sprite asset building process is engine-specific)
 /// }
 /// ```
-pub fn dice(sprites: Vec<SourceSprite>, prefs: Prefs) -> Result<DiceResult, Box<dyn Error>> {
-    _ = dicer::dice(&sprites, &prefs)?;
+pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> anyhow::Result<DiceResult> {
+    _ = dicer::dice(sprites, prefs)?;
     Ok(DiceResult {
         atlases: Vec::new(),
         sprites: Vec::new(),
