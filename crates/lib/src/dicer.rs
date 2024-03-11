@@ -2,6 +2,7 @@ use crate::models::*;
 use anyhow::{bail, Result};
 use image::{DynamicImage, GenericImageView, RgbaImage, SubImage};
 use std::cmp;
+use std::collections::HashSet;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
@@ -43,7 +44,9 @@ fn dice_src(ctx: &Context) -> DicedTexture {
             }
         }
     }
-    DicedTexture { id, units }
+
+    let unique = count_unique(&units);
+    DicedTexture { id, units, unique }
 }
 
 fn dice_at(x: u32, y: u32, ctx: &Context) -> Option<DicedUnit> {
@@ -101,13 +104,19 @@ fn hash(img: &RgbaImage) -> u64 {
     hasher.finish()
 }
 
+fn count_unique(units: &[DicedUnit]) -> u32 {
+    let mut set = HashSet::new();
+    for unit in units {
+        set.insert(unit.hash);
+    }
+    set.len() as u32
+}
+
 #[cfg(test)]
 mod tests {
-    use image::DynamicImage;
-
-    use crate::fixtures as fx;
-
     use super::*;
+    use crate::fixtures as fx;
+    use image::DynamicImage;
 
     #[test]
     fn errs_when_unit_size_zero() {
@@ -116,7 +125,7 @@ mod tests {
 
     #[test]
     fn foo() {
-        dice(&src(&fx::B), &Prefs::default()).unwrap();
+        dice(&src(&fx::B), &pref(1, 0, false)).unwrap();
     }
 
     fn pref(size: u32, pad: u32, trim: bool) -> Prefs {

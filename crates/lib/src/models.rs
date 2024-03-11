@@ -120,6 +120,8 @@ pub(crate) struct DicedTexture {
     pub id: String,
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
+    /// Number of distinct units (based on content hash).
+    pub unique: u32,
 }
 
 /// A chunk diced from a source texture.
@@ -128,7 +130,7 @@ pub(crate) struct DicedUnit {
     pub rect: PixelRect,
     /// Pixels chopped from the source texture, including padding.
     pub img: RgbaImage,
-    /// Hash based on the non-padded pixels of the unit.
+    /// Content hash based on the non-padded pixels of the unit.
     pub hash: u64,
 }
 
