@@ -66,9 +66,7 @@ use std::error::Error;
 /// }
 /// ```
 pub fn dice(sprites: Vec<SourceSprite>, prefs: Prefs) -> Result<DiceResult, Box<dyn Error>> {
-    let dicer = dicer::new(&prefs)?;
-    let diced = sprites.iter().map(|s| dicer.dice(s)).collect::<Vec<_>>();
-    _ = diced;
+    _ = dicer::dice(&sprites, &prefs)?;
     Ok(DiceResult {
         atlases: Vec::new(),
         sprites: Vec::new(),

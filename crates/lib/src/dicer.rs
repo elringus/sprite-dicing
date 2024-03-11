@@ -1,34 +1,37 @@
 use crate::models::*;
+use image::DynamicImage;
 
-/// Chops source sprite textures and collects unique units.
-pub(crate) struct Dicer {
-    dice_size: u16,
-    padding: u16,
-    trim_transparent: bool,
+struct Context<'a> {
+    size: u16,
+    pad: u16,
+    trim: bool,
+    tex: &'a DynamicImage,
+    units: Vec<DicedUnit<'a>>,
+    diced: Vec<DicedTexture<'a>>,
 }
 
-pub(crate) fn new(prefs: &Prefs) -> Result<Dicer, &'static str> {
+/// Chops source sprite textures and collects unique units.
+pub(crate) fn dice<'a>(
+    sources: &Vec<SourceSprite>,
+    prefs: &Prefs,
+) -> Result<Vec<DicedTexture<'a>>, &'static str> {
+    let mut ctx = create_context(prefs)?;
+    _ = sources;
+    Ok(ctx.diced)
+}
+
+fn create_context<'a>(prefs: &Prefs) -> Result<Context<'a>, &'static str> {
     if prefs.unit_size < 1 {
         return Err("Unit size can't be zero.");
     }
-    Ok(Dicer {
-        dice_size: prefs.unit_size,
-        padding: prefs.padding,
-        trim_transparent: prefs.trim_transparent,
+    Ok(Context {
+        size: prefs.unit_size,
+        pad: prefs.padding,
+        trim: prefs.trim_transparent,
+        tex: DynamicImage::default(),
+        units: Vec::new(),
+        diced: Vec::new(),
     })
-}
-
-impl Dicer {
-    pub fn dice<'a>(&self, source: &'a SourceSprite) -> DicedTexture<'a> {
-        let units: Vec<DicedUnit> = Vec::new();
-        let unique_units: Vec<DicedUnit> = Vec::new();
-
-        DicedTexture {
-            source,
-            units,
-            unique_units,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -37,40 +40,37 @@ mod tests {
     use crate::fixtures as fx;
     use image::DynamicImage;
 
+    type Result = std::result::Result<Box<dyn std::any::Any>, Box<dyn std::any::Any>>;
+
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(new(&Prefs {
-            unit_size: 0,
-            ..Prefs::default()
-        })
-        .is_err());
+        assert!(dice(&src(&fx::B), &pref(0, 0, false)).is_err());
     }
 
     #[test]
-    fn keeps_source_ref() {
-        assert_eq!(*fx::B, *dice(1, 0, false, &src(&fx::B)).source.texture);
+    fn keeps_source_ref() -> Result {
+        assert_eq!(*fx::B, *dice(&src(&fx::B), &Prefs::default())?[0].source.texture)
     }
 
     #[test]
-    fn foo() {
-        dice(1, 0, false, &src(&fx::B));
+    fn foo() -> Result {
+        dice(&src(&fx::B), &Prefs::default())
     }
 
-    fn dice<'a>(size: u16, pad: u16, trim: bool, src: &'a SourceSprite) -> DicedTexture<'a> {
-        let prefs = Prefs {
+    fn pref(size: u16, pad: u16, trim: bool) -> Prefs {
+        Prefs {
             unit_size: size,
             padding: pad,
             trim_transparent: trim,
             ..Prefs::default()
-        };
-        new(&prefs).unwrap().dice(src)
+        }
     }
 
-    fn src(tex: &DynamicImage) -> SourceSprite {
-        SourceSprite {
+    fn src(tex: &DynamicImage) -> Vec<SourceSprite> {
+        vec![SourceSprite {
             id: "test".to_string(),
             texture: tex,
             pivot: None,
-        }
+        }]
     }
 }
