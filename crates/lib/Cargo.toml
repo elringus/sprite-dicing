@@ -13,7 +13,6 @@ keywords = ["gamedev", "graphics", "sprite", "texture", "atlas"]
 categories = ["game-development", "graphics", "compression"]
 
 [dependencies]
-anyhow = "1.0"
 image = { version = "0.25", default-features = false }
 serde_json = { version = "1.0", optional = true }
 

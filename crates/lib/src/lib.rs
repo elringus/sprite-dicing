@@ -64,9 +64,9 @@ pub use models::*;
 ///     // ... (actual sprite asset building process is engine-specific)
 /// }
 /// ```
-pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> anyhow::Result<DiceResult> {
+pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<DiceArtifacts> {
     _ = dicer::dice(sprites, prefs)?;
-    Ok(DiceResult {
+    Ok(DiceArtifacts {
         atlases: Vec::new(),
         sprites: Vec::new(),
     })

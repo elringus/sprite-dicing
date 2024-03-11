@@ -1,6 +1,42 @@
 //! Common data models.
 
-use image::{DynamicImage, RgbaImage};
+/// Common result of a dicing operation.
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Common error occurred in a dicing operation.
+#[derive(Debug)]
+pub enum Error {
+    /// An issue with [Prefs] and/or input data.
+    Spec(&'static str),
+    /// An issue with image manipulation.
+    Image(image::ImageError),
+    /// An issue with an I/O operation.
+    Io(std::io::Error),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Spec(info) => write!(f, "{}", info),
+            Error::Image(err) => write!(f, "{}", err),
+            Error::Io(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Io(err)
+    }
+}
+
+impl From<image::ImageError> for Error {
+    fn from(err: image::ImageError) -> Self {
+        Error::Image(err)
+    }
+}
+
+impl std::error::Error for Error {}
 
 /// Preferences for a dicing operation.
 pub struct Prefs {
@@ -56,16 +92,16 @@ pub struct SourceSprite<'a> {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
     /// Texture containing all the pixels of the sprite.
-    pub texture: &'a DynamicImage,
+    pub texture: &'a image::DynamicImage,
     /// Relative position of the sprite origin point on the generated mesh. When not specified,
     /// will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
 }
 
-/// Result of a dicing operation.
-pub struct DiceResult {
+/// Final data generated from the diced input sprites.
+pub struct DiceArtifacts {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
-    pub atlases: Vec<DynamicImage>,
+    pub atlases: Vec<image::DynamicImage>,
     /// Generated diced sprites containing mesh data and refs to the associated atlas.
     pub sprites: Vec<DicedSprite>,
 }
@@ -75,7 +111,7 @@ pub struct DiceResult {
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
-    /// Index of atlas texture in [DiceResult] containing all the unique pixels for this sprite.
+    /// Index of atlas texture in [DiceArtifacts] containing the unique pixels for this sprite.
     pub atlas_index: usize,
     /// Local position of the generated sprite mesh vertices.
     pub vertices: Vec<VertexPosition>,
@@ -129,7 +165,7 @@ pub(crate) struct DicedUnit {
     /// Position and dimensions of the unit inside source texture.
     pub rect: PixelRect,
     /// Pixels chopped from the source texture, including padding.
-    pub img: RgbaImage,
+    pub img: image::RgbaImage,
     /// Content hash based on the non-padded pixels of the unit.
     pub hash: u64,
 }

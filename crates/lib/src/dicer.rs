@@ -1,5 +1,4 @@
 use crate::models::*;
-use anyhow::{bail, Result};
 use image::{DynamicImage, GenericImageView, RgbaImage, SubImage};
 use std::cmp;
 use std::collections::HashSet;
@@ -8,7 +7,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 /// Chops source sprite textures and collects unique units.
 pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {
     if prefs.unit_size < 1 {
-        bail!("Unit size can't be zero.")
+        return Err(Error::Spec("Unit size can't be zero."));
     }
     Ok(src.iter().map(|s| dice_src(&new_ctx(s, prefs))).collect())
 }
