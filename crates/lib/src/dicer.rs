@@ -64,8 +64,8 @@ fn dice_at(x: u32, y: u32, ctx: &Context) -> Option<DicedUnit> {
         return None;
     }
 
-    let rect = crop_over_borders(&unit_rect, x, y, ctx.tex);
-    let padded_rect = pad_rect(&unit_rect, ctx.pad);
+    let rect = crop_over_borders(&unit_rect, ctx.tex);
+    let padded_rect = crop_over_borders(&pad_rect(&unit_rect, ctx.pad), ctx.tex);
     let img = view(&padded_rect, ctx.tex).to_image();
     let hash = hash(&img);
     Some(DicedUnit { rect, img, hash })
@@ -81,19 +81,19 @@ fn all_pixels_transparent(view: &SubImage<&DynamicImage>) -> bool {
 
 fn pad_rect(rect: &PixelRect, pad: u32) -> PixelRect {
     PixelRect {
-        x: rect.x - pad,
-        y: rect.y - pad,
+        x: rect.x.saturating_sub(pad),
+        y: rect.y.saturating_sub(pad),
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
     }
 }
 
-fn crop_over_borders(rect: &PixelRect, x: u32, y: u32, tex: &DynamicImage) -> PixelRect {
+fn crop_over_borders(rect: &PixelRect, tex: &DynamicImage) -> PixelRect {
     PixelRect {
-        x,
-        y,
-        width: cmp::min(rect.width, tex.width() - x),
-        height: cmp::min(rect.height, tex.height() - y),
+        x: rect.x,
+        y: rect.y,
+        width: cmp::min(rect.width, tex.width() - rect.x),
+        height: cmp::min(rect.height, tex.height() - rect.y),
     }
 }
 
@@ -119,12 +119,25 @@ mod tests {
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&src(&fx::B), &pref(0, 0, false)).is_err());
+        assert!(dice(&[src(&fx::B)], &pref(0, 0, true)).is_err());
     }
 
     #[test]
-    fn foo() {
-        dice(&src(&fx::B), &pref(1, 0, false)).unwrap();
+    fn unit_count_equal_double_texture_size_divided_by_unit_size_square() {
+        assert_eq!(3, dice1(&fx::RGB1X3, 1, 0).units.len());
+        assert_eq!(4, dice1(&fx::RGB4X4, 2, 0).units.len());
+        assert_eq!(1, dice1(&fx::RGB4X4, 4, 0).units.len());
+    }
+
+    #[test]
+    fn unit_count_doesnt_depend_on_padding() {
+        let pad_0_count = dice1(&fx::RGB4X4, 1, 0).units.len();
+        let pad_1_count = dice1(&fx::RGB4X4, 1, 1).units.len();
+        assert_eq!(pad_0_count, pad_1_count);
+    }
+
+    fn dice1(tex: &DynamicImage, size: u32, pad: u32) -> DicedTexture {
+        dice(&[src(tex)], &pref(size, pad, true)).unwrap()[0].to_owned()
     }
 
     fn pref(size: u32, pad: u32, trim: bool) -> Prefs {
@@ -136,11 +149,11 @@ mod tests {
         }
     }
 
-    fn src(tex: &DynamicImage) -> Vec<SourceSprite> {
-        vec![SourceSprite {
+    fn src(tex: &DynamicImage) -> SourceSprite {
+        SourceSprite {
             id: "test".to_string(),
             texture: tex,
             pivot: None,
-        }]
+        }
     }
 }

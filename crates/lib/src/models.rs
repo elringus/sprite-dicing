@@ -151,6 +151,7 @@ pub struct TextureCoordinate {
 }
 
 /// Product of dicing a [SourceSprite]'s texture.
+#[derive(Clone)]
 pub(crate) struct DicedTexture {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
@@ -161,10 +162,11 @@ pub(crate) struct DicedTexture {
 }
 
 /// A chunk diced from a source texture.
+#[derive(Clone)]
 pub(crate) struct DicedUnit {
     /// Position and dimensions of the unit inside source texture.
     pub rect: PixelRect,
-    /// Pixels chopped from the source texture, including padding.
+    /// Unit pixels chopped from the source texture, including padding.
     pub img: image::RgbaImage,
     /// Content hash based on the non-padded pixels of the unit.
     pub hash: u64,
@@ -172,6 +174,7 @@ pub(crate) struct DicedUnit {
 
 /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
 /// corner of the texture rectangle, as well as width and height.
+#[derive(Clone)]
 pub(crate) struct PixelRect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
     pub x: u32,
