@@ -136,6 +136,12 @@ mod tests {
         assert_eq!(pad_0_count, pad_1_count);
     }
 
+    #[test]
+    fn when_unit_size_is_larger_than_texture_single_unit_is_diced() {
+        assert_eq!(1, dice1(&fx::RGB3X1, 5, 0).units.len());
+        assert_eq!(1, dice1(&fx::RGB4X4, 128, 0).units.len());
+    }
+
     fn dice1(tex: &DynamicImage, size: u32, pad: u32) -> DicedTexture {
         dice(&[src(tex)], &pref(size, pad, true)).unwrap()[0].to_owned()
     }
