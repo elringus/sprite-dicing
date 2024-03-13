@@ -28,17 +28,6 @@ struct IntRect {
     pub height: u16,
 }
 
-impl IntRect {
-    pub fn new(x: i32, y: i32, width: u16, height: u16) -> Self {
-        IntRect {
-            x,
-            y,
-            width,
-            height,
-        }
-    }
-}
-
 fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     Context {
         size: prefs.unit_size,
@@ -68,11 +57,14 @@ fn dice_src(ctx: &Context) -> DicedTexture {
 }
 
 fn dice_at(dice_x: u16, dice_y: u16, ctx: &Context) -> Option<DicedUnit> {
-    let pixel_x = dice_x as i32 * ctx.size as i32;
-    let pixel_y = dice_y as i32 * ctx.size as i32;
+    let unit_rect = IntRect {
+        x: dice_x as i32 * ctx.size as i32,
+        y: dice_y as i32 * ctx.size as i32,
+        width: ctx.size,
+        height: ctx.size,
+    };
 
-    let unit_rect = IntRect::new(pixel_x, pixel_y, ctx.size, ctx.size);
-    if ctx.trim && all_transparent(&get_pixels(&unit_rect, ctx.tex)) {
+    if ctx.trim && get_pixels(&unit_rect, ctx.tex).iter().all(|p| p.a == 0) {
         return None;
     }
 
@@ -101,10 +93,6 @@ fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
     let x = saturate(x, tex.width - 1);
     let y = saturate(y, tex.height - 1);
     tex.pixels[(x + tex.width * y) as usize]
-}
-
-fn all_transparent(pixels: &[Pixel]) -> bool {
-    !pixels.iter().any(|p| p.a > 0)
 }
 
 fn pad_rect(rect: &IntRect, pad: u16) -> IntRect {
