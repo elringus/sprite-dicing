@@ -56,10 +56,10 @@ fn dice_src(ctx: &Context) -> DicedTexture {
     DicedTexture { id, units, unique }
 }
 
-fn dice_at(dice_x: u16, dice_y: u16, ctx: &Context) -> Option<DicedUnit> {
+fn dice_at(x: u16, y: u16, ctx: &Context) -> Option<DicedUnit> {
     let unit_rect = IntRect {
-        x: dice_x as i32 * ctx.size as i32,
-        y: dice_y as i32 * ctx.size as i32,
+        x: x as i32 * ctx.size as i32,
+        y: y as i32 * ctx.size as i32,
         width: ctx.size,
         height: ctx.size,
     };
