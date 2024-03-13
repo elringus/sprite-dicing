@@ -88,7 +88,6 @@ fn get_pixels(rect: &IntRect, tex: &Texture) -> Vec<Pixel> {
     let end_y = rect.y + rect.height as i32;
     let mut pixels = vec![Pixel::default(); (rect.width * rect.height) as usize];
     let mut idx = 0;
-    // TODO: Get and return slice (idx..end) instead of iterating and copying each pixel.
     for y in rect.y..end_y {
         for x in rect.x..end_x {
             pixels[idx] = get_pixel(x, y, tex);
@@ -99,8 +98,8 @@ fn get_pixels(rect: &IntRect, tex: &Texture) -> Vec<Pixel> {
 }
 
 fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
-    let x = clamp(x, tex.width - 1);
-    let y = clamp(y, tex.height - 1);
+    let x = saturate(x, tex.width - 1);
+    let y = saturate(y, tex.height - 1);
     tex.pixels[(x + tex.width * y) as usize]
 }
 
@@ -145,7 +144,7 @@ fn count_unique(units: &[DicedUnit]) -> usize {
     set.len()
 }
 
-fn clamp(n: i32, max: u16) -> u16 {
+fn saturate(n: i32, max: u16) -> u16 {
     if n < 0 {
         0
     } else if n > max as i32 {
@@ -158,36 +157,52 @@ fn clamp(n: i32, max: u16) -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fixtures as fx;
+    use crate::fixtures::*;
 
     #[test]
     fn can_dice_with_defaults() {
-        dice(&[src(&fx::B)], &Prefs::default()).unwrap();
+        assert!(dice(&[src(&B)], &Prefs::default()).is_ok());
     }
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&fx::R)], &pref(0, 0, true)).is_err());
+        assert!(dice(&[src(&R)], &pref(0, 0, true)).is_err());
     }
 
     #[test]
     fn unit_count_equal_double_texture_size_divided_by_unit_size_square() {
-        assert_eq!(3, dice1(&fx::RGB1X3, 1, 0).units.len());
-        assert_eq!(4, dice1(&fx::RGB4X4, 2, 0).units.len());
-        assert_eq!(1, dice1(&fx::RGB4X4, 4, 0).units.len());
+        assert_eq!(3, dice1(&RGB1X3, 1, 0).units.len());
+        assert_eq!(4, dice1(&RGB4X4, 2, 0).units.len());
+        assert_eq!(1, dice1(&RGB4X4, 4, 0).units.len());
     }
 
     #[test]
     fn unit_count_doesnt_depend_on_padding() {
-        let pad_0_count = dice1(&fx::RGB4X4, 1, 0).units.len();
-        let pad_1_count = dice1(&fx::RGB4X4, 1, 1).units.len();
+        let pad_0_count = dice1(&RGB4X4, 1, 0).units.len();
+        let pad_1_count = dice1(&RGB4X4, 1, 1).units.len();
         assert_eq!(pad_0_count, pad_1_count);
     }
 
     #[test]
     fn when_unit_size_is_larger_than_texture_single_unit_is_diced() {
-        assert_eq!(1, dice1(&fx::RGB3X1, 5, 0).units.len());
-        assert_eq!(1, dice1(&fx::RGB4X4, 128, 0).units.len());
+        assert_eq!(1, dice1(&RGB3X1, 5, 0).units.len());
+        assert_eq!(1, dice1(&RGB4X4, 128, 0).units.len());
+    }
+
+    #[test]
+    fn transparent_dices_are_ignored_when_trim_enabled() {
+        let prf = &pref(1, 0, true);
+        assert!(dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
+        assert!(dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
+        assert!(dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
+    }
+
+    #[test]
+    fn transparent_dices_are_preserved_when_trim_disabled() {
+        let prf = &pref(1, 0, false);
+        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
+        assert!(!dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
+        assert!(!dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
     }
 
     fn dice1(tex: &Texture, size: u16, pad: u16) -> DicedTexture {
@@ -209,5 +224,9 @@ mod tests {
             texture: tex.to_owned(),
             pivot: None,
         }
+    }
+
+    fn is_opaque(tex: &DicedTexture) -> bool {
+        tex.units.iter().all(|u| u.pixels.iter().all(|p| p.a > 0))
     }
 }
