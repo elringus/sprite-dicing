@@ -1,40 +1,59 @@
 use crate::models::*;
-use image::{DynamicImage, GenericImageView, RgbaImage, SubImage};
 use std::cmp;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
 pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {
-    if prefs.unit_size < 1 {
+    if prefs.unit_size == 0 {
         return Err(Error::Spec("Unit size can't be zero."));
     }
     Ok(src.iter().map(|s| dice_src(&new_ctx(s, prefs))).collect())
 }
 
 struct Context<'a> {
-    size: u32,
-    pad: u32,
+    size: u16,
+    pad: u16,
     trim: bool,
     id: &'a str,
-    tex: &'a DynamicImage,
+    tex: &'a Texture,
 }
 
-fn new_ctx<'a>(src: &'a SourceSprite<'a>, prefs: &Prefs) -> Context<'a> {
+// Padding may result in negative x/y values, hence using this instead of PixelRect for the
+// transient calculations. This is an impl. detail and shouldn't leak outside the module.
+struct IntRect {
+    pub x: i32,
+    pub y: i32,
+    pub width: u16,
+    pub height: u16,
+}
+
+impl IntRect {
+    pub fn new(x: i32, y: i32, width: u16, height: u16) -> Self {
+        IntRect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
+fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     Context {
         size: prefs.unit_size,
         pad: prefs.padding,
         trim: prefs.trim_transparent,
         id: &src.id,
-        tex: src.texture,
+        tex: &src.texture,
     }
 }
 
 fn dice_src(ctx: &Context) -> DicedTexture {
     let mut units = Vec::new();
     let id = ctx.id.to_owned();
-    let unit_count_x = ctx.tex.width().div_ceil(ctx.size);
-    let unit_count_y = ctx.tex.height().div_ceil(ctx.size);
+    let unit_count_x = ctx.tex.width.div_ceil(ctx.size);
+    let unit_count_y = ctx.tex.height.div_ceil(ctx.size);
 
     for x in 0..unit_count_x {
         for y in 0..unit_count_y {
@@ -48,78 +67,107 @@ fn dice_src(ctx: &Context) -> DicedTexture {
     DicedTexture { id, units, unique }
 }
 
-fn dice_at(x: u32, y: u32, ctx: &Context) -> Option<DicedUnit> {
-    let x = x * ctx.size;
-    let y = y * ctx.size;
+fn dice_at(dice_x: u16, dice_y: u16, ctx: &Context) -> Option<DicedUnit> {
+    let pixel_x = dice_x as i32 * ctx.size as i32;
+    let pixel_y = dice_y as i32 * ctx.size as i32;
 
-    let unit_rect = PixelRect {
-        x,
-        y,
-        width: ctx.size,
-        height: ctx.size,
-    };
-
-    let unit_view = view(&unit_rect, ctx.tex);
-    if ctx.trim && all_pixels_transparent(&unit_view) {
+    let unit_rect = IntRect::new(pixel_x, pixel_y, ctx.size, ctx.size);
+    if ctx.trim && all_transparent(&get_pixels(&unit_rect, ctx.tex)) {
         return None;
     }
 
     let rect = crop_over_borders(&unit_rect, ctx.tex);
-    let padded_rect = crop_over_borders(&pad_rect(&unit_rect, ctx.pad), ctx.tex);
-    let img = view(&padded_rect, ctx.tex).to_image();
-    let hash = hash(&img);
-    Some(DicedUnit { rect, img, hash })
+    let padded_rect = pad_rect(&unit_rect, ctx.pad);
+    let pixels = get_pixels(&padded_rect, ctx.tex);
+    let hash = hash(&pixels);
+    Some(DicedUnit { rect, pixels, hash })
 }
 
-fn view<'a>(rect: &PixelRect, tex: &'a DynamicImage) -> SubImage<&'a DynamicImage> {
-    tex.view(rect.x, rect.y, rect.width, rect.height)
+fn get_pixels(rect: &IntRect, tex: &Texture) -> Vec<Pixel> {
+    let end_x = rect.x + rect.width as i32;
+    let end_y = rect.y + rect.height as i32;
+    let mut pixels = vec![Pixel::default(); (rect.width * rect.height) as usize];
+    let mut idx = 0;
+    // TODO: Get and return slice (idx..end) instead of iterating and copying each pixel.
+    for y in rect.y..end_y {
+        for x in rect.x..end_x {
+            pixels[idx] = get_pixel(x, y, tex);
+            idx += 1;
+        }
+    }
+    pixels
 }
 
-fn all_pixels_transparent(view: &SubImage<&DynamicImage>) -> bool {
-    !view.pixels().any(|p| p.2[3] > 0)
+fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
+    let x = clamp(x, tex.width - 1);
+    let y = clamp(y, tex.height - 1);
+    tex.pixels[(x + tex.width * y) as usize]
 }
 
-fn pad_rect(rect: &PixelRect, pad: u32) -> PixelRect {
-    PixelRect {
-        x: rect.x.saturating_sub(pad),
-        y: rect.y.saturating_sub(pad),
+fn all_transparent(pixels: &[Pixel]) -> bool {
+    !pixels.iter().any(|p| p.a > 0)
+}
+
+fn pad_rect(rect: &IntRect, pad: u16) -> IntRect {
+    IntRect {
+        x: rect.x - pad as i32,
+        y: rect.y - pad as i32,
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
     }
 }
 
-fn crop_over_borders(rect: &PixelRect, tex: &DynamicImage) -> PixelRect {
+fn crop_over_borders(rect: &IntRect, tex: &Texture) -> PixelRect {
     PixelRect {
-        x: rect.x,
-        y: rect.y,
-        width: cmp::min(rect.width, tex.width() - rect.x),
-        height: cmp::min(rect.height, tex.height() - rect.y),
+        x: rect.x as u16,
+        y: rect.y as u16,
+        width: cmp::min(rect.width, tex.width - rect.x as u16),
+        height: cmp::min(rect.height, tex.height - rect.y as u16),
     }
 }
 
-fn hash(img: &RgbaImage) -> u64 {
+fn hash(pixels: &[Pixel]) -> u64 {
     let mut hasher = DefaultHasher::new();
-    img.hash(&mut hasher);
+    for pixel in pixels {
+        pixel.r.hash(&mut hasher);
+        pixel.g.hash(&mut hasher);
+        pixel.b.hash(&mut hasher);
+        pixel.a.hash(&mut hasher);
+    }
     hasher.finish()
 }
 
-fn count_unique(units: &[DicedUnit]) -> u32 {
+fn count_unique(units: &[DicedUnit]) -> usize {
     let mut set = HashSet::new();
     for unit in units {
         set.insert(unit.hash);
     }
-    set.len() as u32
+    set.len()
+}
+
+fn clamp(n: i32, max: u16) -> u16 {
+    if n < 0 {
+        0
+    } else if n > max as i32 {
+        max
+    } else {
+        n as u16
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::fixtures as fx;
-    use image::DynamicImage;
+
+    #[test]
+    fn can_dice_with_defaults() {
+        dice(&[src(&fx::B)], &Prefs::default()).unwrap();
+    }
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&fx::B)], &pref(0, 0, true)).is_err());
+        assert!(dice(&[src(&fx::R)], &pref(0, 0, true)).is_err());
     }
 
     #[test]
@@ -142,11 +190,11 @@ mod tests {
         assert_eq!(1, dice1(&fx::RGB4X4, 128, 0).units.len());
     }
 
-    fn dice1(tex: &DynamicImage, size: u32, pad: u32) -> DicedTexture {
+    fn dice1(tex: &Texture, size: u16, pad: u16) -> DicedTexture {
         dice(&[src(tex)], &pref(size, pad, true)).unwrap()[0].to_owned()
     }
 
-    fn pref(size: u32, pad: u32, trim: bool) -> Prefs {
+    fn pref(size: u16, pad: u16, trim: bool) -> Prefs {
         Prefs {
             unit_size: size,
             padding: pad,
@@ -155,10 +203,10 @@ mod tests {
         }
     }
 
-    fn src(tex: &DynamicImage) -> SourceSprite {
+    fn src(tex: &Texture) -> SourceSprite {
         SourceSprite {
             id: "test".to_string(),
-            texture: tex,
+            texture: tex.to_owned(),
             pivot: None,
         }
     }

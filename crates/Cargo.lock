@@ -6,7 +6,7 @@ version = 3
 name = "abi"
 version = "0.0.0"
 dependencies = [
- "sprite-dicing",
+ "sprite_dicing",
 ]
 
 [[package]]
@@ -49,7 +49,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "cli"
 version = "0.0.0"
 dependencies = [
- "sprite-dicing",
+ "sprite_dicing",
 ]
 
 [[package]]
@@ -270,7 +270,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
-name = "sprite-dicing"
+name = "sprite_dicing"
 version = "0.1.0"
 dependencies = [
  "image",

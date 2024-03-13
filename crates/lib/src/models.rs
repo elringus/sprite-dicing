@@ -1,16 +1,18 @@
 //! Common data models.
 
-/// Common result of a dicing operation.
+/// Result of a dicing operation.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Common error occurred in a dicing operation.
+/// Error occurred in a dicing operation.
 #[derive(Debug)]
 pub enum Error {
     /// An issue with [Prefs] and/or input data.
     Spec(&'static str),
-    /// An issue with image manipulation.
+    /// An issue with texture encoding.
+    #[cfg(feature = "fs")]
     Image(image::ImageError),
     /// An issue with an I/O operation.
+    #[cfg(feature = "fs")]
     Io(std::io::Error),
 }
 
@@ -18,18 +20,22 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Spec(info) => write!(f, "{}", info),
+            #[cfg(feature = "fs")]
             Error::Image(err) => write!(f, "{}", err),
+            #[cfg(feature = "fs")]
             Error::Io(err) => write!(f, "{}", err),
         }
     }
 }
 
+#[cfg(feature = "fs")]
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Error::Io(err)
     }
 }
 
+#[cfg(feature = "fs")]
 impl From<image::ImageError> for Error {
     fn from(err: image::ImageError) -> Self {
         Error::Image(err)
@@ -39,14 +45,15 @@ impl From<image::ImageError> for Error {
 impl std::error::Error for Error {}
 
 /// Preferences for a dicing operation.
+#[derive(Clone)]
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
-    pub unit_size: u32,
+    pub unit_size: u16,
     /// The size of border, in pixels, to add between adjacent diced units inside atlas textures.
     /// Increase to prevent texture bleeding artifacts. Larger values consume more texture space,
     /// but yield better anti-bleeding results.
-    pub padding: u32,
+    pub padding: u16,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates. Can be used in
     /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't
     /// consume texture space, but higher values could visually distort the rendered sprite.
@@ -56,7 +63,7 @@ pub struct Prefs {
     pub trim_transparent: bool,
     /// Maximum size (width or height) of a single generated atlas texture; will generate
     /// multiple textures when the limit is reached.
-    pub atlas_size_limit: u32,
+    pub atlas_size_limit: u16,
     /// The generated atlas textures will always be square. Less efficient, but required for
     /// PVRTC compression.
     pub atlas_square: bool,
@@ -65,7 +72,7 @@ pub struct Prefs {
     pub atlas_pot: bool,
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
     /// Higher values will make sprite larger in conventional space units.
-    pub ppu: u32,
+    pub ppu: u16,
     /// Relative position of the sprite origin point on the generated mesh.
     /// Used as a fallback default when pivot in [SourceSprite] is not specified.
     pub pivot: Pivot,
@@ -87,27 +94,68 @@ impl Default for Prefs {
     }
 }
 
+/// A texture pixel represented as 8-bit RGBA components.
+#[derive(Copy, Clone)]
+pub struct Pixel {
+    /// Red color component of the pixel.
+    pub r: u8,
+    /// Green color component of the pixel.
+    pub g: u8,
+    /// Blue color component of the pixel.
+    pub b: u8,
+    /// Alpha (opacity) color component of the pixel.
+    pub a: u8,
+}
+
+impl Pixel {
+    pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Pixel { r, g, b, a }
+    }
+}
+
+impl Default for Pixel {
+    fn default() -> Self {
+        Pixel::new(0, 0, 0, 0)
+    }
+}
+
+/// A set of pixels forming sprite texture.
+#[derive(Clone, Default)]
+pub struct Texture {
+    /// Width of the texture, in pixels.
+    pub width: u16,
+    /// Height of the texture, in pixels.
+    pub height: u16,
+    /// Pixel content of the texture. Expected to be in order, indexed left to right,
+    /// top to bottom; eg, first pixel would be top-left on texture rect, while last
+    /// would be the bottom-right one.
+    pub pixels: Vec<Pixel>,
+}
+
 /// Original sprite specified as input for a dicing operation.
-pub struct SourceSprite<'a> {
+#[derive(Clone)]
+pub struct SourceSprite {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
     /// Texture containing all the pixels of the sprite.
-    pub texture: &'a image::DynamicImage,
+    pub texture: Texture,
     /// Relative position of the sprite origin point on the generated mesh. When not specified,
     /// will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
 }
 
 /// Final data generated from the diced input sprites.
+#[derive(Clone)]
 pub struct DiceArtifacts {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
-    pub atlases: Vec<image::DynamicImage>,
+    pub atlases: Vec<Texture>,
     /// Generated diced sprites containing mesh data and refs to the associated atlas.
     pub sprites: Vec<DicedSprite>,
 }
 
 /// Generated dicing product of a [SourceSprite] containing mesh data and reference to the
 /// associated atlas texture required to reconstruct and render sprite at runtime.
+#[derive(Clone)]
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
@@ -125,6 +173,7 @@ pub struct DicedSprite {
 
 /// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
 /// from top-left corner of the sprite mesh rectangle.
+#[derive(Clone)]
 pub struct Pivot {
     /// Relative distance from the left mesh border (x-axis), where 0 is left border,
     /// 0.5 — center and 1.0 is the right border.
@@ -135,6 +184,7 @@ pub struct Pivot {
 }
 
 /// Represents position of a mesh vertex in a local space coordinated with conventional units.
+#[derive(Clone)]
 pub struct VertexPosition {
     /// Position over horizontal (X) axis, in conventional units.
     pub x: f32,
@@ -143,6 +193,7 @@ pub struct VertexPosition {
 }
 
 /// Represents position on a texture, relative to its dimensions.
+#[derive(Clone)]
 pub struct TextureCoordinate {
     /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
     pub u: f32,
@@ -158,7 +209,7 @@ pub(crate) struct DicedTexture {
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
     /// Number of distinct units (based on content hash).
-    pub unique: u32,
+    pub unique: usize,
 }
 
 /// A chunk diced from a source texture.
@@ -167,7 +218,7 @@ pub(crate) struct DicedUnit {
     /// Position and dimensions of the unit inside source texture.
     pub rect: PixelRect,
     /// Unit pixels chopped from the source texture, including padding.
-    pub img: image::RgbaImage,
+    pub pixels: Vec<Pixel>,
     /// Content hash based on the non-padded pixels of the unit.
     pub hash: u64,
 }
@@ -177,11 +228,22 @@ pub(crate) struct DicedUnit {
 #[derive(Clone)]
 pub(crate) struct PixelRect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
-    pub x: u32,
+    pub x: u16,
     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
-    pub y: u32,
+    pub y: u16,
     /// Width of the rect, in pixels.
-    pub width: u32,
+    pub width: u16,
     /// Height of the rect, in pixels.
-    pub height: u32,
+    pub height: u16,
+}
+
+impl PixelRect {
+    pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
+        PixelRect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
 }

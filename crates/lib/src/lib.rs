@@ -1,17 +1,14 @@
 #![allow(dead_code)] // TODO: Remove.
 
-//! Provides APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
+//! APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
 //! When `fs` feature is enabled, additionally provides APIs to read and decode textures of
 //! various formats from the file system as well as to save generated atlases into textures
-//! of various formats and to write diced sprite meshes into Wavefront OBJ files.
+//! of various formats and to write diced sprite meshes into either JSON or Wavefront OBJ files.
 
 mod dicer;
 mod fixtures;
-#[cfg(feature = "fs")]
 mod fs;
 mod models;
-
-#[cfg(feature = "fs")]
 pub use fs::*;
 pub use models::*;
 
@@ -29,13 +26,16 @@ pub use models::*;
 /// # Examples
 ///
 /// ```no_run
-/// use sprite_dicing::{dice, SourceSprite, Prefs};
-/// use image::{open}; // https://crates.io/crates/image
+/// use sprite_dicing::{dice, SourceSprite, Prefs, Texture};
+///
+/// // Fake functions to read and write textures on file system.
+/// fn open (path: &str) -> Texture { Texture::default() }
+/// fn save (path: &str, tex: &Texture) { }
 ///
 /// // Collect source sprite textures to dice.
 /// let source_sprites = vec![
-///     SourceSprite { id: "1".to_owned(), texture: &open("1.png")?, pivot: None },
-///     SourceSprite { id: "2".to_owned(), texture: &open("2.png")?, pivot: None },
+///     SourceSprite { id: "1".to_owned(), texture: open("1.png"), pivot: None },
+///     SourceSprite { id: "2".to_owned(), texture: open("2.png"), pivot: None },
 ///     // ...
 /// ];
 ///
@@ -44,7 +44,7 @@ pub use models::*;
 ///
 /// // Write generated atlas textures to file system.
 /// for (index, atlas) in generated.atlases.iter().enumerate() {
-///     atlas.save(format!("atlas_{index}.png"))?;
+///     save(format!("atlas_{index}.png"), atlas);
 /// }
 ///
 /// // Build sprites from the generated meshes.

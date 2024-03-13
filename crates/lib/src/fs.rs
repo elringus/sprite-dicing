@@ -1,12 +1,16 @@
 #![cfg(feature = "fs")]
 
-use crate::{dice, models::*, Prefs};
+//! Provides additional APIs to the main lib for dicing sprites stored as images of various
+//! formats on file system, writing generated atlases as images of specified format and
+//! sprite meshes as either JSON or Wavefront OBJ files.
+
+use crate::{dice, models::*};
 use std::fs;
 use std::path::Path;
 
 /// Dices all the textures of supported formats inside directory with specified path and
 /// writes generated atlas texture in specified format and diced sprites meta serialized
-/// in JSON under the specified out directory.
+/// in specified format under the specified out directory.
 pub fn dice_in_dir(dir: &Path, out: &Path) -> Result<String> {
     _ = dice(&Vec::new(), &Prefs::default());
     let mut str = format!(

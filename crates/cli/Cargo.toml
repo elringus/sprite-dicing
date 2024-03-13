@@ -5,4 +5,4 @@ edition = "2021"
 publish = false
 
 [dependencies]
-sprite-dicing = { path = "../lib", features = ["fs"] }
+sprite_dicing = { path = "../lib", features = ["fs"] }
