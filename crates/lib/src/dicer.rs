@@ -147,8 +147,9 @@ fn saturate(n: i32, max: u16) -> u16 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::dicer::dice;
     use crate::fixtures::*;
+    use crate::models::*;
 
     #[test]
     fn can_dice_with_defaults() {
