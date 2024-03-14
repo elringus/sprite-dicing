@@ -28,7 +28,7 @@ pub use models::*;
 /// # Examples
 ///
 /// ```
-/// use sprite_dicing::{dice, SourceSprite, Prefs, Texture};
+/// use sprite_dicing::{Prefs, SourceSprite, Texture};
 ///
 /// // Fake functions to read and write textures on file system.
 /// fn open (path: &str) -> Texture { Texture::default() }
@@ -42,7 +42,7 @@ pub use models::*;
 /// ];
 ///
 /// // Dice source sprites with default preferences.
-/// let diced = dice(&sprites, &Prefs::default()).unwrap();
+/// let diced = sprite_dicing::dice(&sprites, &Prefs::default()).unwrap();
 ///
 /// // Write generated atlas textures to file system.
 /// for (index, atlas) in diced.atlases.iter().enumerate() {
