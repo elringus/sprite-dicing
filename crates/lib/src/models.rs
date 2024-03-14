@@ -95,7 +95,7 @@ impl Default for Prefs {
 }
 
 /// A texture pixel represented as 8-bit RGBA components.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Pixel {
     /// Red color component of the pixel.
     pub r: u8,
@@ -225,7 +225,7 @@ pub(crate) struct DicedUnit {
 
 /// A rectangular subset of a sprite texture represented via XY offsets from the top-left
 /// corner of the texture rectangle, as well as width and height.
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub(crate) struct PixelRect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
     pub x: u16,

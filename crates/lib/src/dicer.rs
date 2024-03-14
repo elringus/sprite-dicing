@@ -40,7 +40,6 @@ fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
 
 fn dice_src(ctx: &Context) -> DicedTexture {
     let mut units = Vec::new();
-    let id = ctx.id.to_owned();
     let unit_count_x = ctx.tex.width.div_ceil(ctx.size);
     let unit_count_y = ctx.tex.height.div_ceil(ctx.size);
 
@@ -52,6 +51,7 @@ fn dice_src(ctx: &Context) -> DicedTexture {
         }
     }
 
+    let id = ctx.id.to_owned();
     let unique = count_unique(&units);
     DicedTexture { id, units, unique }
 }
@@ -64,21 +64,23 @@ fn dice_at(unit_x: u16, unit_y: u16, ctx: &Context) -> Option<DicedUnit> {
         height: ctx.size,
     };
 
-    if ctx.trim && get_pixels(&unit_rect, ctx.tex).iter().all(|p| p.a == 0) {
+    let unit_pixels = get_pixels(&unit_rect, ctx.tex);
+    if ctx.trim && unit_pixels.iter().all(|p| p.a == 0) {
         return None;
     }
 
+    let hash = hash(&unit_pixels);
     let rect = crop_over_borders(&unit_rect, ctx.tex);
     let padded_rect = pad_rect(&unit_rect, ctx.pad);
     let pixels = get_pixels(&padded_rect, ctx.tex);
-    let hash = hash(&pixels);
     Some(DicedUnit { rect, pixels, hash })
 }
 
 fn get_pixels(rect: &IntRect, tex: &Texture) -> Vec<Pixel> {
     let end_x = rect.x + rect.width as i32;
     let end_y = rect.y + rect.height as i32;
-    let mut pixels = vec![Pixel::default(); (rect.width * rect.height) as usize];
+    let size = (rect.width * rect.height) as usize;
+    let mut pixels = vec![Pixel::default(); size];
     let mut idx = 0;
     for y in rect.y..end_y {
         for x in rect.x..end_x {
@@ -180,17 +182,50 @@ mod tests {
     #[test]
     fn transparent_dices_are_ignored_when_trim_enabled() {
         let prf = &pref(1, 0, true);
-        assert!(dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
-        assert!(dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
-        assert!(dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
+        assert!(dice(&[src(&CCCC)], prf).unwrap()[0].units.is_empty());
+        assert!(dice(&[src(&BGRC)], prf).unwrap().iter().all(is_opaque));
+        assert!(dice(&[src(&BCGR)], prf).unwrap().iter().all(is_opaque));
     }
 
     #[test]
     fn transparent_dices_are_preserved_when_trim_disabled() {
         let prf = &pref(1, 0, false);
-        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
-        assert!(!dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
-        assert!(!dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
+        assert!(!dice(&[src(&CCCC)], prf).unwrap()[0].units.is_empty());
+        assert!(!dice(&[src(&BGRC)], prf).unwrap().iter().all(is_opaque));
+        assert!(!dice(&[src(&BCGR)], prf).unwrap().iter().all(is_opaque));
+    }
+
+    #[test]
+    fn content_hash_of_equal_pixels_is_equal() {
+        let units = dice1(&BGRC, 1, 0).units;
+        for unit in dice1(&BCGR, 1, 0).units {
+            assert!(units.iter().any(|u| u.hash == unit.hash));
+        }
+    }
+
+    #[test]
+    fn content_hash_of_distinct_pixels_is_not_equal() {
+        assert_ne!(dice1(&B, 1, 0).units[0].hash, dice1(&R, 1, 0).units[0].hash);
+    }
+
+    #[test]
+    fn content_hash_ignores_padding() {
+        let no_pad = dice1(&RGB4X4, 1, 0).units;
+        for padded in dice1(&RGB4X4, 1, 1).units {
+            assert!(no_pad.iter().any(|u| u.hash == padded.hash))
+        }
+    }
+
+    #[test]
+    fn unit_rects_are_mapped_top_left_to_bottom_right() {
+        let units = &dice(&[src(&BGRC)], &pref(1, 0, false)).unwrap()[0].units;
+        assert!(has(units, BLUE, PixelRect::new(0, 0, 1, 1)));
+        assert!(has(units, GREEN, PixelRect::new(1, 0, 1, 1)));
+        assert!(has(units, RED, PixelRect::new(0, 1, 1, 1)));
+        assert!(has(units, CLEAR, PixelRect::new(1, 1, 1, 1)));
+        fn has(units: &[DicedUnit], pixel: Pixel, rect: PixelRect) -> bool {
+            units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
+        }
     }
 
     fn dice1(tex: &Texture, size: u16, pad: u16) -> DicedTexture {
