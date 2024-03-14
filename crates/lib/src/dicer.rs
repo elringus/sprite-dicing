@@ -151,19 +151,19 @@ mod tests {
 
     #[test]
     fn can_dice_with_defaults() {
-        assert!(dice(&[src(&B)], &Prefs::default()).is_ok());
+        assert!(dice(&[src(&B1X1)], &Prefs::default()).is_ok());
     }
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&R)], &pref(0, 0, true)).is_err());
+        assert!(dice(&[src(&R1X1)], &pref(0, 0, true)).is_err());
     }
 
     #[test]
     fn unit_count_equal_double_texture_size_divided_by_unit_size_square() {
-        assert_eq!(3, dice1(&RGB1X3, 1, 0).units.len());
-        assert_eq!(4, dice1(&RGB4X4, 2, 0).units.len());
-        assert_eq!(1, dice1(&RGB4X4, 4, 0).units.len());
+        assert_eq!(dice1(&RGB1X3, 1, 0).units.len(), 3);
+        assert_eq!(dice1(&RGB4X4, 2, 0).units.len(), 4);
+        assert_eq!(dice1(&RGB4X4, 4, 0).units.len(), 1);
     }
 
     #[test]
@@ -175,8 +175,8 @@ mod tests {
 
     #[test]
     fn when_unit_size_is_larger_than_texture_single_unit_is_diced() {
-        assert_eq!(1, dice1(&RGB3X1, 5, 0).units.len());
-        assert_eq!(1, dice1(&RGB4X4, 128, 0).units.len());
+        assert_eq!(dice1(&RGB3X1, 5, 0).units.len(), 1);
+        assert_eq!(dice1(&RGB4X4, 128, 0).units.len(), 1);
     }
 
     #[test]
@@ -205,7 +205,10 @@ mod tests {
 
     #[test]
     fn content_hash_of_distinct_pixels_is_not_equal() {
-        assert_ne!(dice1(&B, 1, 0).units[0].hash, dice1(&R, 1, 0).units[0].hash);
+        assert_ne!(
+            dice1(&B1X1, 1, 0).units[0].hash,
+            dice1(&R1X1, 1, 0).units[0].hash
+        );
     }
 
     #[test]
@@ -219,13 +222,49 @@ mod tests {
     #[test]
     fn unit_rects_are_mapped_top_left_to_bottom_right() {
         let units = &dice(&[src(&BGRC)], &pref(1, 0, false)).unwrap()[0].units;
-        assert!(has(units, BLUE, PixelRect::new(0, 0, 1, 1)));
-        assert!(has(units, GREEN, PixelRect::new(1, 0, 1, 1)));
-        assert!(has(units, RED, PixelRect::new(0, 1, 1, 1)));
-        assert!(has(units, CLEAR, PixelRect::new(1, 1, 1, 1)));
+        assert!(has(units, B, PixelRect::new(0, 0, 1, 1)));
+        assert!(has(units, G, PixelRect::new(1, 0, 1, 1)));
+        assert!(has(units, R, PixelRect::new(0, 1, 1, 1)));
+        assert!(has(units, C, PixelRect::new(1, 1, 1, 1)));
         fn has(units: &[DicedUnit], pixel: Pixel, rect: PixelRect) -> bool {
             units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
         }
+    }
+
+    #[test]
+    fn when_no_content_padded_pixels_are_repeated() {
+        #[rustfmt::skip]
+        assert_eq!(
+            dice1(&B1X1, 1, 1).units[0].pixels,
+            vec![B, B, B,
+                 B, B, B,
+                 B, B, B]);
+    }
+
+    #[test]
+    fn padded_pixels_are_neighbors() {
+        let pixels = dice1(&BGRC, 1, 1)
+            .units
+            .iter()
+            .map(|u| u.pixels.to_owned())
+            .collect::<Vec<_>>();
+        #[rustfmt::skip]
+        assert!(pixels.contains(&vec![
+            B, B, G,
+            B, B, G,
+            R, R, C]));
+    }
+
+    #[test]
+    fn diced_texture_contains_identical_units() {
+        assert_eq!(16, dice1(&RGB4X4, 1, 0).units.len());
+        assert_eq!(16, dice1(&UIC4X4, 1, 0).units.len());
+    }
+
+    #[test]
+    fn unique_doesnt_count_identical_units() {
+        assert_eq!(3, dice1(&RGB4X4, 1, 0).unique);
+        assert_eq!(16, dice1(&UIC4X4, 1, 0).unique);
     }
 
     fn dice1(tex: &Texture, size: u16, pad: u16) -> DicedTexture {

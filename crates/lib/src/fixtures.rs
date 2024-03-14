@@ -3,35 +3,64 @@
 use crate::models::*;
 use once_cell::sync::Lazy;
 
-pub const RED: Pixel = Pixel::new(255, 0, 0, 255);
-pub const GREEN: Pixel = Pixel::new(0, 255, 0, 255);
-pub const BLUE: Pixel = Pixel::new(0, 0, 255, 255);
-pub const BLACK: Pixel = Pixel::new(0, 0, 0, 255);
-pub const CLEAR: Pixel = Pixel::new(255, 255, 255, 0);
+pub const R: Pixel = Pixel::new(255, 0, 0, 255);
+pub const G: Pixel = Pixel::new(0, 255, 0, 255);
+pub const B: Pixel = Pixel::new(0, 0, 255, 255);
+pub const C: Pixel = Pixel::new(0, 0, 0, 0);
 
-pub static B: Lazy<Texture> = Lazy::new(|| load("1x1/B"));
-pub static R: Lazy<Texture> = Lazy::new(|| load("1x1/R"));
-pub static BGRC: Lazy<Texture> = Lazy::new(|| load("2x2/BGRC"));
-pub static BCGR: Lazy<Texture> = Lazy::new(|| load("2x2/BCGR"));
-pub static BCGC: Lazy<Texture> = Lazy::new(|| load("2x2/BCGC"));
-pub static CCCC: Lazy<Texture> = Lazy::new(|| load("2x2/CCCC"));
-pub static RGB1X3: Lazy<Texture> = Lazy::new(|| load("RGB1x3"));
-pub static RGB3X1: Lazy<Texture> = Lazy::new(|| load("RGB3x1"));
-pub static RGB4X4: Lazy<Texture> = Lazy::new(|| load("RGB4x4"));
-pub static UIC4X4: Lazy<Texture> = Lazy::new(|| load("UIC4x4"));
+pub static B1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![B]));
+pub static R1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![R]));
+#[rustfmt::skip]
+pub static BGRC: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    B, G,
+    R, C
+]));
+#[rustfmt::skip]
+pub static BCGR: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    B, C,
+    G, R
+]));
+#[rustfmt::skip]
+pub static BCGC: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    B, C,
+    G, C
+]));
+#[rustfmt::skip]
+pub static CCCC: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    C, C,
+    C, C
+]));
+#[rustfmt::skip]
+pub static RGB1X3: Lazy<Texture> = Lazy::new(|| tex(1, 3, vec![
+    G,
+    R,
+    B
+]));
+#[rustfmt::skip]
+pub static RGB3X1: Lazy<Texture> = Lazy::new(|| tex(3, 1, vec![
+    G, R, B
+]));
+#[rustfmt::skip]
+pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
+    B, G, G, G,
+    R, R, G, B,
+    R, G, B, R,
+    B, B, R, G,
+]));
+pub static UIC4X4: Lazy<Texture> = Lazy::new(|| uic(4, 4));
 
-fn load(name: &'static str) -> Texture {
-    let lib_dir = env!("CARGO_MANIFEST_DIR");
-    let path = format!("{lib_dir}/../tests/fixtures/{name}.png");
-    let img = image::open(path).unwrap();
+fn tex(width: u16, height: u16, pixels: Vec<Pixel>) -> Texture {
     Texture {
-        width: img.width() as u16,
-        height: img.height() as u16,
-        pixels: img
-            .as_rgba8()
-            .unwrap()
-            .pixels()
-            .map(|p| Pixel::new(p[0], p[1], p[2], p[3]))
-            .collect(),
+        width,
+        height,
+        pixels,
     }
+}
+
+fn uic(width: u16, height: u16) -> Texture {
+    let mut pixels = Vec::new();
+    for i in 0..=(width * height) as u8 {
+        pixels.push(Pixel::new(i, i, i, 255))
+    }
+    tex(width, height, pixels)
 }

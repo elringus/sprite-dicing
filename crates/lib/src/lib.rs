@@ -25,10 +25,9 @@ pub use models::*;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```
 /// use sprite_dicing::{dice, SourceSprite, Prefs, Texture};
 ///
-/// // Fake functions to read and write textures on file system.
 /// fn open (path: &str) -> Texture { Texture::default() }
 /// fn save (path: &str, tex: &Texture) { }
 ///
