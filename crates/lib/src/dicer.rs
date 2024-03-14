@@ -8,7 +8,7 @@ pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTextu
     if prefs.unit_size == 0 {
         return Err(Error::Spec("Unit size can't be zero."));
     }
-    Ok(src.iter().map(|s| dice_src(&new_ctx(s, prefs))).collect())
+    Ok(src.iter().map(|s| dice_it(&new_ctx(s, prefs))).collect())
 }
 
 struct Context<'a> {
@@ -17,15 +17,6 @@ struct Context<'a> {
     trim: bool,
     id: &'a str,
     tex: &'a Texture,
-}
-
-// Padding may result in negative x/y values, hence using this instead of PixelRect for the
-// transient calculations. This is an impl. detail and shouldn't leak outside the module.
-struct IntRect {
-    pub x: i32,
-    pub y: i32,
-    pub width: u16,
-    pub height: u16,
 }
 
 fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
@@ -38,7 +29,16 @@ fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     }
 }
 
-fn dice_src(ctx: &Context) -> DicedTexture {
+// Padding may result in negative x/y values, hence using this instead of PixelRect for the
+// transient calculations. This is an impl. detail and shouldn't leak outside the module.
+struct IntRect {
+    pub x: i32,
+    pub y: i32,
+    pub width: u16,
+    pub height: u16,
+}
+
+fn dice_it(ctx: &Context) -> DicedTexture {
     let mut units = Vec::new();
     let unit_count_x = ctx.tex.width.div_ceil(ctx.size);
     let unit_count_y = ctx.tex.height.div_ceil(ctx.size);
@@ -245,8 +245,8 @@ mod tests {
     fn padded_pixels_are_neighbors() {
         let pixels = dice1(&BGRC, 1, 1)
             .units
-            .iter()
-            .map(|u| u.pixels.to_owned())
+            .into_iter()
+            .map(|u| u.pixels)
             .collect::<Vec<_>>();
         #[rustfmt::skip]
         assert!(pixels.contains(&vec![

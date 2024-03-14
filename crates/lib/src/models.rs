@@ -1,5 +1,7 @@
 //! Common data models.
 
+use std::collections::HashMap;
+
 /// Result of a dicing operation.
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -246,4 +248,15 @@ impl PixelRect {
             height,
         }
     }
+}
+
+/// Product of packing [DicedTexture]s.
+#[derive(Clone)]
+pub(crate) struct AtlasTexture {
+    /// The atlas texture.
+    pub texture: Texture,
+    /// Diced textures backed into this atlas.
+    pub diced: Vec<DicedTexture>,
+    /// Diced unit hashes mapped to UVs of the atlas texture.
+    pub uv_by_hash: HashMap<u64, TextureCoordinate>,
 }

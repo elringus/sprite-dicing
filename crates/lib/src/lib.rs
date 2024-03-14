@@ -9,6 +9,8 @@ mod dicer;
 mod fixtures;
 mod fs;
 mod models;
+mod packer;
+
 pub use fs::*;
 pub use models::*;
 
@@ -28,30 +30,31 @@ pub use models::*;
 /// ```
 /// use sprite_dicing::{dice, SourceSprite, Prefs, Texture};
 ///
+/// // Fake functions to read and write textures on file system.
 /// fn open (path: &str) -> Texture { Texture::default() }
 /// fn save (path: &str, tex: &Texture) { }
 ///
-/// // Collect source sprite textures to dice.
-/// let source_sprites = vec![
+/// // Collect source sprites to dice.
+/// let sprites = vec![
 ///     SourceSprite { id: "1".to_owned(), texture: open("1.png"), pivot: None },
 ///     SourceSprite { id: "2".to_owned(), texture: open("2.png"), pivot: None },
 ///     // ...
 /// ];
 ///
 /// // Dice source sprites with default preferences.
-/// let generated = dice(&source_sprites, &Prefs::default())?;
+/// let diced = dice(&sprites, &Prefs::default()).unwrap();
 ///
 /// // Write generated atlas textures to file system.
-/// for (index, atlas) in generated.atlases.iter().enumerate() {
-///     save(format!("atlas_{index}.png"), atlas);
+/// for (index, atlas) in diced.atlases.iter().enumerate() {
+///     save(&format!("atlas_{index}.png"), atlas);
 /// }
 ///
-/// // Build sprites from the generated meshes.
-/// for sprite in generated.sprites {
+/// // Build diced sprites using generated data.
+/// for sprite in diced.sprites {
 ///     // Unique ID as set in the associated source sprite.
 ///     _ = sprite.id;
 ///     // Atlas texture containing all the unique pixels for the sprite.
-///     _ = &generated.atlases[sprite.atlas_index];
+///     _ = &diced.atlases[sprite.atlas_index];
 ///     // Mesh vertex positions in local space (scaled by PPU specified in prefs).
 ///     _ = sprite.vertices;
 ///     // Atlas texture coordinates mapped to the mesh vertices.
@@ -64,9 +67,9 @@ pub use models::*;
 /// }
 /// ```
 pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<DiceArtifacts> {
-    _ = dicer::dice(sprites, prefs)?;
-    Ok(DiceArtifacts {
-        atlases: Vec::new(),
-        sprites: Vec::new(),
-    })
+    let diced = dicer::dice(sprites, prefs)?;
+    let packed = packer::pack(&diced, prefs)?;
+    let atlases = packed.into_iter().map(|p| p.texture).collect();
+    let sprites = Vec::new();
+    Ok(DiceArtifacts { atlases, sprites })
 }
