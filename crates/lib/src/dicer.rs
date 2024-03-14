@@ -1,6 +1,6 @@
 use crate::models::*;
 use std::cmp;
-use std::collections::{hash_map::DefaultHasher, HashSet};
+use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
@@ -116,7 +116,8 @@ fn crop_over_borders(rect: &IntRect, tex: &Texture) -> PixelRect {
 }
 
 fn hash(pixels: &[Pixel]) -> u64 {
-    let mut hasher = DefaultHasher::new();
+    // Using std::hash::DefaultHasher breaks build on macOS.
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
     for pixel in pixels {
         pixel.r.hash(&mut hasher);
         pixel.g.hash(&mut hasher);
