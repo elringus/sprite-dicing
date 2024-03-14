@@ -116,7 +116,7 @@ fn crop_over_borders(rect: &IntRect, tex: &Texture) -> PixelRect {
 }
 
 fn hash(pixels: &[Pixel]) -> u64 {
-    // Using std::hash::DefaultHasher breaks build on macOS.
+    // Using std::hash::DefaultHasher breaks build for macOS.
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     for pixel in pixels {
         pixel.r.hash(&mut hasher);
