@@ -68,7 +68,7 @@ pub use models::*;
 /// ```
 pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<DiceArtifacts> {
     let diced = dicer::dice(sprites, prefs)?;
-    let packed = packer::pack(&diced, prefs)?;
+    let packed = packer::pack(diced, prefs)?;
     let atlases = packed.into_iter().map(|p| p.texture).collect();
     let sprites = Vec::new();
     Ok(DiceArtifacts { atlases, sprites })

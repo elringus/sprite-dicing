@@ -1,7 +1,7 @@
 use crate::models::*;
 
 /// Packs diced textures into atlases.
-pub(crate) fn pack(diced: &[DicedTexture], prefs: &Prefs) -> Result<Vec<AtlasTexture>> {
+pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<AtlasTexture>> {
     if prefs.uv_inset > 0.5 {
         return Err(Error::Spec("UV inset should be in 0.0 to 0.5 range."));
     }
@@ -11,9 +11,14 @@ pub(crate) fn pack(diced: &[DicedTexture], prefs: &Prefs) -> Result<Vec<AtlasTex
     if prefs.unit_size > prefs.atlas_size_limit {
         return Err(Error::Spec("Unit size can't be above atlas size limit."));
     }
-    _ = diced;
-    _ = prefs;
-    Ok(Vec::new())
+
+    let mut atlases = Vec::new();
+    let mut ctx = new_ctx(diced, prefs);
+    while !ctx.to_pack.is_empty() {
+        atlases.push(pack_it(&mut ctx));
+    }
+
+    Ok(atlases)
 }
 
 struct Context {
@@ -25,9 +30,10 @@ struct Context {
     pad: u32,
     padded_unit_size: u32,
     unit_capacity: u32,
+    to_pack: Vec<DicedTexture>,
 }
 
-fn new_ctx(prefs: &Prefs) -> Context {
+fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     let padded_unit_size = prefs.unit_size + prefs.padding * 2;
     let unit_capacity = (prefs.atlas_size_limit / padded_unit_size).pow(2);
     Context {
@@ -39,6 +45,16 @@ fn new_ctx(prefs: &Prefs) -> Context {
         pad: prefs.padding,
         padded_unit_size,
         unit_capacity,
+        to_pack: diced,
+    }
+}
+
+fn pack_it(ctx: &mut Context) -> AtlasTexture {
+    _ = ctx;
+    AtlasTexture {
+        texture: Default::default(),
+        diced: vec![],
+        uv_by_hash: Default::default(),
     }
 }
 
@@ -91,6 +107,6 @@ mod tests {
                 pivot: None,
             })
             .collect::<Vec<_>>();
-        pack(&dice(&sprites, prefs)?, prefs)
+        pack(dice(&sprites, prefs)?, prefs)
     }
 }
