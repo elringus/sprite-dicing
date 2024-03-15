@@ -1,4 +1,5 @@
 use crate::models::*;
+use std::collections::{HashMap, HashSet};
 
 /// Packs diced textures into atlases.
 pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<AtlasTexture>> {
@@ -15,7 +16,7 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<AtlasT
     let mut atlases = Vec::new();
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
-        atlases.push(pack_it(&mut ctx));
+        atlases.push(pack_it(&mut ctx)?);
     }
 
     Ok(atlases)
@@ -49,13 +50,69 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     }
 }
 
-fn pack_it(ctx: &mut Context) -> AtlasTexture {
-    _ = ctx;
-    AtlasTexture {
-        texture: Default::default(),
-        diced: vec![],
-        uv_by_hash: Default::default(),
+fn pack_it(ctx: &mut Context) -> Result<AtlasTexture> {
+    let mut packed_textures = Vec::new();
+    let mut packed_units = HashSet::new();
+
+    while let Some(id) = find_packable(ctx, &packed_units) {
+        let idx = ctx.to_pack.iter().position(|t| t.id == id).unwrap();
+        packed_units.extend(ctx.to_pack[idx].units.iter().map(|u| u.hash));
+        packed_textures.extend(ctx.to_pack.drain(idx..=idx));
     }
+
+    if packed_textures.is_empty() {
+        return Err(Error::Spec("Can't fit any texture; increase atlas size."));
+    }
+
+    let (atlas_width, atlas_height) = eval_atlas_size(packed_units.len() as u32, ctx);
+    let mut texture = Texture::new(atlas_width, atlas_height);
+    let uv_by_hash = bake_units(&mut texture, &packed_textures, packed_units, ctx);
+
+    Ok(AtlasTexture {
+        texture,
+        packed: packed_textures,
+        uv_by_hash,
+    })
+}
+
+fn find_packable<'a>(ctx: &Context, packed_units: &'a HashSet<u64>) -> Option<&'a str> {
+    None
+}
+
+fn eval_atlas_size(units_count: u32, ctx: &Context) -> (u32, u32) {
+    let size = units_count.pow(2);
+
+    if ctx.pot {
+        let size = (size * ctx.padded_unit_size).next_power_of_two();
+        return (size, size);
+    }
+
+    if ctx.square {
+        let size = size * ctx.padded_unit_size;
+        return (size, size);
+    }
+
+    let mut size = (size, size);
+    for width in size.0..0 {
+        let height = units_count.div_ceil(width);
+        if height * ctx.padded_unit_size > ctx.size_limit {
+            break;
+        }
+        if width * height < size.0 * size.1 {
+            size = (width, height);
+        }
+    }
+
+    (size.0 * ctx.padded_unit_size, size.1 * ctx.padded_unit_size)
+}
+
+fn bake_units(
+    atlas: &mut Texture,
+    packed_textures: &Vec<DicedTexture>,
+    packed_units: HashSet<u64>,
+    ctx: &Context,
+) -> HashMap<u64, TextureCoordinate> {
+    HashMap::new()
 }
 
 #[cfg(test)]

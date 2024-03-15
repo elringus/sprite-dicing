@@ -134,6 +134,16 @@ pub struct Texture {
     pub pixels: Vec<Pixel>,
 }
 
+impl Texture {
+    pub fn new(width: u32, height: u32) -> Self {
+        Texture {
+            width,
+            height,
+            pixels: vec![],
+        }
+    }
+}
+
 /// Original sprite specified as input for a dicing operation.
 #[derive(Clone)]
 pub struct SourceSprite {
@@ -255,8 +265,8 @@ impl PixelRect {
 pub(crate) struct AtlasTexture {
     /// The atlas texture.
     pub texture: Texture,
-    /// Diced textures backed into this atlas.
-    pub diced: Vec<DicedTexture>,
+    /// Diced textures packed into this atlas.
+    pub packed: Vec<DicedTexture>,
     /// Diced unit hashes mapped to UVs of the atlas texture.
     pub uv_by_hash: HashMap<u64, TextureCoordinate>,
 }
