@@ -15,8 +15,8 @@ pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTextu
 }
 
 struct Context<'a> {
-    size: u16,
-    pad: u16,
+    size: u32,
+    pad: u32,
     trim: bool,
     id: &'a str,
     tex: &'a Texture,
@@ -37,8 +37,8 @@ fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
 struct IntRect {
     pub x: i32,
     pub y: i32,
-    pub width: u16,
-    pub height: u16,
+    pub width: u32,
+    pub height: u32,
 }
 
 fn dice_it(ctx: &Context) -> DicedTexture {
@@ -59,7 +59,7 @@ fn dice_it(ctx: &Context) -> DicedTexture {
     DicedTexture { id, units, unique }
 }
 
-fn dice_at(unit_x: u16, unit_y: u16, ctx: &Context) -> Option<DicedUnit> {
+fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
     let unit_rect = IntRect {
         x: unit_x as i32 * ctx.size as i32,
         y: unit_y as i32 * ctx.size as i32,
@@ -100,7 +100,7 @@ fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
     tex.pixels[(x + tex.width * y) as usize]
 }
 
-fn pad_rect(rect: &IntRect, pad: u16) -> IntRect {
+fn pad_rect(rect: &IntRect, pad: u32) -> IntRect {
     IntRect {
         x: rect.x - pad as i32,
         y: rect.y - pad as i32,
@@ -111,10 +111,10 @@ fn pad_rect(rect: &IntRect, pad: u16) -> IntRect {
 
 fn crop_over_borders(rect: &IntRect, tex: &Texture) -> PixelRect {
     PixelRect {
-        x: rect.x as u16,
-        y: rect.y as u16,
-        width: cmp::min(rect.width, tex.width - rect.x as u16),
-        height: cmp::min(rect.height, tex.height - rect.y as u16),
+        x: rect.x as u32,
+        y: rect.y as u32,
+        width: cmp::min(rect.width, tex.width - rect.x as u32),
+        height: cmp::min(rect.height, tex.height - rect.y as u32),
     }
 }
 
@@ -138,13 +138,13 @@ fn count_unique(units: &[DicedUnit]) -> usize {
     set.len()
 }
 
-fn saturate(n: i32, max: u16) -> u16 {
+fn saturate(n: i32, max: u32) -> u32 {
     if n < 0 {
         0
     } else if n > max as i32 {
         max
     } else {
-        n as u16
+        n as u32
     }
 }
 
@@ -277,11 +277,11 @@ mod tests {
         assert_eq!(16, dice1(&UIC4X4, 1, 0).unique);
     }
 
-    fn dice1(tex: &Texture, size: u16, pad: u16) -> DicedTexture {
+    fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {
         dice(&[src(tex)], &pref(size, pad, true)).unwrap()[0].to_owned()
     }
 
-    fn pref(size: u16, pad: u16, trim: bool) -> Prefs {
+    fn pref(size: u32, pad: u32, trim: bool) -> Prefs {
         Prefs {
             unit_size: size,
             padding: pad,

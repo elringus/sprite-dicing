@@ -20,23 +20,25 @@ struct Context {
     inset: f32,
     square: bool,
     pot: bool,
-    limit: u16,
-    unit_size: u16,
-    pad: u16,
-    padded_unit_size: u16,
-    units_per_atlas_limit: u16,
+    size_limit: u32,
+    unit_size: u32,
+    pad: u32,
+    padded_unit_size: u32,
+    unit_capacity: u32,
 }
 
 fn new_ctx(prefs: &Prefs) -> Context {
+    let padded_unit_size = prefs.unit_size + prefs.padding * 2;
+    let unit_capacity = (prefs.atlas_size_limit / padded_unit_size).pow(2);
     Context {
         inset: prefs.uv_inset,
         square: prefs.atlas_square,
         pot: prefs.atlas_pot,
-        limit: prefs.atlas_size_limit,
+        size_limit: prefs.atlas_size_limit,
         unit_size: prefs.unit_size,
         pad: prefs.padding,
-        padded_unit_size: prefs.unit_size + prefs.padding * 2,
-        units_per_atlas_limit: 0,
+        padded_unit_size,
+        unit_capacity,
     }
 }
 

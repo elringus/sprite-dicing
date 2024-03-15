@@ -49,7 +49,7 @@ pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
 ]));
 pub static UIC4X4: Lazy<Texture> = Lazy::new(|| uic(4, 4));
 
-fn tex(width: u16, height: u16, pixels: Vec<Pixel>) -> Texture {
+fn tex(width: u32, height: u32, pixels: Vec<Pixel>) -> Texture {
     Texture {
         width,
         height,
@@ -57,7 +57,7 @@ fn tex(width: u16, height: u16, pixels: Vec<Pixel>) -> Texture {
     }
 }
 
-fn uic(width: u16, height: u16) -> Texture {
+fn uic(width: u32, height: u32) -> Texture {
     let mut pixels = Vec::new();
     for i in 0..=(width * height) as u8 {
         pixels.push(Pixel::new(i, i, i, 255))

@@ -51,11 +51,11 @@ impl std::error::Error for Error {}
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
-    pub unit_size: u16,
+    pub unit_size: u32,
     /// The size of border, in pixels, to add between adjacent diced units inside atlas textures.
     /// Increase to prevent texture bleeding artifacts. Larger values consume more texture space,
     /// but yield better anti-bleeding results.
-    pub padding: u16,
+    pub padding: u32,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates. Can be used in
     /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't
     /// consume texture space, but higher values could visually distort the rendered sprite.
@@ -65,7 +65,7 @@ pub struct Prefs {
     pub trim_transparent: bool,
     /// Maximum size (width or height) of a single generated atlas texture; will generate
     /// multiple textures when the limit is reached.
-    pub atlas_size_limit: u16,
+    pub atlas_size_limit: u32,
     /// The generated atlas textures will always be square. Less efficient, but required for
     /// PVRTC compression.
     pub atlas_square: bool,
@@ -74,7 +74,7 @@ pub struct Prefs {
     pub atlas_pot: bool,
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
     /// Higher values will make sprite larger in conventional space units.
-    pub ppu: u16,
+    pub ppu: u32,
     /// Relative position of the sprite origin point on the generated mesh.
     /// Used as a fallback default when pivot in [SourceSprite] is not specified.
     pub pivot: Pivot,
@@ -125,9 +125,9 @@ impl Default for Pixel {
 #[derive(Clone, Default)]
 pub struct Texture {
     /// Width of the texture, in pixels.
-    pub width: u16,
+    pub width: u32,
     /// Height of the texture, in pixels.
-    pub height: u16,
+    pub height: u32,
     /// Pixel content of the texture. Expected to be in order, indexed left to right,
     /// top to bottom; eg, first pixel would be top-left on texture rect, while last
     /// would be the bottom-right one.
@@ -230,17 +230,17 @@ pub(crate) struct DicedUnit {
 #[derive(Clone, Eq, PartialEq)]
 pub(crate) struct PixelRect {
     /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
-    pub x: u16,
+    pub x: u32,
     /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
-    pub y: u16,
+    pub y: u32,
     /// Width of the rect, in pixels.
-    pub width: u16,
+    pub width: u32,
     /// Height of the rect, in pixels.
-    pub height: u16,
+    pub height: u32,
 }
 
 impl PixelRect {
-    pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
+    pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
         PixelRect {
             x,
             y,
