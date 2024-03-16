@@ -55,7 +55,7 @@ fn dice_it(ctx: &Context) -> DicedTexture {
     }
 
     let id = ctx.id.to_owned();
-    let unique = count_unique(&units);
+    let unique = units.iter().map(|u| u.hash).collect::<HashSet<_>>();
     DicedTexture { id, units, unique }
 }
 
@@ -128,14 +128,6 @@ fn hash(pixels: &[Pixel]) -> u64 {
         pixel.a.hash(&mut hasher);
     }
     hasher.finish()
-}
-
-fn count_unique(units: &[DicedUnit]) -> usize {
-    let mut set = HashSet::new();
-    for unit in units {
-        set.insert(unit.hash);
-    }
-    set.len()
 }
 
 fn saturate(n: i32, max: u32) -> u32 {
@@ -273,8 +265,8 @@ mod tests {
 
     #[test]
     fn unique_doesnt_count_identical_units() {
-        assert_eq!(3, dice1(&RGB4X4, 1, 0).unique);
-        assert_eq!(16, dice1(&UIC4X4, 1, 0).unique);
+        assert_eq!(3, dice1(&RGB4X4, 1, 0).unique.len());
+        assert_eq!(16, dice1(&UIC4X4, 1, 0).unique.len());
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {

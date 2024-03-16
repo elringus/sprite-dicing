@@ -1,6 +1,6 @@
 //! Common data models.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Result of a dicing operation.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -220,8 +220,8 @@ pub(crate) struct DicedTexture {
     pub id: String,
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
-    /// Number of distinct units (based on content hash).
-    pub unique: usize,
+    /// Hashes of diced units with distinct content.
+    pub unique: HashSet<u64>,
 }
 
 /// A chunk diced from a source texture.

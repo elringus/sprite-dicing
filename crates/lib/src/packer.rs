@@ -16,7 +16,7 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<AtlasT
     let mut atlases = Vec::new();
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
-        atlases.push(pack_it(&mut ctx)?);
+        atlases.push(pack_next(&mut ctx)?);
     }
 
     Ok(atlases)
@@ -50,36 +50,65 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     }
 }
 
-fn pack_it(ctx: &mut Context) -> Result<AtlasTexture> {
-    let mut packed_textures = Vec::new();
-    let mut packed_units = HashSet::new();
+/// Current atlas packing context.
+struct Packed {
+    /// Indexes of diced textures (via ctx.to_pack) packed into current atlas.
+    textures: HashSet<usize>,
+    /// Units packed into current atlas mapped by hashes.
+    units: HashMap<u64, UnitRef>,
+}
 
-    while let Some(id) = find_packable(ctx, &packed_units) {
-        let idx = ctx.to_pack.iter().position(|t| t.id == id).unwrap();
-        packed_units.extend(ctx.to_pack[idx].units.iter().map(|u| u.hash));
-        packed_textures.extend(ctx.to_pack.drain(idx..=idx));
+/// Reference to a diced unit of a diced texture.
+struct UnitRef {
+    /// Index of the diced texture (via ctx.to_pack) containing referenced unit.
+    texture_idx: usize,
+    /// Index of the referenced diced unit inside diced texture.
+    unit_idx: usize,
+}
+
+impl UnitRef {
+    fn new(texture_idx: usize, unit_idx: usize) -> Self {
+        UnitRef {
+            texture_idx,
+            unit_idx,
+        }
+    }
+}
+
+fn pack_next(ctx: &mut Context) -> Result<AtlasTexture> {
+    let mut pck = Packed {
+        textures: HashSet::new(),
+        units: HashMap::new(),
+    };
+
+    while let Some(texture_idx) = find_packable_texture(ctx, &pck) {
+        pck.textures.insert(texture_idx);
+        let units = ctx.to_pack[texture_idx].units.iter().enumerate();
+        let refs = units.map(|(i, u)| (u.hash, UnitRef::new(texture_idx, i)));
+        pck.units.extend(refs);
     }
 
-    if packed_textures.is_empty() {
+    if pck.textures.is_empty() {
         return Err(Error::Spec("Can't fit any texture; increase atlas size."));
     }
 
-    let (atlas_width, atlas_height) = eval_atlas_size(packed_units.len() as u32, ctx);
+    let (atlas_width, atlas_height) = eval_atlas_size(ctx, pck.units.len() as u32);
     let mut texture = Texture::new(atlas_width, atlas_height);
-    let uv_by_hash = bake_units(&mut texture, &packed_textures, packed_units, ctx);
+    let uv_by_hash = bake_units(ctx, &pck, &mut texture);
+    let packed = extract_packed_textures(ctx, &pck);
 
     Ok(AtlasTexture {
         texture,
-        packed: packed_textures,
+        packed,
         uv_by_hash,
     })
 }
 
-fn find_packable<'a>(ctx: &Context, packed_units: &'a HashSet<u64>) -> Option<&'a str> {
-    None
+fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
+    Some(0)
 }
 
-fn eval_atlas_size(units_count: u32, ctx: &Context) -> (u32, u32) {
+fn eval_atlas_size(ctx: &Context, units_count: u32) -> (u32, u32) {
     let size = units_count.pow(2);
 
     if ctx.pot {
@@ -106,13 +135,23 @@ fn eval_atlas_size(units_count: u32, ctx: &Context) -> (u32, u32) {
     (size.0 * ctx.padded_unit_size, size.1 * ctx.padded_unit_size)
 }
 
-fn bake_units(
-    atlas: &mut Texture,
-    packed_textures: &Vec<DicedTexture>,
-    packed_units: HashSet<u64>,
-    ctx: &Context,
-) -> HashMap<u64, TextureCoordinate> {
+fn bake_units(ctx: &Context, pck: &Packed, atlas: &mut Texture) -> HashMap<u64, TextureCoordinate> {
     HashMap::new()
+}
+
+fn extract_packed_textures(ctx: &mut Context, pck: &Packed) -> Vec<DicedTexture> {
+    let mut packed = Vec::new();
+    let mut idx = ctx.to_pack.len() - 1;
+    loop {
+        if pck.textures.contains(&idx) {
+            packed.push(ctx.to_pack.swap_remove(idx));
+        }
+        if idx == 0 {
+            break;
+        }
+        idx -= 1;
+    }
+    packed
 }
 
 #[cfg(test)]
