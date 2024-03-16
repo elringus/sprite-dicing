@@ -286,4 +286,5 @@ pub(crate) struct AtlasTexture {
     pub uv_by_hash: HashMap<u64, UV>,
 }
 
-// TODO: ----------> Add FRect, IRect, etc (mirror Unity types) instead of PixelRect, ...
+// TODO: ----------> Add FRect, IRect, etc (mirror Unity types) for internal APIs.
+// Keep PixelRect, UVs, etc for public API.
