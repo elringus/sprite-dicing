@@ -174,9 +174,9 @@ pub struct DicedSprite {
     /// Index of atlas texture in [DiceArtifacts] containing the unique pixels for this sprite.
     pub atlas_index: usize,
     /// Local position of the generated sprite mesh vertices.
-    pub vertices: Vec<VertexPosition>,
+    pub vertices: Vec<Vertex>,
     /// Atlas texture coordinates mapped to the [vertices] vector.
-    pub uvs: Vec<TextureCoordinate>,
+    pub uvs: Vec<UV>,
     /// Mesh face (triangle) indices to the [vertices] and [uvs] vectors.
     pub indices: Vec<usize>,
     /// Relative position of the sprite origin point on the generated mesh.
@@ -197,7 +197,7 @@ pub struct Pivot {
 
 /// Represents position of a mesh vertex in a local space coordinated with conventional units.
 #[derive(Clone)]
-pub struct VertexPosition {
+pub struct Vertex {
     /// Position over horizontal (X) axis, in conventional units.
     pub x: f32,
     /// Position over vertical (Y) axis, in conventional units.
@@ -206,7 +206,7 @@ pub struct VertexPosition {
 
 /// Represents position on a texture, relative to its dimensions.
 #[derive(Clone)]
-pub struct TextureCoordinate {
+pub struct UV {
     /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
     pub u: f32,
     /// Position over vertical axis, relative to texture height, in 0.0 to 1.0 range.
@@ -260,6 +260,21 @@ impl PixelRect {
     }
 }
 
+/// A size of arbitrary entity inside texture.
+#[derive(Clone)]
+pub(crate) struct Size {
+    /// Width of the entity, in pixels.
+    pub width: u32,
+    /// Height of the entity, in pixels.
+    pub height: u32,
+}
+
+impl Size {
+    pub fn new(width: u32, height: u32) -> Self {
+        Size { width, height }
+    }
+}
+
 /// Product of packing [DicedTexture]s.
 #[derive(Clone)]
 pub(crate) struct AtlasTexture {
@@ -268,5 +283,7 @@ pub(crate) struct AtlasTexture {
     /// Diced textures packed into this atlas.
     pub packed: Vec<DicedTexture>,
     /// Diced unit hashes mapped to UVs of the atlas texture.
-    pub uv_by_hash: HashMap<u64, TextureCoordinate>,
+    pub uv_by_hash: HashMap<u64, UV>,
 }
+
+// TODO: ----------> Add FRect, IRect, etc (mirror Unity types) instead of PixelRect, ...

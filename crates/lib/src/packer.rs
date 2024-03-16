@@ -92,8 +92,8 @@ fn pack_next(ctx: &mut Context) -> Result<AtlasTexture> {
         return Err(Error::Spec("Can't fit any texture; increase atlas size."));
     }
 
-    let (atlas_width, atlas_height) = eval_atlas_size(ctx, pck.units.len() as u32);
-    let mut texture = Texture::new(atlas_width, atlas_height);
+    let atlas_size = eval_atlas_size(ctx, pck.units.len() as u32);
+    let mut texture = Texture::new(atlas_size.width, atlas_size.height);
     let uv_by_hash = bake_units(ctx, &pck, &mut texture);
     let packed = extract_packed_textures(ctx, &pck);
 
@@ -105,39 +105,89 @@ fn pack_next(ctx: &mut Context) -> Result<AtlasTexture> {
 }
 
 fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
-    Some(0)
+    let mut optimal_texture_idx: Option<usize> = None;
+    let mut min_units_to_pack = u32::MAX;
+
+    for (idx, texture) in ctx.to_pack.iter().enumerate() {
+        let units_to_pack = texture
+            .unique
+            .iter()
+            .filter(|u| !pck.units.contains_key(u))
+            .count() as u32;
+        if units_to_pack < min_units_to_pack {
+            optimal_texture_idx = Some(idx);
+            min_units_to_pack = units_to_pack;
+        }
+    }
+
+    if (pck.units.len() as u32 + min_units_to_pack) <= ctx.unit_capacity {
+        optimal_texture_idx
+    } else {
+        None
+    }
 }
 
-fn eval_atlas_size(ctx: &Context, units_count: u32) -> (u32, u32) {
+fn eval_atlas_size(ctx: &Context, units_count: u32) -> Size {
     let size = units_count.pow(2);
 
     if ctx.pot {
         let size = (size * ctx.padded_unit_size).next_power_of_two();
-        return (size, size);
+        return Size::new(size, size);
     }
 
     if ctx.square {
         let size = size * ctx.padded_unit_size;
-        return (size, size);
+        return Size::new(size, size);
     }
 
-    let mut size = (size, size);
-    for width in size.0..0 {
+    let mut size = Size::new(size, size);
+    for width in size.width..0 {
         let height = units_count.div_ceil(width);
         if height * ctx.padded_unit_size > ctx.size_limit {
             break;
         }
-        if width * height < size.0 * size.1 {
-            size = (width, height);
+        if width * height < size.width * size.height {
+            size = Size::new(width, height);
         }
     }
 
-    (size.0 * ctx.padded_unit_size, size.1 * ctx.padded_unit_size)
+    Size::new(
+        size.width * ctx.padded_unit_size,
+        size.height * ctx.padded_unit_size,
+    )
 }
 
-fn bake_units(ctx: &Context, pck: &Packed, atlas: &mut Texture) -> HashMap<u64, TextureCoordinate> {
-    HashMap::new()
+fn bake_units(ctx: &Context, pck: &Packed, atlas: &mut Texture) -> HashMap<u64, UV> {
+    let atlas_size = Size::new(atlas.width, atlas.height);
+    let units_per_row = atlas.width / ctx.padded_unit_size;
+    let mut uv_by_hash = HashMap::new();
+    atlas.pixels = vec![Pixel::default(); (atlas.width * atlas.height) as usize];
+
+    for (unit_idx, (unit_hash, unit_ref)) in pck.units.iter().enumerate() {
+        let row = unit_idx as u32 / units_per_row;
+        let column = unit_idx as u32 % units_per_row;
+        let unit = &ctx.to_pack[unit_ref.texture_idx].units[unit_ref.unit_idx];
+        set_atlas_pixels(&unit.pixels, column, row, atlas);
+        uv_by_hash.insert(*unit_hash, get_uvs(ctx, column, row, &atlas_size));
+    }
+
+    uv_by_hash
 }
+
+fn set_atlas_pixels(pixels: &[Pixel], column: u32, row: u32, atlas: &mut Texture) {}
+
+fn get_uvs(ctx: &Context, column: u32, row: u32, atlas_size: &Size) -> UV {
+    let width = ctx.unit_size as f32 / atlas_size.width as f32;
+    let height = ctx.unit_size as f32 / atlas_size.height as f32;
+    let u = (column * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.width as f32;
+    let v = (row * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.height as f32;
+    let uv = UV { u, v };
+    uv
+}
+
+// fn inset_uvs(ctx: &Context, uv: UV) -> UV {
+//     let crop = ctx.inset * (uv.)
+// }
 
 fn extract_packed_textures(ctx: &mut Context, pck: &Packed) -> Vec<DicedTexture> {
     let mut packed = Vec::new();
