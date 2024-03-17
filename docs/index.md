@@ -117,7 +117,7 @@ hero:
 
 @media (min-width: 960px) {
     :root {
-        --vp-home-hero-image-filter: blur(100px) opacity(0.66);
+        --vp-home-hero-image-filter: blur(120px) opacity(0.66);
     }
 
     .VPHome .name .clip {
@@ -129,6 +129,10 @@ hero:
         line-height: 64px;
         font-size: 57px;
     }
+}
+
+.image-bg {
+    border-radius: 13% !important;
 }
 
 .VPHome .tagline a {
