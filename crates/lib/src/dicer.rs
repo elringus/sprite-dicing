@@ -144,12 +144,14 @@ mod tests {
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&R1X1)], &pref(0, 0, true)).is_err());
+        assert!(dice(&[src(&R1X1)], &pref(0, 0, true))
+            .is_err_and(|e| e.to_string() == "Unit size can't be zero."));
     }
 
     #[test]
     fn errs_when_padding_is_above_unit_size() {
-        assert!(dice(&[src(&R1X1)], &pref(1, 2, true)).is_err());
+        assert!(dice(&[src(&R1X1)], &pref(1, 2, true))
+            .is_err_and(|e| e.to_string() == "Unit size can't be above atlas size limit."));
     }
 
     #[test]

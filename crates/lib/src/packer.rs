@@ -112,6 +112,9 @@ fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
     let mut min_units_to_pack = u32::MAX;
 
     for (idx, texture) in ctx.to_pack.iter().enumerate() {
+        if pck.textures.contains(&idx) {
+            continue;
+        }
         let units_to_pack = texture
             .unique
             .iter()
@@ -123,6 +126,7 @@ fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
         }
     }
 
+    optimal_texture_idx?;
     if (pck.units.len() as u32 + min_units_to_pack) <= ctx.unit_capacity {
         optimal_texture_idx
     } else {
@@ -241,38 +245,46 @@ mod tests {
 
     #[test]
     fn can_pack_with_defaults() {
-        assert!(pck(vec![&R1X1, &B1X1], &Prefs::default()).is_ok());
+        pck(vec![&R1X1, &B1X1], &Prefs::default());
     }
 
     #[test]
+    #[should_panic(expected = "UV inset should be in 0.0 to 0.5 range.")]
     fn errs_when_inset_above_05() {
         let prefs = Prefs {
             uv_inset: 0.85,
             ..Prefs::default()
         };
-        assert!(pck(vec![&RGB4X4], &prefs).is_err());
+        pck(vec![&RGB4X4], &prefs);
     }
 
     #[test]
+    #[should_panic(expected = "Atlas size limit can't be zero.")]
     fn errs_when_limit_is_zero() {
         let prefs = Prefs {
             atlas_size_limit: 0,
             ..Prefs::default()
         };
-        assert!(pck(vec![&RGB4X4], &prefs).is_err());
+        pck(vec![&RGB4X4], &prefs);
     }
 
     #[test]
+    #[should_panic(expected = "Unit size can't be above atlas size limit.")]
     fn errs_when_unit_size_above_limit() {
         let prefs = Prefs {
             unit_size: 2,
             atlas_size_limit: 1,
             ..Prefs::default()
         };
-        assert!(pck(vec![&RGB4X4], &prefs).is_err());
+        pck(vec![&RGB4X4], &prefs);
     }
 
-    fn pck(src: Vec<&Texture>, prefs: &Prefs) -> Result<Vec<Atlas>> {
+    #[test]
+    fn when_empty_input_empty_vec_is_returned() {
+        assert_eq!(pck(vec![], &Prefs::default()).len(), 0);
+    }
+
+    fn pck(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
         let sprites = src
             .into_iter()
             .map(|t| SourceSprite {
@@ -281,6 +293,6 @@ mod tests {
                 pivot: None,
             })
             .collect::<Vec<_>>();
-        pack(dice(&sprites, prefs)?, prefs)
+        pack(dice(&sprites, prefs).unwrap(), prefs).unwrap()
     }
 }

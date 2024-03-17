@@ -27,7 +27,7 @@ pub use models::*;
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```
 /// use sprite_dicing::{Prefs, SourceSprite, Texture, Pixel};
 ///
 /// // Fake functions to read and write textures on file system.
