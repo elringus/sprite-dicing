@@ -47,7 +47,6 @@ impl From<image::ImageError> for Error {
 impl std::error::Error for Error {}
 
 /// Preferences for a dicing operation.
-#[derive(Clone)]
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
@@ -99,13 +98,14 @@ impl Default for Prefs {
 /// A texture pixel represented as 8-bit RGBA components.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Pixel {
-    /// Red color component of the pixel.
+    /// Red color component of the pixel, in 0-255 range.
     pub r: u8,
-    /// Green color component of the pixel.
+    /// Green color component of the pixel, in 0-255 range.
     pub g: u8,
-    /// Blue color component of the pixel.
+    /// Blue color component of the pixel, in 0-255 range.
     pub b: u8,
-    /// Alpha (opacity) color component of the pixel.
+    /// Alpha (opacity) color component of the pixel, in 0-255 range,
+    /// where 0 is fully transparent (invisible) and 255 — fully opaque.
     pub a: u8,
 }
 
@@ -122,7 +122,7 @@ impl Default for Pixel {
 }
 
 /// A set of pixels forming sprite texture.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Texture {
     /// Width of the texture, in pixels.
     pub width: u32,
@@ -134,18 +134,7 @@ pub struct Texture {
     pub pixels: Vec<Pixel>,
 }
 
-impl Texture {
-    pub fn new(width: u32, height: u32) -> Self {
-        Texture {
-            width,
-            height,
-            pixels: vec![],
-        }
-    }
-}
-
 /// Original sprite specified as input for a dicing operation.
-#[derive(Clone)]
 pub struct SourceSprite {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
@@ -157,7 +146,6 @@ pub struct SourceSprite {
 }
 
 /// Final data generated from the diced input sprites.
-#[derive(Clone)]
 pub struct DiceArtifacts {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
     pub atlases: Vec<Texture>,
@@ -167,7 +155,6 @@ pub struct DiceArtifacts {
 
 /// Generated dicing product of a [SourceSprite] containing mesh data and reference to the
 /// associated atlas texture required to reconstruct and render sprite at runtime.
-#[derive(Clone)]
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
@@ -185,7 +172,6 @@ pub struct DicedSprite {
 
 /// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
 /// from top-left corner of the sprite mesh rectangle.
-#[derive(Clone)]
 pub struct Pivot {
     /// Relative distance from the left mesh border (x-axis), where 0 is left border,
     /// 0.5 — center and 1.0 is the right border.
@@ -196,7 +182,6 @@ pub struct Pivot {
 }
 
 /// Represents position of a mesh vertex in a local space coordinated with conventional units.
-#[derive(Clone)]
 pub struct Vertex {
     /// Position over horizontal (X) axis, in conventional units.
     pub x: f32,
@@ -205,7 +190,6 @@ pub struct Vertex {
 }
 
 /// Represents position on a texture, relative to its dimensions.
-#[derive(Clone)]
 pub struct UV {
     /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
     pub u: f32,
@@ -214,9 +198,8 @@ pub struct UV {
 }
 
 /// Product of dicing a [SourceSprite]'s texture.
-#[derive(Clone)]
 pub(crate) struct DicedTexture {
-    /// Unique identifier of the sprite among others in a dicing operation.
+    /// Identifier of the [SourceSprite] to which this texture belongs.
     pub id: String,
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
@@ -225,33 +208,41 @@ pub(crate) struct DicedTexture {
 }
 
 /// A chunk diced from a source texture.
-#[derive(Clone)]
 pub(crate) struct DicedUnit {
     /// Position and dimensions of the unit inside source texture.
-    pub rect: PixelRect,
+    pub rect: URect,
     /// Unit pixels chopped from the source texture, including padding.
     pub pixels: Vec<Pixel>,
     /// Content hash based on the non-padded pixels of the unit.
     pub hash: u64,
 }
 
-/// A rectangular subset of a sprite texture represented via XY offsets from the top-left
-/// corner of the texture rectangle, as well as width and height.
-#[derive(Clone, Eq, PartialEq)]
-pub(crate) struct PixelRect {
-    /// Horizontal (x-axis) offset from the top border of the texture rect, in pixels.
+/// Product of packing [DicedTexture]s.
+pub(crate) struct Atlas {
+    /// The atlas texture containing unique content of the packed diced textures.
+    pub texture: Texture,
+    /// Packed unit UV rects on the atlas texture, mapped by unit hashes.
+    pub rects: HashMap<u64, FRect>,
+    /// Diced textures packed into this atlas.
+    pub packed: Vec<DicedTexture>,
+}
+
+/// A rectangle in unsigned integer space.
+#[derive(Eq, PartialEq)]
+pub(crate) struct URect {
+    /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: u32,
-    /// Vertical (y-axis) offset from the left border of the texture rect, in pixels.
+    /// Position of the top-left corner of the rectangle on vertical axis.
     pub y: u32,
-    /// Width of the rect, in pixels.
+    /// Length of the rectangle over horizontal axis, starting from X.
     pub width: u32,
-    /// Height of the rect, in pixels.
+    /// Length of the rectangle over vertical axis, starting from Y.
     pub height: u32,
 }
 
-impl PixelRect {
+impl URect {
     pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
-        PixelRect {
+        URect {
             x,
             y,
             width,
@@ -260,31 +251,64 @@ impl PixelRect {
     }
 }
 
-/// A size of arbitrary entity inside texture.
-#[derive(Clone)]
-pub(crate) struct Size {
-    /// Width of the entity, in pixels.
+/// A rectangle in signed integer space.
+#[derive(Eq, PartialEq)]
+pub(crate) struct IRect {
+    /// Position of the top-left corner of the rectangle on horizontal axis.
+    pub x: i32,
+    /// Position of the top-left corner of the rectangle on vertical axis.
+    pub y: i32,
+    /// Length of the rectangle over horizontal axis, starting from X.
     pub width: u32,
-    /// Height of the entity, in pixels.
+    /// Length of the rectangle over vertical axis, starting from Y.
     pub height: u32,
 }
 
-impl Size {
-    pub fn new(width: u32, height: u32) -> Self {
-        Size { width, height }
+impl IRect {
+    pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
+        IRect {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 
-/// Product of packing [DicedTexture]s.
-#[derive(Clone)]
-pub(crate) struct AtlasTexture {
-    /// The atlas texture.
-    pub texture: Texture,
-    /// Diced textures packed into this atlas.
-    pub packed: Vec<DicedTexture>,
-    /// Diced unit hashes mapped to UVs of the atlas texture.
-    pub uv_by_hash: HashMap<u64, UV>,
+/// A rectangle in floating point space.
+pub(crate) struct FRect {
+    /// Position of the top-left corner of the rectangle on horizontal axis.
+    pub x: f32,
+    /// Position of the top-left corner of the rectangle on vertical axis.
+    pub y: f32,
+    /// Length of the rectangle over horizontal axis, starting from X.
+    pub width: f32,
+    /// Length of the rectangle over vertical axis, starting from Y.
+    pub height: f32,
 }
 
-// TODO: ----------> Add FRect, IRect, etc (mirror Unity types) for internal APIs.
-// Keep PixelRect, UVs, etc for public API.
+impl FRect {
+    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
+        FRect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
+/// A size of arbitrary entity in unsigned integer space.
+#[derive(Eq, PartialEq)]
+pub(crate) struct USize {
+    /// Width of the entity.
+    pub width: u32,
+    /// Height of the entity.
+    pub height: u32,
+}
+
+impl USize {
+    pub fn new(width: u32, height: u32) -> Self {
+        USize { width, height }
+    }
+}

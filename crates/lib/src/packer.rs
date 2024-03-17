@@ -2,7 +2,7 @@ use crate::models::*;
 use std::collections::{HashMap, HashSet};
 
 /// Packs diced textures into atlases.
-pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<AtlasTexture>> {
+pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>> {
     if prefs.uv_inset > 0.5 {
         return Err(Error::Spec("UV inset should be in 0.0 to 0.5 range."));
     }
@@ -75,7 +75,12 @@ impl UnitRef {
     }
 }
 
-fn pack_next(ctx: &mut Context) -> Result<AtlasTexture> {
+struct BakedAtlas {
+    texture: Texture,
+    rects: HashMap<u64, FRect>,
+}
+
+fn pack_next(ctx: &mut Context) -> Result<Atlas> {
     let mut pck = Packed {
         textures: HashSet::new(),
         units: HashMap::new(),
@@ -93,14 +98,12 @@ fn pack_next(ctx: &mut Context) -> Result<AtlasTexture> {
     }
 
     let atlas_size = eval_atlas_size(ctx, pck.units.len() as u32);
-    let mut texture = Texture::new(atlas_size.width, atlas_size.height);
-    let uv_by_hash = bake_units(ctx, &pck, &mut texture);
-    let packed = extract_packed_textures(ctx, &pck);
+    let backed_atlas = bake_atlas(ctx, &pck, &atlas_size);
 
-    Ok(AtlasTexture {
-        texture,
-        packed,
-        uv_by_hash,
+    Ok(Atlas {
+        texture: backed_atlas.texture,
+        rects: backed_atlas.rects,
+        packed: extract_packed_textures(ctx, &pck),
     })
 }
 
@@ -127,67 +130,92 @@ fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
     }
 }
 
-fn eval_atlas_size(ctx: &Context, units_count: u32) -> Size {
+fn eval_atlas_size(ctx: &Context, units_count: u32) -> USize {
     let size = units_count.pow(2);
 
     if ctx.pot {
         let size = (size * ctx.padded_unit_size).next_power_of_two();
-        return Size::new(size, size);
+        return USize::new(size, size);
     }
 
     if ctx.square {
         let size = size * ctx.padded_unit_size;
-        return Size::new(size, size);
+        return USize::new(size, size);
     }
 
-    let mut size = Size::new(size, size);
+    let mut size = USize::new(size, size);
     for width in size.width..0 {
         let height = units_count.div_ceil(width);
         if height * ctx.padded_unit_size > ctx.size_limit {
             break;
         }
         if width * height < size.width * size.height {
-            size = Size::new(width, height);
+            size = USize::new(width, height);
         }
     }
 
-    Size::new(
+    USize::new(
         size.width * ctx.padded_unit_size,
         size.height * ctx.padded_unit_size,
     )
 }
 
-fn bake_units(ctx: &Context, pck: &Packed, atlas: &mut Texture) -> HashMap<u64, UV> {
-    let atlas_size = Size::new(atlas.width, atlas.height);
-    let units_per_row = atlas.width / ctx.padded_unit_size;
-    let mut uv_by_hash = HashMap::new();
-    atlas.pixels = vec![Pixel::default(); (atlas.width * atlas.height) as usize];
+fn bake_atlas(ctx: &Context, pck: &Packed, size: &USize) -> BakedAtlas {
+    let units_per_row = size.width / ctx.padded_unit_size;
+    let mut rects = HashMap::new();
+    let mut texture = Texture {
+        width: size.width,
+        height: size.height,
+        pixels: vec![Pixel::default(); (size.width * size.height) as usize],
+    };
 
     for (unit_idx, (unit_hash, unit_ref)) in pck.units.iter().enumerate() {
         let row = unit_idx as u32 / units_per_row;
         let column = unit_idx as u32 % units_per_row;
         let unit = &ctx.to_pack[unit_ref.texture_idx].units[unit_ref.unit_idx];
-        set_atlas_pixels(&unit.pixels, column, row, atlas);
-        uv_by_hash.insert(*unit_hash, get_uvs(ctx, column, row, &atlas_size));
+        set_pixels(ctx, &unit.pixels, column, row, &mut texture);
+
+        let rect = get_uv(ctx, column, row, size);
+        let rect = inset_uv(ctx, rect);
+        let rect = scale_uv(ctx, rect, unit);
+        rects.insert(*unit_hash, rect);
     }
 
-    uv_by_hash
+    BakedAtlas { texture, rects }
 }
 
-fn set_atlas_pixels(pixels: &[Pixel], column: u32, row: u32, atlas: &mut Texture) {}
+fn set_pixels(ctx: &Context, pixels: &[Pixel], column: u32, row: u32, atlas: &mut Texture) {
+    let mut from_idx = 0;
+    let start_x = column * ctx.padded_unit_size;
+    let start_y = row * ctx.padded_unit_size;
+    for y in start_y..(start_y + ctx.padded_unit_size) {
+        for x in start_x..(start_x + ctx.padded_unit_size) {
+            let into_idx = (x + atlas.width * y) as usize;
+            atlas.pixels[into_idx] = pixels[from_idx];
+            from_idx += 1;
+        }
+    }
+}
 
-fn get_uvs(ctx: &Context, column: u32, row: u32, atlas_size: &Size) -> UV {
+fn get_uv(ctx: &Context, column: u32, row: u32, atlas_size: &USize) -> FRect {
     let width = ctx.unit_size as f32 / atlas_size.width as f32;
     let height = ctx.unit_size as f32 / atlas_size.height as f32;
-    let u = (column * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.width as f32;
-    let v = (row * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.height as f32;
-    let uv = UV { u, v };
-    uv
+    let x = (column * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.width as f32;
+    let y = (row * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.height as f32;
+    FRect::new(x, y, width, height)
 }
 
-// fn inset_uvs(ctx: &Context, uv: UV) -> UV {
-//     let crop = ctx.inset * (uv.)
-// }
+fn inset_uv(ctx: &Context, rect: FRect) -> FRect {
+    let d = ctx.inset * (rect.width / 2.0);
+    let dx2 = d * 2.0;
+    FRect::new(rect.x + d, rect.y + d, rect.width - dx2, rect.height - dx2)
+}
+
+fn scale_uv(ctx: &Context, rect: FRect, unit: &DicedUnit) -> FRect {
+    let mx = unit.rect.width as f32 / ctx.unit_size as f32;
+    let my = unit.rect.height as f32 / ctx.unit_size as f32;
+    FRect::new(rect.x, rect.y, rect.width * mx, rect.height * my)
+}
 
 fn extract_packed_textures(ctx: &mut Context, pck: &Packed) -> Vec<DicedTexture> {
     let mut packed = Vec::new();
@@ -244,7 +272,7 @@ mod tests {
         assert!(pck(vec![&RGB4X4], &prefs).is_err());
     }
 
-    fn pck(src: Vec<&Texture>, prefs: &Prefs) -> Result<Vec<AtlasTexture>> {
+    fn pck(src: Vec<&Texture>, prefs: &Prefs) -> Result<Vec<Atlas>> {
         let sprites = src
             .into_iter()
             .map(|t| SourceSprite {

@@ -4,7 +4,7 @@
 //! formats on file system, writing generated atlases as images of specified format and
 //! sprite meshes as either JSON or Wavefront OBJ files.
 
-use crate::{dice, models::*};
+use crate::models::*;
 use std::fs;
 use std::path::Path;
 
@@ -12,7 +12,7 @@ use std::path::Path;
 /// writes generated atlas texture in specified format and diced sprites meta serialized
 /// in specified format under the specified out directory.
 pub fn dice_in_dir(dir: &Path, out: &Path) -> Result<String> {
-    _ = dice(&Vec::new(), &Prefs::default());
+    _ = crate::dice(&Vec::new(), &Prefs::default());
     let mut str = format!(
         "Requested dice in: {} to: {}\n",
         dir.display(),

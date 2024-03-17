@@ -27,11 +27,15 @@ pub use models::*;
 ///
 /// # Examples
 ///
-/// ```
-/// use sprite_dicing::{Prefs, SourceSprite, Texture};
+/// ```no_run
+/// use sprite_dicing::{Prefs, SourceSprite, Texture, Pixel};
 ///
 /// // Fake functions to read and write textures on file system.
-/// fn open (path: &str) -> Texture { Texture::default() }
+/// fn open (path: &str) -> Texture {
+///     let red = Pixel::new(255, 0, 0, 255);
+///     let blue = Pixel::new(0, 0, 255, 255);
+///     Texture { width: 2, height: 2, pixels: vec![red, blue, blue, red] }
+/// }
 /// fn save (path: &str, tex: &Texture) { }
 ///
 /// // Collect source sprites to dice.

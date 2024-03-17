@@ -32,15 +32,6 @@ fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     }
 }
 
-// Padding may result in negative x/y values, hence using this instead of PixelRect for the
-// transient calculations. This is an impl. detail and shouldn't leak outside the module.
-struct IntRect {
-    pub x: i32,
-    pub y: i32,
-    pub width: u32,
-    pub height: u32,
-}
-
 fn dice_it(ctx: &Context) -> DicedTexture {
     let mut units = Vec::new();
     let unit_count_x = ctx.tex.width.div_ceil(ctx.size);
@@ -60,7 +51,7 @@ fn dice_it(ctx: &Context) -> DicedTexture {
 }
 
 fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
-    let unit_rect = IntRect {
+    let unit_rect = IRect {
         x: unit_x as i32 * ctx.size as i32,
         y: unit_y as i32 * ctx.size as i32,
         width: ctx.size,
@@ -79,7 +70,7 @@ fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
     Some(DicedUnit { rect, pixels, hash })
 }
 
-fn get_pixels(rect: &IntRect, tex: &Texture) -> Vec<Pixel> {
+fn get_pixels(rect: &IRect, tex: &Texture) -> Vec<Pixel> {
     let end_x = rect.x + rect.width as i32;
     let end_y = rect.y + rect.height as i32;
     let size = (rect.width * rect.height) as usize;
@@ -100,8 +91,8 @@ fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
     tex.pixels[(x + tex.width * y) as usize]
 }
 
-fn pad_rect(rect: &IntRect, pad: u32) -> IntRect {
-    IntRect {
+fn pad_rect(rect: &IRect, pad: u32) -> IRect {
+    IRect {
         x: rect.x - pad as i32,
         y: rect.y - pad as i32,
         width: rect.width + pad * 2,
@@ -109,8 +100,8 @@ fn pad_rect(rect: &IntRect, pad: u32) -> IntRect {
     }
 }
 
-fn crop_over_borders(rect: &IntRect, tex: &Texture) -> PixelRect {
-    PixelRect {
+fn crop_over_borders(rect: &IRect, tex: &Texture) -> URect {
+    URect {
         x: rect.x as u32,
         y: rect.y as u32,
         width: cmp::min(rect.width, tex.width - rect.x as u32),
@@ -224,11 +215,11 @@ mod tests {
     #[test]
     fn unit_rects_are_mapped_top_left_to_bottom_right() {
         let units = &dice(&[src(&BGRC)], &pref(1, 0, false)).unwrap()[0].units;
-        assert!(has(units, B, PixelRect::new(0, 0, 1, 1)));
-        assert!(has(units, G, PixelRect::new(1, 0, 1, 1)));
-        assert!(has(units, R, PixelRect::new(0, 1, 1, 1)));
-        assert!(has(units, C, PixelRect::new(1, 1, 1, 1)));
-        fn has(units: &[DicedUnit], pixel: Pixel, rect: PixelRect) -> bool {
+        assert!(has(units, B, URect::new(0, 0, 1, 1)));
+        assert!(has(units, G, URect::new(1, 0, 1, 1)));
+        assert!(has(units, R, URect::new(0, 1, 1, 1)));
+        assert!(has(units, C, URect::new(1, 1, 1, 1)));
+        fn has(units: &[DicedUnit], pixel: Pixel, rect: URect) -> bool {
             units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
         }
     }
@@ -270,7 +261,8 @@ mod tests {
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {
-        dice(&[src(tex)], &pref(size, pad, true)).unwrap()[0].to_owned()
+        let pref = pref(size, pad, true);
+        dice(&[src(tex)], &pref).unwrap().pop().unwrap()
     }
 
     fn pref(size: u32, pad: u32, trim: bool) -> Prefs {
