@@ -9,7 +9,7 @@ pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTextu
         return Err(Error::Spec("Unit size can't be zero."));
     }
     if prefs.padding > prefs.unit_size {
-        return Err(Error::Spec("Unit size can't be above atlas size limit."));
+        return Err(Error::Spec("Padding can't be above unit size."));
     }
     Ok(src.iter().map(|s| dice_it(&new_ctx(s, prefs))).collect())
 }
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn errs_when_padding_is_above_unit_size() {
         assert!(dice(&[src(&R1X1)], &pref(1, 2, true))
-            .is_err_and(|e| e.to_string() == "Unit size can't be above atlas size limit."));
+            .is_err_and(|e| e.to_string() == "Padding can't be above unit size."));
     }
 
     #[test]

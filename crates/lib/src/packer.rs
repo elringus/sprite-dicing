@@ -94,7 +94,9 @@ fn pack_next(ctx: &mut Context) -> Result<Atlas> {
     }
 
     if pck.textures.is_empty() {
-        return Err(Error::Spec("Can't fit any texture; increase atlas size."));
+        return Err(Error::Spec(
+            "Can't fit single texture; increase atlas size limit.",
+        ));
     }
 
     let atlas_size = eval_atlas_size(ctx, pck.units.len() as u32);
@@ -241,11 +243,10 @@ mod tests {
     use crate::dicer::dice;
     use crate::fixtures::*;
     use crate::models::*;
-    use crate::packer::pack;
 
     #[test]
     fn can_pack_with_defaults() {
-        pck(vec![&R1X1, &B1X1], &Prefs::default());
+        pack(vec![&R1X1, &B1X1], &Prefs::default());
     }
 
     #[test]
@@ -253,9 +254,9 @@ mod tests {
     fn errs_when_inset_above_05() {
         let prefs = Prefs {
             uv_inset: 0.85,
-            ..Prefs::default()
+            ..defaults()
         };
-        pck(vec![&RGB4X4], &prefs);
+        pack(vec![&RGB4X4], &prefs);
     }
 
     #[test]
@@ -263,9 +264,9 @@ mod tests {
     fn errs_when_limit_is_zero() {
         let prefs = Prefs {
             atlas_size_limit: 0,
-            ..Prefs::default()
+            ..defaults()
         };
-        pck(vec![&RGB4X4], &prefs);
+        pack(vec![&RGB4X4], &prefs);
     }
 
     #[test]
@@ -274,17 +275,58 @@ mod tests {
         let prefs = Prefs {
             unit_size: 2,
             atlas_size_limit: 1,
-            ..Prefs::default()
+            ..defaults()
         };
-        pck(vec![&RGB4X4], &prefs);
+        pack(vec![&RGB4X4], &prefs);
     }
 
     #[test]
     fn when_empty_input_empty_vec_is_returned() {
-        assert_eq!(pck(vec![], &Prefs::default()).len(), 0);
+        assert_eq!(pack(vec![], &Prefs::default()).len(), 0);
     }
 
-    fn pck(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
+    #[test]
+    fn when_content_doesnt_fit_multiple_atlases_are_produced() {
+        let prefs = Prefs {
+            atlas_size_limit: 1,
+            ..defaults()
+        };
+        assert_eq!(pack(vec![&B1X1, &R1X1], &prefs).len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't fit single texture; increase atlas size limit.")]
+    fn errs_when_content_from_single_texture_doesnt_fit() {
+        let prefs = Prefs {
+            atlas_size_limit: 1,
+            ..defaults()
+        };
+        pack(vec![&RGB4X4], &prefs);
+    }
+
+    #[test]
+    fn when_forcing_square_atlas_is_square() {
+        let prefs = Prefs {
+            atlas_square: true,
+            atlas_size_limit: 4,
+            ..defaults()
+        };
+        let atlas = pack(vec![&RGB4X4, &B1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, atlas.texture.height);
+    }
+
+    #[test]
+    fn when_not_forcing_square_atlas_has_optimal_size() {
+        let prefs = Prefs {
+            atlas_square: false,
+            atlas_size_limit: 4,
+            ..defaults()
+        };
+        let atlas = pack(vec![&RGB4X4, &B1X1], &prefs).pop().unwrap();
+        assert_ne!(atlas.texture.width, atlas.texture.height);
+    }
+
+    fn pack(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
         let sprites = src
             .into_iter()
             .map(|t| SourceSprite {
@@ -293,6 +335,14 @@ mod tests {
                 pivot: None,
             })
             .collect::<Vec<_>>();
-        pack(dice(&sprites, prefs).unwrap(), prefs).unwrap()
+        crate::packer::pack(dice(&sprites, prefs).unwrap(), prefs).unwrap()
+    }
+
+    fn defaults() -> Prefs {
+        Prefs {
+            unit_size: 1,
+            padding: 0,
+            ..Prefs::default()
+        }
     }
 }
