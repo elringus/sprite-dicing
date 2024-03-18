@@ -350,6 +350,48 @@ mod tests {
         assert_eq!(atlas.texture.height, 4);
     }
 
+    #[test]
+    fn unused_pixels_are_clear() {
+        let prefs = Prefs {
+            atlas_size_limit: 4,
+            atlas_pot: true,
+            ..defaults()
+        };
+        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        let clear = atlas.texture.pixels.into_iter().filter(|p| p.eq(&T));
+        assert_eq!(clear.count(), 12);
+    }
+
+    #[test]
+    fn uvs_are_mapped() {
+        let atlas = pack(vec![&R1X1], &defaults()).pop().unwrap();
+        let rect = atlas.rects.values().next().unwrap();
+        assert_eq!(*rect, FRect::new(0.0, 0.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn inset_uvs_are_scaled() {
+        let prefs = Prefs {
+            uv_inset: 0.2,
+            ..Prefs::default()
+        };
+        let atlas = pack(vec![&Y1X1], &prefs).pop().unwrap();
+        let rect = atlas.rects.values().next().unwrap();
+        assert_eq!(*rect, FRect::new(0.1, 0.1, 0.8, 0.8));
+    }
+
+    #[test]
+    fn overflow_uvs_are_cropped() {
+        let prefs = Prefs {
+            unit_size: 2,
+            padding: 1,
+            ..Prefs::default()
+        };
+        let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
+        let rect = atlas.rects.values().next().unwrap();
+        assert_eq!(*rect, FRect::new(0.25, 0.25, 0.25, 0.25));
+    }
+
     fn pack(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
         let sprites = src
             .into_iter()

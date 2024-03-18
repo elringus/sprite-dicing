@@ -47,6 +47,7 @@ impl From<image::ImageError> for Error {
 impl std::error::Error for Error {}
 
 /// Preferences for a dicing operation.
+#[derive(Debug, Clone)]
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
@@ -122,7 +123,7 @@ impl Default for Pixel {
 }
 
 /// A set of pixels forming sprite texture.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Texture {
     /// Width of the texture, in pixels.
     pub width: u32,
@@ -135,6 +136,7 @@ pub struct Texture {
 }
 
 /// Original sprite specified as input for a dicing operation.
+#[derive(Debug, Clone)]
 pub struct SourceSprite {
     /// Unique identifier of the sprite among others in a dicing operation.
     pub id: String,
@@ -146,6 +148,7 @@ pub struct SourceSprite {
 }
 
 /// Final data generated from the diced input sprites.
+#[derive(Debug, Clone)]
 pub struct DiceArtifacts {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
     pub atlases: Vec<Texture>,
@@ -155,6 +158,7 @@ pub struct DiceArtifacts {
 
 /// Generated dicing product of a [SourceSprite] containing mesh data and reference to the
 /// associated atlas texture required to reconstruct and render sprite at runtime.
+#[derive(Debug, Clone)]
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
@@ -172,6 +176,7 @@ pub struct DicedSprite {
 
 /// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
 /// from top-left corner of the sprite mesh rectangle.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Pivot {
     /// Relative distance from the left mesh border (x-axis), where 0 is left border,
     /// 0.5 — center and 1.0 is the right border.
@@ -182,6 +187,7 @@ pub struct Pivot {
 }
 
 /// Represents position of a mesh vertex in a local space coordinated with conventional units.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Vertex {
     /// Position over horizontal (X) axis, in conventional units.
     pub x: f32,
@@ -190,6 +196,7 @@ pub struct Vertex {
 }
 
 /// Represents position on a texture, relative to its dimensions.
+#[derive(Debug, Clone, PartialEq)]
 pub struct UV {
     /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
     pub u: f32,
@@ -198,6 +205,7 @@ pub struct UV {
 }
 
 /// Product of dicing a [SourceSprite]'s texture.
+#[derive(Debug, Clone)]
 pub(crate) struct DicedTexture {
     /// Identifier of the [SourceSprite] to which this texture belongs.
     pub id: String,
@@ -208,6 +216,7 @@ pub(crate) struct DicedTexture {
 }
 
 /// A chunk diced from a source texture.
+#[derive(Debug, Clone)]
 pub(crate) struct DicedUnit {
     /// Position and dimensions of the unit inside source texture.
     pub rect: URect,
@@ -218,6 +227,7 @@ pub(crate) struct DicedUnit {
 }
 
 /// Product of packing [DicedTexture]s.
+#[derive(Debug, Clone)]
 pub(crate) struct Atlas {
     /// The atlas texture containing unique content of the packed diced textures.
     pub texture: Texture,
@@ -228,7 +238,7 @@ pub(crate) struct Atlas {
 }
 
 /// A rectangle in unsigned integer space.
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct URect {
     /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: u32,
@@ -252,7 +262,7 @@ impl URect {
 }
 
 /// A rectangle in signed integer space.
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct IRect {
     /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: i32,
@@ -276,6 +286,7 @@ impl IRect {
 }
 
 /// A rectangle in floating point space.
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct FRect {
     /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: f32,
@@ -299,7 +310,7 @@ impl FRect {
 }
 
 /// A size of arbitrary entity in unsigned integer space.
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct USize {
     /// Width of the entity.
     pub width: u32,
