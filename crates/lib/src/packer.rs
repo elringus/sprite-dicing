@@ -137,7 +137,7 @@ fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
 }
 
 fn eval_atlas_size(ctx: &Context, units_count: u32) -> USize {
-    let size = units_count.pow(2);
+    let size = (units_count as f32).sqrt().ceil() as u32;
 
     if ctx.pot {
         let size = (size * ctx.padded_unit_size).next_power_of_two();
@@ -150,7 +150,7 @@ fn eval_atlas_size(ctx: &Context, units_count: u32) -> USize {
     }
 
     let mut size = USize::new(size, size);
-    for width in size.width..0 {
+    for width in (1..=size.width).rev() {
         let height = units_count.div_ceil(width);
         if height * ctx.padded_unit_size > ctx.size_limit {
             break;
@@ -256,7 +256,7 @@ mod tests {
             uv_inset: 0.85,
             ..defaults()
         };
-        pack(vec![&RGB4X4], &prefs);
+        pack(vec![&BGRT], &prefs);
     }
 
     #[test]
@@ -266,7 +266,7 @@ mod tests {
             atlas_size_limit: 0,
             ..defaults()
         };
-        pack(vec![&RGB4X4], &prefs);
+        pack(vec![&BGRT], &prefs);
     }
 
     #[test]
@@ -277,7 +277,7 @@ mod tests {
             atlas_size_limit: 1,
             ..defaults()
         };
-        pack(vec![&RGB4X4], &prefs);
+        pack(vec![&BGRT], &prefs);
     }
 
     #[test]
@@ -301,29 +301,29 @@ mod tests {
             atlas_size_limit: 1,
             ..defaults()
         };
-        pack(vec![&RGB4X4], &prefs);
+        pack(vec![&BGRT], &prefs);
     }
 
     #[test]
-    fn when_forcing_square_atlas_is_square() {
-        let prefs = Prefs {
-            atlas_square: true,
-            atlas_size_limit: 4,
-            ..defaults()
-        };
-        let atlas = pack(vec![&RGB4X4, &B1X1], &prefs).pop().unwrap();
-        assert_eq!(atlas.texture.width, atlas.texture.height);
-    }
-
-    #[test]
-    fn when_not_forcing_square_atlas_has_optimal_size() {
+    fn when_not_forcing_square_and_square_is_not_optimal_atlas_is_not_square() {
         let prefs = Prefs {
             atlas_square: false,
             atlas_size_limit: 4,
             ..defaults()
         };
-        let atlas = pack(vec![&RGB4X4, &B1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
         assert_ne!(atlas.texture.width, atlas.texture.height);
+    }
+
+    #[test]
+    fn when_forcing_square_atlas_is_square_even_when_not_optimal() {
+        let prefs = Prefs {
+            atlas_square: true,
+            atlas_size_limit: 4,
+            ..defaults()
+        };
+        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, atlas.texture.height);
     }
 
     fn pack(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
@@ -342,6 +342,7 @@ mod tests {
         Prefs {
             unit_size: 1,
             padding: 0,
+            trim_transparent: false,
             ..Prefs::default()
         }
     }

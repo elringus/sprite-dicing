@@ -177,23 +177,23 @@ mod tests {
     #[test]
     fn transparent_dices_are_ignored_when_trim_enabled() {
         let prf = &pref(1, 0, true);
-        assert!(dice(&[src(&CCCC)], prf).unwrap()[0].units.is_empty());
-        assert!(dice(&[src(&BGRC)], prf).unwrap().iter().all(is_opaque));
-        assert!(dice(&[src(&BCGR)], prf).unwrap().iter().all(is_opaque));
+        assert!(dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
+        assert!(dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
+        assert!(dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
     }
 
     #[test]
     fn transparent_dices_are_preserved_when_trim_disabled() {
         let prf = &pref(1, 0, false);
-        assert!(!dice(&[src(&CCCC)], prf).unwrap()[0].units.is_empty());
-        assert!(!dice(&[src(&BGRC)], prf).unwrap().iter().all(is_opaque));
-        assert!(!dice(&[src(&BCGR)], prf).unwrap().iter().all(is_opaque));
+        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
+        assert!(!dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
+        assert!(!dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
     }
 
     #[test]
     fn content_hash_of_equal_pixels_is_equal() {
-        let units = dice1(&BGRC, 1, 0).units;
-        for unit in dice1(&BCGR, 1, 0).units {
+        let units = dice1(&BGRT, 1, 0).units;
+        for unit in dice1(&BTGR, 1, 0).units {
             assert!(units.iter().any(|u| u.hash == unit.hash));
         }
     }
@@ -216,11 +216,11 @@ mod tests {
 
     #[test]
     fn unit_rects_are_mapped_top_left_to_bottom_right() {
-        let units = &dice(&[src(&BGRC)], &pref(1, 0, false)).unwrap()[0].units;
+        let units = &dice(&[src(&BGRT)], &pref(1, 0, false)).unwrap()[0].units;
         assert!(has(units, B, URect::new(0, 0, 1, 1)));
         assert!(has(units, G, URect::new(1, 0, 1, 1)));
         assert!(has(units, R, URect::new(0, 1, 1, 1)));
-        assert!(has(units, C, URect::new(1, 1, 1, 1)));
+        assert!(has(units, T, URect::new(1, 1, 1, 1)));
         fn has(units: &[DicedUnit], pixel: Pixel, rect: URect) -> bool {
             units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
         }
@@ -238,7 +238,7 @@ mod tests {
 
     #[test]
     fn padded_pixels_are_neighbors() {
-        let pixels = dice1(&BGRC, 1, 1)
+        let pixels = dice1(&BGRT, 1, 1)
             .units
             .into_iter()
             .map(|u| u.pixels)
@@ -247,7 +247,7 @@ mod tests {
         assert!(pixels.contains(&vec![
             B, B, G,
             B, B, G,
-            R, R, C]));
+            R, R, T]));
     }
 
     #[test]
