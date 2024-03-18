@@ -373,7 +373,7 @@ mod tests {
     fn inset_uvs_are_scaled() {
         let prefs = Prefs {
             uv_inset: 0.2,
-            ..Prefs::default()
+            ..defaults()
         };
         let atlas = pack(vec![&Y1X1], &prefs).pop().unwrap();
         let rect = atlas.rects.values().next().unwrap();
@@ -385,7 +385,7 @@ mod tests {
         let prefs = Prefs {
             unit_size: 2,
             padding: 1,
-            ..Prefs::default()
+            ..defaults()
         };
         let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
         let rect = atlas.rects.values().next().unwrap();
