@@ -305,25 +305,49 @@ mod tests {
     }
 
     #[test]
-    fn when_not_forcing_square_and_square_is_not_optimal_atlas_is_not_square() {
+    fn when_square_is_optimal_atlas_is_square() {
         let prefs = Prefs {
-            atlas_square: false,
             atlas_size_limit: 4,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
-        assert_ne!(atlas.texture.width, atlas.texture.height);
+        let atlas = pack(vec![&BGRT, &B1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 2);
+        assert_eq!(atlas.texture.height, 2);
     }
 
     #[test]
-    fn when_forcing_square_atlas_is_square_even_when_not_optimal() {
+    fn when_square_is_not_optimal_atlas_is_not_square() {
         let prefs = Prefs {
-            atlas_square: true,
             atlas_size_limit: 4,
             ..defaults()
         };
         let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
-        assert_eq!(atlas.texture.width, atlas.texture.height);
+        assert_eq!(atlas.texture.width, 3);
+        assert_eq!(atlas.texture.height, 2);
+    }
+
+    #[test]
+    fn when_square_is_not_optimal_but_forced_atlas_is_square() {
+        let prefs = Prefs {
+            atlas_size_limit: 4,
+            atlas_square: true,
+            ..defaults()
+        };
+        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 3);
+        assert_eq!(atlas.texture.height, 3);
+    }
+
+    #[test]
+    fn when_pot_forced_atlas_is_power_of_two() {
+        let prefs = Prefs {
+            atlas_size_limit: 4,
+            atlas_pot: true,
+            ..defaults()
+        };
+        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 4);
+        assert_eq!(atlas.texture.height, 4);
     }
 
     fn pack(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
