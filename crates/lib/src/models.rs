@@ -170,8 +170,23 @@ pub struct DicedSprite {
     pub uvs: Vec<UV>,
     /// Mesh face (triangle) indices to the [vertices] and [uvs] vectors.
     pub indices: Vec<usize>,
-    /// Relative position of the sprite origin point on the generated mesh.
+    /// Rect of the sprite in conventional units space, aka boundaries.
+    pub rect: Rect,
+    /// Relative position of the sprite origin point on the rect.
     pub pivot: Pivot,
+}
+
+/// A rectangle in conventional units space.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Rect {
+    /// Position of the top-left corner of the rectangle on horizontal axis.
+    pub x: f32,
+    /// Position of the top-left corner of the rectangle on vertical axis.
+    pub y: f32,
+    /// Length of the rectangle over horizontal axis, starting from X.
+    pub width: f32,
+    /// Length of the rectangle over vertical axis, starting from Y.
+    pub height: f32,
 }
 
 /// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
@@ -209,6 +224,8 @@ pub struct UV {
 pub(crate) struct DicedTexture {
     /// Identifier of the [SourceSprite] to which this texture belongs.
     pub id: String,
+    /// Pivot of the associated [SourceSprite], if any.
+    pub pivot: Option<Pivot>,
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
     /// Hashes of diced units with distinct content.

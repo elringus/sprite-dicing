@@ -19,26 +19,23 @@ struct Context<'a> {
     size: u32,
     pad: u32,
     trim: bool,
-    /// ID of the currently diced source sprite.
-    id: &'a str,
-    /// Currently diced source sprite texture.
-    tex: &'a Texture,
+    /// Currently diced source sprite.
+    sprite: &'a SourceSprite,
 }
 
-fn new_ctx<'a>(src: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
+fn new_ctx<'a>(sprite: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     Context {
         size: prefs.unit_size,
         pad: prefs.padding,
         trim: prefs.trim_transparent,
-        id: &src.id,
-        tex: &src.texture,
+        sprite,
     }
 }
 
 fn dice_it(ctx: &Context) -> DicedTexture {
     let mut units = Vec::new();
-    let unit_count_x = ctx.tex.width.div_ceil(ctx.size);
-    let unit_count_y = ctx.tex.height.div_ceil(ctx.size);
+    let unit_count_x = ctx.sprite.texture.width.div_ceil(ctx.size);
+    let unit_count_y = ctx.sprite.texture.height.div_ceil(ctx.size);
 
     for x in 0..unit_count_x {
         for y in 0..unit_count_y {
@@ -48,9 +45,12 @@ fn dice_it(ctx: &Context) -> DicedTexture {
         }
     }
 
-    let id = ctx.id.to_owned();
-    let unique = units.iter().map(|u| u.hash).collect::<HashSet<_>>();
-    DicedTexture { id, units, unique }
+    DicedTexture {
+        id: ctx.sprite.id.to_owned(),
+        unique: units.iter().map(|u| u.hash).collect::<HashSet<_>>(),
+        pivot: ctx.sprite.pivot.to_owned(),
+        units,
+    }
 }
 
 fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
@@ -61,15 +61,15 @@ fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
         height: ctx.size,
     };
 
-    let unit_pixels = get_pixels(&unit_rect, ctx.tex);
+    let unit_pixels = get_pixels(&unit_rect, &ctx.sprite.texture);
     if ctx.trim && unit_pixels.iter().all(|p| p.a == 0) {
         return None;
     }
 
     let hash = hash(&unit_pixels);
-    let rect = crop_over_borders(&unit_rect, ctx.tex);
+    let rect = crop_over_borders(&unit_rect, &ctx.sprite.texture);
     let padded_rect = pad_rect(&unit_rect, ctx.pad);
-    let pixels = get_pixels(&padded_rect, ctx.tex);
+    let pixels = get_pixels(&padded_rect, &ctx.sprite.texture);
     Some(DicedUnit { rect, pixels, hash })
 }
 
