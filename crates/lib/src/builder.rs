@@ -1,30 +1,38 @@
 use crate::models::*;
 
 /// Builds data required to reconstruct diced sprites at runtime: mesh, uvs, etc.
-pub(crate) fn build(packed: &Vec<Atlas>, prefs: &Prefs) -> Result<Vec<DicedSprite>> {
+pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>> {
     if prefs.ppu == 0 {
         return Err(Error::Spec("PPU can't be zero."));
     }
 
-    _ = packed;
-    _ = prefs;
-    Ok(vec![])
+    Ok(packed.iter().map(|a| pack_it(&new_ctx(a, prefs))).collect())
 }
 
-struct Context {
+struct Context<'a> {
     ppu: u32,
     default_pivot: Pivot,
+    atlas: &'a Atlas,
 }
 
-fn new_ctx(prefs: &Prefs) -> Context {
+fn new_ctx<'a>(atlas: &'a Atlas, prefs: &Prefs) -> Context<'a> {
     Context {
         ppu: prefs.ppu,
         default_pivot: prefs.pivot.to_owned(),
+        atlas,
     }
 }
 
-fn pack_it () {
-    
+fn pack_it(ctx: &Context) -> DicedSprite {
+    _ = ctx;
+    DicedSprite {
+        id: "".to_string(),
+        atlas_index: 0,
+        vertices: vec![],
+        uvs: vec![],
+        indices: vec![],
+        pivot: Pivot { x: 0.0, y: 0.0 },
+    }
 }
 
 #[cfg(test)]

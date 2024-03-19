@@ -11,6 +11,7 @@ pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTextu
     if prefs.padding > prefs.unit_size {
         return Err(Error::Spec("Padding can't be above unit size."));
     }
+
     Ok(src.iter().map(|s| dice_it(&new_ctx(s, prefs))).collect())
 }
 
@@ -18,7 +19,9 @@ struct Context<'a> {
     size: u32,
     pad: u32,
     trim: bool,
+    /// ID of the currently diced source sprite.
     id: &'a str,
+    /// Currently diced source sprite texture.
     tex: &'a Texture,
 }
 

@@ -13,10 +13,12 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
         return Err(Error::Spec("Unit size can't be above atlas size limit."));
     }
 
-    let mut atlases = Vec::new();
+    let mut atlases = vec![];
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
-        atlases.push(pack_next(&mut ctx)?);
+        atlases.push(pack_it(&mut ctx)?);
+        ctx.packed.clear();
+        ctx.units.clear();
     }
 
     Ok(atlases)
@@ -30,8 +32,22 @@ struct Context {
     unit_size: u32,
     pad: u32,
     padded_unit_size: u32,
+    /// Max. number of units single atlas is able to accommodate.
     unit_capacity: u32,
+    /// Total textures left to pack.
     to_pack: Vec<DicedTexture>,
+    /// Indexes of to_pack textures packed into current atlas.
+    packed: HashSet<usize>,
+    /// Units packed into current atlas mapped by hashes.
+    units: HashMap<u64, UnitRef>,
+}
+
+/// Reference to a diced unit of a diced texture.
+struct UnitRef {
+    /// Index of the diced texture (via ctx.to_pack) containing referenced unit.
+    tex_idx: usize,
+    /// Index of the referenced diced unit inside diced texture.
+    unit_idx: usize,
 }
 
 fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
@@ -47,80 +63,48 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
         padded_unit_size,
         unit_capacity,
         to_pack: diced,
-    }
-}
-
-/// Current atlas packing context.
-struct Packed {
-    /// Indexes of diced textures (via ctx.to_pack) packed into current atlas.
-    textures: HashSet<usize>,
-    /// Units packed into current atlas mapped by hashes.
-    units: HashMap<u64, UnitRef>,
-}
-
-/// Reference to a diced unit of a diced texture.
-struct UnitRef {
-    /// Index of the diced texture (via ctx.to_pack) containing referenced unit.
-    texture_idx: usize,
-    /// Index of the referenced diced unit inside diced texture.
-    unit_idx: usize,
-}
-
-impl UnitRef {
-    fn new(texture_idx: usize, unit_idx: usize) -> Self {
-        UnitRef {
-            texture_idx,
-            unit_idx,
-        }
-    }
-}
-
-struct BakedAtlas {
-    texture: Texture,
-    rects: HashMap<u64, FRect>,
-}
-
-fn pack_next(ctx: &mut Context) -> Result<Atlas> {
-    let mut pck = Packed {
-        textures: HashSet::new(),
+        packed: HashSet::new(),
         units: HashMap::new(),
-    };
+    }
+}
 
-    while let Some(texture_idx) = find_packable_texture(ctx, &pck) {
-        pck.textures.insert(texture_idx);
-        let units = ctx.to_pack[texture_idx].units.iter().enumerate();
-        let refs = units.map(|(i, u)| (u.hash, UnitRef::new(texture_idx, i)));
-        pck.units.extend(refs);
+fn pack_it(ctx: &mut Context) -> Result<Atlas> {
+    while let Some(tex_idx) = find_packable_texture(ctx) {
+        ctx.packed.insert(tex_idx);
+        let units = ctx.to_pack[tex_idx].units.iter().enumerate();
+        let refs = units.map(|(unit_idx, u)| (u.hash, UnitRef { tex_idx, unit_idx }));
+        ctx.units.extend(refs);
     }
 
-    if pck.textures.is_empty() {
+    if ctx.packed.is_empty() {
         return Err(Error::Spec(
             "Can't fit single texture; increase atlas size limit.",
         ));
     }
 
-    let atlas_size = eval_atlas_size(ctx, pck.units.len() as u32);
-    let backed_atlas = bake_atlas(ctx, &pck, &atlas_size);
+    let atlas_size = eval_atlas_size(ctx);
+    let (texture, rects) = bake_atlas(ctx, &atlas_size);
+    let packed = extract_packed_textures(ctx);
 
     Ok(Atlas {
-        texture: backed_atlas.texture,
-        rects: backed_atlas.rects,
-        packed: extract_packed_textures(ctx, &pck),
+        texture,
+        rects,
+        packed,
     })
 }
 
-fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
+fn find_packable_texture(ctx: &Context) -> Option<usize> {
     let mut optimal_texture_idx: Option<usize> = None;
     let mut min_units_to_pack = u32::MAX;
 
     for (idx, texture) in ctx.to_pack.iter().enumerate() {
-        if pck.textures.contains(&idx) {
+        if ctx.packed.contains(&idx) {
             continue;
         }
         let units_to_pack = texture
             .unique
             .iter()
-            .filter(|u| !pck.units.contains_key(u))
+            .filter(|u| !ctx.units.contains_key(u))
             .count() as u32;
         if units_to_pack < min_units_to_pack {
             optimal_texture_idx = Some(idx);
@@ -129,14 +113,15 @@ fn find_packable_texture(ctx: &Context, pck: &Packed) -> Option<usize> {
     }
 
     optimal_texture_idx?;
-    if (pck.units.len() as u32 + min_units_to_pack) <= ctx.unit_capacity {
+    if (ctx.units.len() as u32 + min_units_to_pack) <= ctx.unit_capacity {
         optimal_texture_idx
     } else {
         None
     }
 }
 
-fn eval_atlas_size(ctx: &Context, units_count: u32) -> USize {
+fn eval_atlas_size(ctx: &Context) -> USize {
+    let units_count = ctx.units.len() as u32;
     let size = (units_count as f32).sqrt().ceil() as u32;
 
     if ctx.pot {
@@ -166,7 +151,7 @@ fn eval_atlas_size(ctx: &Context, units_count: u32) -> USize {
     )
 }
 
-fn bake_atlas(ctx: &Context, pck: &Packed, size: &USize) -> BakedAtlas {
+fn bake_atlas(ctx: &Context, size: &USize) -> (Texture, HashMap<u64, FRect>) {
     let units_per_row = size.width / ctx.padded_unit_size;
     let mut rects = HashMap::new();
     let mut texture = Texture {
@@ -175,10 +160,10 @@ fn bake_atlas(ctx: &Context, pck: &Packed, size: &USize) -> BakedAtlas {
         pixels: vec![Pixel::default(); (size.width * size.height) as usize],
     };
 
-    for (unit_idx, (unit_hash, unit_ref)) in pck.units.iter().enumerate() {
+    for (unit_idx, (unit_hash, unit_ref)) in ctx.units.iter().enumerate() {
         let row = unit_idx as u32 / units_per_row;
         let column = unit_idx as u32 % units_per_row;
-        let unit = &ctx.to_pack[unit_ref.texture_idx].units[unit_ref.unit_idx];
+        let unit = &ctx.to_pack[unit_ref.tex_idx].units[unit_ref.unit_idx];
         set_pixels(ctx, &unit.pixels, column, row, &mut texture);
 
         let rect = get_uv(ctx, column, row, size);
@@ -187,7 +172,7 @@ fn bake_atlas(ctx: &Context, pck: &Packed, size: &USize) -> BakedAtlas {
         rects.insert(*unit_hash, rect);
     }
 
-    BakedAtlas { texture, rects }
+    (texture, rects)
 }
 
 fn set_pixels(ctx: &Context, pixels: &[Pixel], column: u32, row: u32, atlas: &mut Texture) {
@@ -223,11 +208,11 @@ fn scale_uv(ctx: &Context, rect: FRect, unit: &DicedUnit) -> FRect {
     FRect::new(rect.x, rect.y, rect.width * mx, rect.height * my)
 }
 
-fn extract_packed_textures(ctx: &mut Context, pck: &Packed) -> Vec<DicedTexture> {
+fn extract_packed_textures(ctx: &mut Context) -> Vec<DicedTexture> {
     let mut packed = Vec::new();
     let mut idx = ctx.to_pack.len() - 1;
     loop {
-        if pck.textures.contains(&idx) {
+        if ctx.packed.contains(&idx) {
             packed.push(ctx.to_pack.swap_remove(idx));
         }
         if idx == 0 {
