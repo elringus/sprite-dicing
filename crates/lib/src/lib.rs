@@ -5,12 +5,14 @@
 //! various formats from the file system as well as to save generated atlases into textures
 //! of various formats and to write diced sprite meshes into either JSON or Wavefront OBJ files.
 
+mod builder;
 mod dicer;
 mod fixtures;
 mod fs;
 mod models;
 mod packer;
 
+#[cfg(feature = "fs")]
 pub use fs::*;
 pub use models::*;
 
@@ -70,10 +72,10 @@ pub use models::*;
 ///     // ... (actual sprite asset building process is engine-specific)
 /// }
 /// ```
-pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<DiceArtifacts> {
+pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Artifacts> {
     let diced = dicer::dice(sprites, prefs)?;
     let packed = packer::pack(diced, prefs)?;
+    let sprites = builder::build(&packed, prefs)?;
     let atlases = packed.into_iter().map(|p| p.texture).collect();
-    let sprites = Vec::new();
-    Ok(DiceArtifacts { atlases, sprites })
+    Ok(Artifacts { atlases, sprites })
 }

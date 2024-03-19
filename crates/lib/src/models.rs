@@ -147,12 +147,12 @@ pub struct SourceSprite {
     pub pivot: Option<Pivot>,
 }
 
-/// Final data generated from the diced input sprites.
+/// Final products of a dicing operation.
 #[derive(Debug, Clone)]
-pub struct DiceArtifacts {
+pub struct Artifacts {
     /// Generated atlas textures containing unique pixel content of the diced sprites.
     pub atlases: Vec<Texture>,
-    /// Generated diced sprites containing mesh data and refs to the associated atlas.
+    /// Generated diced sprites with data to reconstruct source spites: mesh, uvs, etc.
     pub sprites: Vec<DicedSprite>,
 }
 
@@ -162,7 +162,7 @@ pub struct DiceArtifacts {
 pub struct DicedSprite {
     /// ID of the source sprite based on which this sprite is generated.
     pub id: String,
-    /// Index of atlas texture in [DiceArtifacts] containing the unique pixels for this sprite.
+    /// Index of atlas texture in [Artifacts] containing the unique pixels for this sprite.
     pub atlas_index: usize,
     /// Local position of the generated sprite mesh vertices.
     pub vertices: Vec<Vertex>,

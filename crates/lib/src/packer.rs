@@ -240,7 +240,6 @@ fn extract_packed_textures(ctx: &mut Context, pck: &Packed) -> Vec<DicedTexture>
 
 #[cfg(test)]
 mod tests {
-    use crate::dicer::dice;
     use crate::fixtures::*;
     use crate::models::*;
 
@@ -401,7 +400,8 @@ mod tests {
                 pivot: None,
             })
             .collect::<Vec<_>>();
-        crate::packer::pack(dice(&sprites, prefs).unwrap(), prefs).unwrap()
+        let diced = crate::dicer::dice(&sprites, prefs).unwrap();
+        crate::packer::pack(diced, prefs).unwrap()
     }
 
     fn defaults() -> Prefs {
