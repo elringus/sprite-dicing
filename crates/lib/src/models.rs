@@ -296,6 +296,7 @@ pub(crate) struct URect {
 }
 
 impl URect {
+    #[allow(dead_code)] // Used in tests.
     pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
         URect {
             x,
@@ -320,6 +321,7 @@ pub(crate) struct IRect {
 }
 
 impl IRect {
+    #[allow(dead_code)] // Used in tests.
     pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
         IRect {
             x,

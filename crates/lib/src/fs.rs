@@ -2,7 +2,7 @@
 
 //! Provides additional APIs to the main lib for dicing sprites stored as images of various
 //! formats on file system, writing generated atlases as images of specified format and
-//! sprite meshes as either JSON or Wavefront OBJ files.
+//! sprite meshes as JSON files.
 
 use crate::models::*;
 use std::fs;

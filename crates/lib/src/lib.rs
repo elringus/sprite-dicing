@@ -1,9 +1,7 @@
-#![allow(dead_code)] // TODO: Remove.
-
 //! APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
 //! When `fs` feature is enabled, additionally provides APIs to read and decode textures of
-//! various formats from the file system as well as to save generated atlases into textures
-//! of various formats and to write diced sprite meshes into either JSON or Wavefront OBJ files.
+//! various formats from the file system as well as to write generated atlases into textures
+//! of various formats and to serialize diced sprite meshes as JSON files.
 
 mod builder;
 mod dicer;
@@ -32,18 +30,20 @@ pub use models::*;
 /// ```
 /// use sprite_dicing::{Prefs, SourceSprite, Texture, Pixel};
 ///
-/// // Fake functions to read and write textures on file system.
-/// fn open (path: &str) -> Texture {
+/// // Fake function to load textures (images).
+/// fn load (path: &str) -> Texture {
 ///     let red = Pixel::new(255, 0, 0, 255);
 ///     let blue = Pixel::new(0, 0, 255, 255);
 ///     Texture { width: 2, height: 2, pixels: vec![red, blue, blue, red] }
 /// }
+///
+/// // Fake function to save textures.
 /// fn save (path: &str, tex: &Texture) { }
 ///
 /// // Collect source sprites to dice.
 /// let sprites = vec![
-///     SourceSprite { id: "1".to_owned(), texture: open("1.png"), pivot: None },
-///     SourceSprite { id: "2".to_owned(), texture: open("2.png"), pivot: None },
+///     SourceSprite { id: "1".to_owned(), texture: load("1.png"), pivot: None },
+///     SourceSprite { id: "2".to_owned(), texture: load("2.png"), pivot: None },
 ///     // ...
 /// ];
 ///
