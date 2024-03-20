@@ -376,15 +376,8 @@ mod tests {
         assert_eq!(*rect, FRect::new(0.25, 0.25, 0.25, 0.25));
     }
 
-    fn pack(src: Vec<&Texture>, prefs: &Prefs) -> Vec<Atlas> {
-        let sprites = src
-            .into_iter()
-            .map(|t| SourceSprite {
-                id: "test".to_string(),
-                texture: t.to_owned(),
-                pivot: None,
-            })
-            .collect::<Vec<_>>();
+    fn pack(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<Atlas> {
+        let sprites = src.into_iter().map(|s| s.sprite()).collect::<Vec<_>>();
         let diced = crate::dicer::dice(&sprites, prefs).unwrap();
         crate::packer::pack(diced, prefs).unwrap()
     }

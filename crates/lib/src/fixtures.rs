@@ -57,6 +57,39 @@ pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
 ]));
 pub static UIC4X4: Lazy<Texture> = Lazy::new(|| uic(4, 4));
 
+pub trait AnySource {
+    fn texture(&self) -> Texture;
+    fn pivot(&self) -> Option<Pivot>;
+    fn sprite(&self) -> SourceSprite {
+        SourceSprite {
+            id: "TEST".to_string(),
+            texture: self.texture(),
+            pivot: self.pivot(),
+        }
+    }
+}
+
+impl AnySource for Lazy<Texture> {
+    fn texture(&self) -> Texture {
+        (&self as &Texture).to_owned()
+    }
+    fn pivot(&self) -> Option<Pivot> {
+        None
+    }
+}
+
+impl AnySource for (&Lazy<Texture>, (f32, f32)) {
+    fn texture(&self) -> Texture {
+        (&self.0 as &Texture).to_owned()
+    }
+    fn pivot(&self) -> Option<Pivot> {
+        Some(Pivot {
+            x: self.1 .0,
+            y: self.1 .1,
+        })
+    }
+}
+
 fn tex(width: u32, height: u32, pixels: Vec<Pixel>) -> Texture {
     Texture {
         width,

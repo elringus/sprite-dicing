@@ -19,7 +19,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 }
 
 struct Context<'a> {
-    ppu: u32,
+    ppu: f32,
     default_pivot: &'a Pivot,
     atlas_idx: usize,
     diced: &'a DicedTexture,
@@ -36,7 +36,7 @@ fn new_ctx<'a>(
     prefs: &'a Prefs,
 ) -> Context<'a> {
     Context {
-        ppu: prefs.ppu,
+        ppu: prefs.ppu as f32,
         default_pivot: &prefs.pivot,
         atlas_idx,
         diced,
@@ -57,7 +57,7 @@ fn pack_it(mut ctx: Context) -> DicedSprite {
         id: ctx.diced.id.to_owned(),
         atlas_index: ctx.atlas_idx,
         pivot: eval_pivot(&mut ctx),
-        rect: eval_sprite_rect(&ctx, ctx.ppu as f32),
+        rect: eval_sprite_rect(&ctx, ctx.ppu),
         vertices: ctx.vertices,
         uvs: ctx.uvs,
         indices: ctx.indices,
@@ -70,7 +70,7 @@ fn build_unit(ctx: &mut Context, unit_rect: &URect, uv_rect: &FRect) {
 }
 
 fn scale_unit_rect(ctx: &Context, unit_rect: &URect) -> FRect {
-    let ratio = 1.0 / ctx.ppu as f32;
+    let ratio = 1.0 / ctx.ppu;
     FRect {
         x: unit_rect.x as f32 * ratio,
         y: unit_rect.y as f32 * ratio,
@@ -130,23 +130,31 @@ fn eval_sprite_rect(ctx: &Context, scale: f32) -> Rect {
     }
 }
 
-// (?) add an option like "pref.move_vertices_for_pivot"
-
 fn eval_pivot(ctx: &mut Context) -> Pivot {
     let sprite_rect = eval_sprite_rect(ctx, 1.0);
 
     let pivot = match &ctx.diced.pivot {
-        Some(source_pivot) => source_pivot.to_owned(),
+        Some(source_pivot) => Pivot {
+            x: (source_pivot.x / ctx.ppu - sprite_rect.x) / sprite_rect.width,
+            y: (source_pivot.y / ctx.ppu - sprite_rect.y) / sprite_rect.height,
+        },
         _ => ctx.default_pivot.to_owned(),
     };
 
-    apply_pivot(ctx);
-    
+    offset_vertices_over_pivot(ctx, &sprite_rect, &pivot);
+
     pivot
 }
 
-fn apply_pivot (ctx: &mut Context) {
-    
+fn offset_vertices_over_pivot(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
+    let origin_x = -sprite_rect.x / sprite_rect.width;
+    let origin_y = -sprite_rect.y / sprite_rect.height;
+    let delta_x = sprite_rect.width * pivot.x - sprite_rect.width * origin_x;
+    let delta_y = sprite_rect.height * pivot.y - sprite_rect.height * origin_y;
+    for idx in 0..ctx.vertices.len() {
+        ctx.vertices[idx].x -= delta_x;
+        ctx.vertices[idx].y -= delta_y;
+    }
 }
 
 #[cfg(test)]
@@ -169,15 +177,29 @@ mod tests {
         build(vec![&R1X1, &B1X1], &prefs);
     }
 
-    fn build(src: Vec<&Texture>, prefs: &Prefs) -> Vec<DicedSprite> {
-        let sprites = src
-            .into_iter()
-            .map(|t| SourceSprite {
-                id: "test".to_string(),
-                texture: t.to_owned(),
-                pivot: None,
-            })
-            .collect::<Vec<_>>();
+    #[test]
+    fn default_pivot_is_applied() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.66, y: -0.66 },
+            ..defaults()
+        };
+        assert_eq!(build(vec![&B1X1], &prefs)[0].pivot, prefs.pivot);
+    }
+
+    #[test]
+    fn custom_pivot_overrides_default() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.66, y: -0.66 },
+            ..defaults()
+        };
+        assert_eq!(
+            build(vec![&(&B1X1, (0.1, 0.2))], &prefs)[0].pivot,
+            Pivot { x: 0.1, y: 0.2 }
+        );
+    }
+
+    fn build(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<DicedSprite> {
+        let sprites = src.into_iter().map(|s| s.sprite()).collect::<Vec<_>>();
         let diced = crate::dicer::dice(&sprites, prefs).unwrap();
         let packed = crate::packer::pack(diced, prefs).unwrap();
         crate::builder::build(&packed, prefs).unwrap()
