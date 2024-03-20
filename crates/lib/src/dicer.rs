@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
-pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {
+pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {
     if prefs.unit_size == 0 {
         return Err(Error::Spec("Unit size can't be zero."));
     }
@@ -12,7 +12,15 @@ pub(crate) fn dice(src: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTextu
         return Err(Error::Spec("Padding can't be above unit size."));
     }
 
-    Ok(src.iter().map(|s| dice_it(&new_ctx(s, prefs))).collect())
+    let mut textures = vec![];
+    for sprite in sprites {
+        let ctx = new_ctx(sprite, prefs);
+        if let Some(texture) = dice_it(&ctx) {
+            textures.push(texture);
+        }
+    }
+
+    Ok(textures)
 }
 
 struct Context<'a> {
@@ -32,7 +40,7 @@ fn new_ctx<'a>(sprite: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     }
 }
 
-fn dice_it(ctx: &Context) -> DicedTexture {
+fn dice_it(ctx: &Context) -> Option<DicedTexture> {
     let mut units = Vec::new();
     let unit_count_x = ctx.sprite.texture.width.div_ceil(ctx.size);
     let unit_count_y = ctx.sprite.texture.height.div_ceil(ctx.size);
@@ -45,12 +53,16 @@ fn dice_it(ctx: &Context) -> DicedTexture {
         }
     }
 
-    DicedTexture {
+    if units.is_empty() {
+        return None;
+    }
+
+    Some(DicedTexture {
         id: ctx.sprite.id.to_owned(),
         unique: units.iter().map(|u| u.hash).collect::<HashSet<_>>(),
         pivot: ctx.sprite.pivot.to_owned(),
         units,
-    }
+    })
 }
 
 fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
@@ -180,7 +192,6 @@ mod tests {
     #[test]
     fn transparent_dices_are_ignored_when_trim_enabled() {
         let prf = &pref(1, 0, true);
-        assert!(dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
         assert!(dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
         assert!(dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
     }
@@ -188,9 +199,21 @@ mod tests {
     #[test]
     fn transparent_dices_are_preserved_when_trim_disabled() {
         let prf = &pref(1, 0, false);
-        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
         assert!(!dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
         assert!(!dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
+    }
+
+    #[test]
+    fn when_trim_enabled_transparent_sprites_are_ignored() {
+        let prf = &pref(1, 0, true);
+        assert!(dice(&[src(&TTTT)], prf).unwrap().is_empty());
+    }
+
+    #[test]
+    fn when_trim_disabled_transparent_sprites_are_not_ignored() {
+        let prf = &pref(1, 0, false);
+        assert!(!dice(&[src(&TTTT)], prf).unwrap().is_empty());
+        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
     }
 
     #[test]

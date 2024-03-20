@@ -59,11 +59,11 @@ fn pack_it(mut ctx: Context) -> DicedSprite {
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
+        rect: eval_boundaries(&ctx),
         atlas_index: ctx.atlas_idx,
         vertices: ctx.vertices,
         uvs: ctx.uvs,
         indices: ctx.indices,
-        rect,
         pivot,
     }
 }
@@ -267,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn when_trimmed_sprite_rect_size_proportion_is_changed() {
+    fn sprite_rect_reflects_trimming() {
         let prefs = Prefs {
             trim_transparent: true,
             ..defaults()
@@ -276,6 +276,34 @@ mod tests {
             build(vec![&BTGT], &prefs)[0].rect,
             Rect::new(0.0, 0.0, 1.0, 2.0)
         );
+    }
+
+    #[test]
+    fn sprite_rect_reflects_pivot_offset() {
+        assert_eq!(
+            build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
+            Rect::new(-0.5, -0.5, 2.0, 2.0)
+        );
+    }
+
+    #[test]
+    fn when_transparent_and_trim_enabled_sprite_is_ignored() {
+        let prefs = Prefs {
+            trim_transparent: true,
+            ..defaults()
+        };
+        assert!(&build(vec![&TTTT], &prefs).is_empty());
+    }
+
+    #[test]
+    fn when_transparent_and_trim_disabled_sprite_is_build_normally() {
+        let prefs = Prefs {
+            trim_transparent: false,
+            ..defaults()
+        };
+        let sprite = &build(vec![&TTTT], &prefs)[0];
+        assert_eq!(sprite.rect, Rect::new(0.0, 0.0, 2.0, 2.0));
+        assert_eq!(sprite.vertices.len(), 16);
     }
 
     fn build(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<DicedSprite> {
