@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 /// Builds data required to reconstruct diced sprites at runtime: mesh, uvs, etc.
 pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>> {
-    if prefs.ppu == 0 {
-        return Err(Error::Spec("PPU can't be zero."));
+    if prefs.ppu <= 0.0 {
+        return Err(Error::Spec("PPU can't be zero or negative."));
     }
 
     let mut sprites = vec![];
@@ -36,7 +36,7 @@ fn new_ctx<'a>(
     prefs: &'a Prefs,
 ) -> Context<'a> {
     Context {
-        ppu: prefs.ppu as f32,
+        ppu: prefs.ppu,
         default_pivot: &prefs.pivot,
         atlas_idx,
         diced,
@@ -168,17 +168,17 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "PPU can't be zero.")]
+    #[should_panic(expected = "PPU can't be zero or negative.")]
     fn errs_when_ppu_zero() {
         let prefs = Prefs {
-            ppu: 0,
+            ppu: 0.0,
             ..defaults()
         };
         build(vec![&R1X1, &B1X1], &prefs);
     }
 
     #[test]
-    fn sprite_vertices_form_quad() {
+    fn sprite_vertices_form_a_quad() {
         let vertices = &build(vec![&B1X1], &defaults())[0].vertices;
 
         let top_left = &vertices[0];
@@ -201,7 +201,7 @@ mod tests {
     #[test]
     fn vertices_are_scaled_by_ppu() {
         let prefs = Prefs {
-            ppu: 1,
+            ppu: 1.0,
             ..defaults()
         };
         let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
@@ -209,7 +209,7 @@ mod tests {
         assert_eq!(bottom_right.y, 1.0);
 
         let prefs = Prefs {
-            ppu: 2,
+            ppu: 2.0,
             ..defaults()
         };
         let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn sprite_rect_size_equals_source_texture_divided_by_ppu() {
         let prefs = Prefs {
-            ppu: 10,
+            ppu: 10.0,
             ..defaults()
         };
         assert_eq!(
@@ -269,13 +269,12 @@ mod tests {
     #[test]
     fn when_trimmed_sprite_rect_size_proportion_is_changed() {
         let prefs = Prefs {
-            ppu: 10,
             trim_transparent: true,
             ..defaults()
         };
         assert_eq!(
             build(vec![&BTGT], &prefs)[0].rect,
-            Rect::new(0.0, 0.0, 0.1, 0.2)
+            Rect::new(0.0, 0.0, 1.0, 2.0)
         );
     }
 
@@ -288,7 +287,7 @@ mod tests {
 
     fn defaults() -> Prefs {
         Prefs {
-            ppu: 1,
+            ppu: 1.0,
             unit_size: 1,
             padding: 0,
             trim_transparent: false,

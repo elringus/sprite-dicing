@@ -73,8 +73,8 @@ pub struct Prefs {
     /// Extremely inefficient, but required by some older GPUs.
     pub atlas_pot: bool,
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
-    /// Higher values will make sprite larger in conventional space units.
-    pub ppu: u32,
+    /// Higher values will make sprite smaller in conventional space units.
+    pub ppu: f32,
     /// Origin of the generated mesh, in relative offsets from top-left corner of the sprite rect.
     /// When differs from the default (0,0), will offset vertices to center mesh over the pivot.
     /// Ignored when [SourceSprite] has individual pivot specified.
@@ -91,7 +91,7 @@ impl Default for Prefs {
             atlas_size_limit: 2048,
             atlas_square: false,
             atlas_pot: false,
-            ppu: 100,
+            ppu: 100.0,
             pivot: Pivot { x: 0.0, y: 0.0 },
         }
     }
