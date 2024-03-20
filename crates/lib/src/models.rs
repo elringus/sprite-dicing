@@ -75,8 +75,9 @@ pub struct Prefs {
     /// Pixel per unit ratio to use when evaluating positions of the generated mesh vertices.
     /// Higher values will make sprite larger in conventional space units.
     pub ppu: u32,
-    /// Relative position of the sprite origin point on the generated mesh.
-    /// Used as a fallback default when pivot in [SourceSprite] is not specified.
+    /// Origin of the generated mesh, in relative offsets from top-left corner of the sprite rect.
+    /// When differs from the default (0,0), will offset vertices to center mesh over the pivot.
+    /// Ignored when [SourceSprite] has individual pivot specified.
     pub pivot: Pivot,
 }
 
@@ -91,7 +92,7 @@ impl Default for Prefs {
             atlas_square: false,
             atlas_pot: false,
             ppu: 100,
-            pivot: Pivot { x: 0.5, y: 0.5 },
+            pivot: Pivot { x: 0.0, y: 0.0 },
         }
     }
 }
@@ -189,6 +190,17 @@ pub struct Rect {
     pub height: f32,
 }
 
+impl Rect {
+    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
+        Rect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
 /// Relative (in 0.0-1.0 range) XY distance of the sprite pivot (origin point), counted
 /// from top-left corner of the sprite mesh rectangle.
 #[derive(Debug, Clone, PartialEq)]
@@ -201,6 +213,12 @@ pub struct Pivot {
     pub y: f32,
 }
 
+impl Pivot {
+    pub fn new(x: f32, y: f32) -> Self {
+        Pivot { x, y }
+    }
+}
+
 /// Represents position of a mesh vertex in a local space coordinated with conventional units.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vertex {
@@ -210,6 +228,12 @@ pub struct Vertex {
     pub y: f32,
 }
 
+impl Vertex {
+    pub fn new(x: f32, y: f32) -> Self {
+        Vertex { x, y }
+    }
+}
+
 /// Represents position on a texture, relative to its dimensions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UV {
@@ -217,6 +241,12 @@ pub struct UV {
     pub u: f32,
     /// Position over vertical axis, relative to texture height, in 0.0 to 1.0 range.
     pub v: f32,
+}
+
+impl UV {
+    pub fn new(u: f32, v: f32) -> Self {
+        UV { u, v }
+    }
 }
 
 /// Product of dicing a [SourceSprite]'s texture.

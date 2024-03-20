@@ -53,14 +53,18 @@ fn pack_it(mut ctx: Context) -> DicedSprite {
         build_unit(&mut ctx, &unit.rect, uv_rect);
     }
 
+    let rect = eval_boundaries(&ctx);
+    let pivot = eval_pivot(&ctx, &rect);
+    offset_vertices_over_pivot(&mut ctx, &rect, &pivot);
+
     DicedSprite {
         id: ctx.diced.id.to_owned(),
         atlas_index: ctx.atlas_idx,
-        pivot: eval_pivot(&mut ctx),
-        rect: eval_sprite_rect(&ctx, ctx.ppu),
         vertices: ctx.vertices,
         uvs: ctx.uvs,
         indices: ctx.indices,
+        rect,
+        pivot,
     }
 }
 
@@ -109,7 +113,8 @@ fn build_quad(ctx: &mut Context, unit_rect: &FRect, uv_rect: &FRect) {
     ctx.indices.extend([i, i + 1, i + 2, i + 2, i + 3, i]);
 }
 
-fn eval_sprite_rect(ctx: &Context, scale: f32) -> Rect {
+// TODO: Just use unit_rect?
+fn eval_boundaries(ctx: &Context) -> Rect {
     let mut min_x = f32::INFINITY;
     let mut min_y = f32::INFINITY;
     let mut max_x = f32::NEG_INFINITY;
@@ -123,30 +128,25 @@ fn eval_sprite_rect(ctx: &Context, scale: f32) -> Rect {
     }
 
     Rect {
-        x: min_x * scale,
-        y: min_y * scale,
-        width: (max_x - min_x).abs() * scale,
-        height: (max_y - min_y).abs() * scale,
+        x: min_x,
+        y: min_y,
+        width: (max_x - min_x).abs(),
+        height: (max_y - min_y).abs(),
     }
 }
 
-fn eval_pivot(ctx: &mut Context) -> Pivot {
-    let sprite_rect = eval_sprite_rect(ctx, 1.0);
-
-    let pivot = match &ctx.diced.pivot {
+fn eval_pivot(ctx: &Context, rect: &Rect) -> Pivot {
+    match &ctx.diced.pivot {
         Some(source_pivot) => Pivot {
-            x: (source_pivot.x / ctx.ppu - sprite_rect.x) / sprite_rect.width,
-            y: (source_pivot.y / ctx.ppu - sprite_rect.y) / sprite_rect.height,
+            x: (source_pivot.x / ctx.ppu - rect.x) / rect.width,
+            y: (source_pivot.y / ctx.ppu - rect.y) / rect.height,
         },
         _ => ctx.default_pivot.to_owned(),
-    };
-
-    offset_vertices_over_pivot(ctx, &sprite_rect, &pivot);
-
-    pivot
+    }
 }
 
 fn offset_vertices_over_pivot(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
+    // TODO: -sprite_rect.x/y is confusing, remove minus and negate the expression.
     let origin_x = -sprite_rect.x / sprite_rect.width;
     let origin_y = -sprite_rect.y / sprite_rect.height;
     let delta_x = sprite_rect.width * pivot.x - sprite_rect.width * origin_x;
@@ -178,6 +178,46 @@ mod tests {
     }
 
     #[test]
+    fn sprite_vertices_form_quad() {
+        let vertices = &build(vec![&B1X1], &defaults())[0].vertices;
+
+        let top_left = &vertices[0];
+        assert_eq!(top_left.x, 0.0);
+        assert_eq!(top_left.y, 0.0);
+
+        let bottom_left = &vertices[1];
+        assert_eq!(bottom_left.x, 0.0);
+        assert_eq!(bottom_left.y, 1.0);
+
+        let bottom_right = &vertices[2];
+        assert_eq!(bottom_right.x, 1.0);
+        assert_eq!(bottom_right.y, 1.0);
+
+        let top_right = &vertices[3];
+        assert_eq!(top_right.x, 1.0);
+        assert_eq!(top_right.y, 0.0);
+    }
+
+    #[test]
+    fn vertices_are_scaled_by_ppu() {
+        let prefs = Prefs {
+            ppu: 1,
+            ..defaults()
+        };
+        let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
+        assert_eq!(bottom_right.x, 1.0);
+        assert_eq!(bottom_right.y, 1.0);
+
+        let prefs = Prefs {
+            ppu: 2,
+            ..defaults()
+        };
+        let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
+        assert_eq!(bottom_right.x, 0.5);
+        assert_eq!(bottom_right.y, 0.5);
+    }
+
+    #[test] // TODO: Test mesh offset instead. Remove DicedSprite.pivot (it's same as source).
     fn default_pivot_is_applied() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.66, y: -0.66 },
@@ -186,7 +226,7 @@ mod tests {
         assert_eq!(build(vec![&B1X1], &prefs)[0].pivot, prefs.pivot);
     }
 
-    #[test]
+    #[test] // TODO: - || -
     fn custom_pivot_overrides_default() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.66, y: -0.66 },
@@ -195,6 +235,47 @@ mod tests {
         assert_eq!(
             build(vec![&(&B1X1, (0.1, 0.2))], &prefs)[0].pivot,
             Pivot { x: 0.1, y: 0.2 }
+        );
+    }
+
+    #[test]
+    fn sprite_rect_size_equals_source_texture_divided_by_ppu() {
+        let prefs = Prefs {
+            ppu: 10,
+            ..defaults()
+        };
+        assert_eq!(
+            build(vec![&B1X1], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.1, 0.1)
+        );
+        assert_eq!(
+            build(vec![&BGRT], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.2, 0.2)
+        );
+        assert_eq!(
+            build(vec![&RGB1X3], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.1, 0.3)
+        );
+        assert_eq!(
+            build(vec![&RGB3X1], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.3, 0.1)
+        );
+        assert_eq!(
+            build(vec![&RGB4X4], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.4, 0.4)
+        );
+    }
+
+    #[test]
+    fn when_trimmed_sprite_rect_size_proportion_is_changed() {
+        let prefs = Prefs {
+            ppu: 10,
+            trim_transparent: true,
+            ..defaults()
+        };
+        assert_eq!(
+            build(vec![&BTGT], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 0.1, 0.2)
         );
     }
 
