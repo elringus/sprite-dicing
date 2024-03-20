@@ -61,14 +61,14 @@ pub use models::*;
 ///     _ = sprite.id;
 ///     // Atlas texture containing all the unique pixels for the sprite.
 ///     _ = &diced.atlases[sprite.atlas_index];
-///     // Mesh vertex positions in local space (scaled by PPU specified in prefs).
+///     // Mesh vertex positions in local space units.
 ///     _ = sprite.vertices;
 ///     // Atlas texture coordinates mapped to the mesh vertices.
 ///     _ = sprite.uvs;
-///     // Mesh triangle faces as indices to the vertices array.
+///     // Mesh quad faces as indices to the vertices array.
 ///     _ = sprite.indices;
-///     // Sprite origin point location in local space.
-///     _ = sprite.pivot;
+///     // Sprite rect in local space units.
+///     _ = sprite.rect;
 ///     // ... (actual sprite asset building process is engine-specific)
 /// }
 /// ```

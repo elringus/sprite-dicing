@@ -64,7 +64,6 @@ fn pack_it(mut ctx: Context) -> DicedSprite {
         vertices: ctx.vertices,
         uvs: ctx.uvs,
         indices: ctx.indices,
-        pivot,
     }
 }
 
@@ -178,24 +177,19 @@ mod tests {
     }
 
     #[test]
-    fn sprite_vertices_form_a_quad() {
-        let vertices = &build(vec![&B1X1], &defaults())[0].vertices;
+    fn sprite_vertices_form_quad() {
+        let quad = Quad::from_1x1(&build(vec![&B1X1], &defaults())[0]);
+        assert_eq!(quad.top_left.x, 0.0);
+        assert_eq!(quad.top_left.y, 0.0);
 
-        let top_left = &vertices[0];
-        assert_eq!(top_left.x, 0.0);
-        assert_eq!(top_left.y, 0.0);
+        assert_eq!(quad.bottom_left.x, 0.0);
+        assert_eq!(quad.bottom_left.y, 1.0);
 
-        let bottom_left = &vertices[1];
-        assert_eq!(bottom_left.x, 0.0);
-        assert_eq!(bottom_left.y, 1.0);
+        assert_eq!(quad.bottom_right.x, 1.0);
+        assert_eq!(quad.bottom_right.y, 1.0);
 
-        let bottom_right = &vertices[2];
-        assert_eq!(bottom_right.x, 1.0);
-        assert_eq!(bottom_right.y, 1.0);
-
-        let top_right = &vertices[3];
-        assert_eq!(top_right.x, 1.0);
-        assert_eq!(top_right.y, 0.0);
+        assert_eq!(quad.top_right.x, 1.0);
+        assert_eq!(quad.top_right.y, 0.0);
     }
 
     #[test]
@@ -204,38 +198,65 @@ mod tests {
             ppu: 1.0,
             ..defaults()
         };
-        let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
-        assert_eq!(bottom_right.x, 1.0);
-        assert_eq!(bottom_right.y, 1.0);
+        let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.bottom_right.x, 1.0);
+        assert_eq!(quad.bottom_right.y, 1.0);
 
         let prefs = Prefs {
             ppu: 2.0,
             ..defaults()
         };
-        let bottom_right = &build(vec![&B1X1], &prefs)[0].vertices[2];
-        assert_eq!(bottom_right.x, 0.5);
-        assert_eq!(bottom_right.y, 0.5);
+        let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.bottom_right.x, 0.5);
+        assert_eq!(quad.bottom_right.y, 0.5);
     }
 
-    #[test] // TODO: Test mesh offset instead. Remove DicedSprite.pivot (it's same as source).
-    fn default_pivot_is_applied() {
+    #[test]
+    fn zero_pivot_doesnt_offset_vertices() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.66, y: -0.66 },
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
-        assert_eq!(build(vec![&B1X1], &prefs)[0].pivot, prefs.pivot);
+        let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.bottom_right.x, 1.0);
+        assert_eq!(quad.bottom_right.y, 1.0);
     }
 
-    #[test] // TODO: - || -
+    #[test]
+    fn non_zero_pivot_offsets_vertices() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.5, y: 0.5 },
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.bottom_right.x, 0.5);
+        assert_eq!(quad.bottom_right.y, 0.5);
+    }
+
+    #[test]
     fn custom_pivot_overrides_default() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.66, y: -0.66 },
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
-        assert_eq!(
-            build(vec![&(&B1X1, (0.1, 0.2))], &prefs)[0].pivot,
-            Pivot { x: 0.1, y: 0.2 }
-        );
+        let quad = Quad::from_1x1(&build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0]);
+        assert_eq!(quad.bottom_right.x, 0.5);
+        assert_eq!(quad.bottom_right.y, 0.5);
+    }
+
+    #[test]
+    fn custom_pivot_doesnt_leak_to_other_sprites() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.0, y: 0.0 },
+            ..defaults()
+        };
+        let sprites = &build(vec![&R1X1, &(&B1X1, (0.5, 0.5))], &prefs);
+        let quad1 = Quad::from_1x1(&sprites[1]);
+        let quad2 = Quad::from_1x1(&sprites[0]);
+        assert_eq!(quad1.bottom_right.x, 1.0);
+        assert_eq!(quad1.bottom_right.y, 1.0);
+        assert_eq!(quad2.bottom_right.x, 0.5);
+        assert_eq!(quad2.bottom_right.y, 0.5);
     }
 
     #[test]
@@ -284,6 +305,11 @@ mod tests {
             build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
             Rect::new(-0.5, -0.5, 2.0, 2.0)
         );
+        // TODO: Pivot should affect the whole rect (currently only width and height).
+        // assert_eq!(
+        //     build(vec![&(&RGB4X4, (0.5, 0.5))], &defaults())[0].rect,
+        //     Rect::new(-0.5, -0.5, 2.0, 2.0)
+        // );
     }
 
     #[test]
@@ -304,6 +330,37 @@ mod tests {
         let sprite = &build(vec![&TTTT], &prefs)[0];
         assert_eq!(sprite.rect, Rect::new(0.0, 0.0, 2.0, 2.0));
         assert_eq!(sprite.vertices.len(), 16);
+    }
+
+    struct Quad {
+        top_left: Vertex,
+        bottom_left: Vertex,
+        bottom_right: Vertex,
+        top_right: Vertex,
+    }
+
+    impl Quad {
+        fn from_1x1(sprite: &DicedSprite) -> Self {
+            assert_eq!(sprite.vertices.len(), 4);
+            Quad {
+                top_left: Vertex {
+                    x: sprite.vertices[0].x,
+                    y: sprite.vertices[0].y,
+                },
+                bottom_left: Vertex {
+                    x: sprite.vertices[1].x,
+                    y: sprite.vertices[1].y,
+                },
+                bottom_right: Vertex {
+                    x: sprite.vertices[2].x,
+                    y: sprite.vertices[2].y,
+                },
+                top_right: Vertex {
+                    x: sprite.vertices[3].x,
+                    y: sprite.vertices[3].y,
+                },
+            }
+        }
     }
 
     fn build(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<DicedSprite> {
