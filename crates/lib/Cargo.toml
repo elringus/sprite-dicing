@@ -23,12 +23,10 @@ once_cell = "1.19"
 [features]
 fs = [
     "image/rayon",
-    "image/bmp",
-    "image/dds",
-    "image/ff",
-    "image/jpeg",
     "image/png",
-    "image/tga",
-    "image/tiff",
+    "image/jpeg",
     "image/webp",
+    "image/tga",
+    "image/dds",
+    "image/tiff",
 ]

@@ -115,6 +115,15 @@ impl Pixel {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
         Pixel { r, g, b, a }
     }
+    #[cfg(feature = "fs")]
+    pub fn from_rgba(rgba: &image::Rgba<u8>) -> Self {
+        Pixel {
+            r: rgba[0],
+            g: rgba[1],
+            b: rgba[2],
+            a: rgba[3],
+        }
+    }
 }
 
 impl Default for Pixel {
@@ -134,6 +143,17 @@ pub struct Texture {
     /// top to bottom; eg, first pixel would be top-left on texture rect, while last
     /// would be the bottom-right one.
     pub pixels: Vec<Pixel>,
+}
+
+impl Texture {
+    #[cfg(feature = "fs")]
+    pub fn from_rgba(img: &image::RgbaImage) -> Self {
+        Texture {
+            width: img.width(),
+            height: img.height(),
+            pixels: img.pixels().map(Pixel::from_rgba).collect(),
+        }
+    }
 }
 
 /// Original sprite specified as input for a dicing operation.

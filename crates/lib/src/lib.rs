@@ -23,7 +23,7 @@ pub use models::*;
 /// * `sprites`: Source sprite textures to dice.
 /// * `prefs`: User preferences for the dicing operation.
 ///
-/// returns: Generated atlas textures and diced sprite meshes or error.
+/// returns: Generated atlas textures and diced sprite meshes or [Error].
 ///
 /// # Examples
 ///
