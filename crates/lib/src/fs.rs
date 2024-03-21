@@ -11,6 +11,7 @@ use std::{fs, path::Path};
 use crate::models::*;
 
 /// Preferences for dicing operations involving image encoding and file system access.
+#[derive(Debug, Clone)]
 pub struct FsPrefs<'a> {
     /// Directory path to write generated data; will use input directory when not specified.
     out: Option<&'a Path>,
