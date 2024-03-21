@@ -45,6 +45,20 @@ pub enum AtlasFormat {
     TIFF,
 }
 
+impl AtlasFormat {
+    /// File extension of the format.
+    pub fn extension(&self) -> &'static str {
+        match self {
+            AtlasFormat::PNG => "png",
+            AtlasFormat::JPEG => "jpeg",
+            AtlasFormat::WEBP => "webp",
+            AtlasFormat::TGA => "tga",
+            AtlasFormat::DDS => "dds",
+            AtlasFormat::TIFF => "tiff",
+        }
+    }
+}
+
 /// Packs all the textures of supported formats inside directory with specified path and
 /// writes generated atlas textures and diced sprite meshes serialized in JSON.
 ///
@@ -56,17 +70,14 @@ pub enum AtlasFormat {
 ///
 /// returns: [Ok] when operation successful or [Error].
 pub fn dice_in_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> {
-    let sprites = collect_sprites(dir, fs_prefs)?;
-    let diced = crate::dice(&sprites, prefs)?;
-    write_atlases(
-        &diced.atlases,
-        fs_prefs.out.unwrap_or(dir),
-        fs_prefs.atlas_format,
-    )?;
-    Ok(())
+    let sources = collect_sources(dir, fs_prefs)?;
+    let diced = crate::dice(&sources, prefs)?;
+    let out_dir = fs_prefs.out.unwrap_or(dir);
+    write_atlases(diced.atlases, out_dir, &fs_prefs.atlas_format)?;
+    write_sprites(diced.sprites, out_dir)
 }
 
-fn collect_sprites(dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
+fn collect_sources(dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
     let mut sprites = vec![];
     for entry in fs::read_dir(dir)? {
         if entry.is_err() {
@@ -74,7 +85,7 @@ fn collect_sprites(dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
         }
         let path = &entry.unwrap().path();
         if path.is_dir() && prefs.recursive {
-            sprites.extend(collect_sprites(path, prefs)?);
+            sprites.extend(collect_sources(path, prefs)?);
         } else if path.is_file() && is_supported_texture(path) {
             sprites.push(create_sprite(dir, path, prefs)?);
         }
@@ -98,10 +109,17 @@ fn is_supported_texture(path: &Path) -> bool {
     }
 }
 
+fn create_sprite(dir: &Path, path: &Path, prefs: &FsPrefs) -> Result<SourceSprite> {
+    let id = eval_sprite_id(dir, path, &prefs.separator);
+    let texture = load_texture(path)?;
+    let pivot = None;
+    Ok(SourceSprite { id, texture, pivot })
+}
+
 fn load_texture(path: &Path) -> Result<Texture> {
     let img = image::io::Reader::open(path)?.decode()?;
     if let Some(img) = img.as_rgba8() {
-        Ok(Texture::from_rgba(img))
+        Ok(Texture::from_image(img))
     } else {
         Err(Error::Image(ImageError::Decoding(DecodingError::new(
             ImageFormatHint::Unknown,
@@ -110,7 +128,7 @@ fn load_texture(path: &Path) -> Result<Texture> {
     }
 }
 
-fn eval_id(dir: &Path, path: &Path, separator: &str) -> String {
+fn eval_sprite_id(dir: &Path, path: &Path, separator: &str) -> String {
     path.with_extension("")
         .iter()
         .skip(dir.iter().count())
@@ -119,15 +137,18 @@ fn eval_id(dir: &Path, path: &Path, separator: &str) -> String {
         .join(separator)
 }
 
-fn create_sprite(dir: &Path, path: &Path, prefs: &FsPrefs) -> Result<SourceSprite> {
-    let id = eval_id(dir, path, &prefs.separator);
-    let texture = load_texture(path)?;
-    let pivot = None;
-    Ok(SourceSprite { id, texture, pivot })
+fn write_atlases(atlases: Vec<Texture>, out_dir: &Path, fmt: &AtlasFormat) -> Result<()> {
+    atlases.into_iter().enumerate().try_for_each(|(idx, tex)| {
+        let name = format!("atlas_{idx}.{}", fmt.extension());
+        let path = out_dir.join(name);
+        tex.to_image()?.save(path).map_err(Error::Image)
+    })
 }
 
-fn write_atlases(atlases: &[Texture], dir: &Path, fmt: AtlasFormat) -> Result<()> {
-    Ok(())
+fn write_sprites(sprites: Vec<DicedSprite>, out_dir: &Path) -> Result<()> {
+    _ = sprites;
+    _ = out_dir;
+    todo!()
 }
 
 #[cfg(test)]
@@ -135,17 +156,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn can_build_id() {
+    fn can_eval_sprite_id_from_path() {
         assert_eq!(
-            eval_id(Path::new("/foo/bar"), Path::new("/foo/bar/img.png"), "/"),
+            eval_sprite_id(Path::new("/foo/bar"), Path::new("/foo/bar/img.png"), "/"),
             "img"
         );
         assert_eq!(
-            eval_id(Path::new("/foo"), Path::new("/foo/bar/img.png"), "/"),
+            eval_sprite_id(Path::new("/foo"), Path::new("/foo/bar/img.png"), "/"),
             "bar/img"
         );
         assert_eq!(
-            eval_id(Path::new("/"), Path::new("/foo/bar/img.png"), "/"),
+            eval_sprite_id(Path::new("/"), Path::new("/foo/bar/img.png"), "/"),
             "foo/bar/img"
         );
     }

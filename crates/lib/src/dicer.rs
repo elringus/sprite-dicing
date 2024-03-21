@@ -74,7 +74,7 @@ fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
     };
 
     let unit_pixels = get_pixels(&unit_rect, &ctx.sprite.texture);
-    if ctx.trim && unit_pixels.iter().all(|p| p.a == 0) {
+    if ctx.trim && unit_pixels.iter().all(|p| p.a() == 0) {
         return None;
     }
 
@@ -128,10 +128,7 @@ fn hash(pixels: &[Pixel]) -> u64 {
     // Using std::hash::DefaultHasher breaks build for macOS.
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     for pixel in pixels {
-        pixel.r.hash(&mut hasher);
-        pixel.g.hash(&mut hasher);
-        pixel.b.hash(&mut hasher);
-        pixel.a.hash(&mut hasher);
+        pixel.rgba.hash(&mut hasher);
     }
     hasher.finish()
 }
@@ -311,6 +308,6 @@ mod tests {
     }
 
     fn is_opaque(tex: &DicedTexture) -> bool {
-        tex.units.iter().all(|u| u.pixels.iter().all(|p| p.a > 0))
+        tex.units.iter().all(|u| u.pixels.iter().all(|p| p.a() > 0))
     }
 }

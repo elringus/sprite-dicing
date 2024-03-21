@@ -98,37 +98,31 @@ impl Default for Prefs {
 }
 
 /// A texture pixel represented as 8-bit RGBA components.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub struct Pixel {
-    /// Red color component of the pixel, in 0-255 range.
-    pub r: u8,
-    /// Green color component of the pixel, in 0-255 range.
-    pub g: u8,
-    /// Blue color component of the pixel, in 0-255 range.
-    pub b: u8,
-    /// Alpha (opacity) color component of the pixel, in 0-255 range,
-    /// where 0 is fully transparent (invisible) and 255 — fully opaque.
-    pub a: u8,
+    /// Red, green, blue and alpha (opacity) components of the pixel, in 0-255 range.
+    pub rgba: [u8; 4],
 }
 
 impl Pixel {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Pixel { r, g, b, a }
+        Pixel { rgba: [r, g, b, a] }
     }
     #[cfg(feature = "fs")]
     pub fn from_rgba(rgba: &image::Rgba<u8>) -> Self {
-        Pixel {
-            r: rgba[0],
-            g: rgba[1],
-            b: rgba[2],
-            a: rgba[3],
-        }
+        Pixel { rgba: rgba.0 }
     }
-}
-
-impl Default for Pixel {
-    fn default() -> Self {
-        Pixel::new(0, 0, 0, 0)
+    pub fn r(&self) -> u8 {
+        self.rgba[0]
+    }
+    pub fn g(&self) -> u8 {
+        self.rgba[1]
+    }
+    pub fn b(&self) -> u8 {
+        self.rgba[2]
+    }
+    pub fn a(&self) -> u8 {
+        self.rgba[3]
     }
 }
 
@@ -147,12 +141,22 @@ pub struct Texture {
 
 impl Texture {
     #[cfg(feature = "fs")]
-    pub fn from_rgba(img: &image::RgbaImage) -> Self {
+    pub fn from_image(img: &image::RgbaImage) -> Self {
         Texture {
             width: img.width(),
             height: img.height(),
             pixels: img.pixels().map(Pixel::from_rgba).collect(),
         }
+    }
+    #[cfg(feature = "fs")]
+    pub fn to_image(self) -> Result<image::RgbaImage> {
+        let buf = self.pixels.into_iter().flat_map(|p| p.rgba).collect();
+        image::RgbaImage::from_raw(self.width, self.height, buf).ok_or(Error::Image(
+            image::error::ImageError::Encoding(image::error::EncodingError::new(
+                image::error::ImageFormatHint::Unknown,
+                "Failed to convert texture into RGBA8 image.",
+            )),
+        ))
     }
 }
 
