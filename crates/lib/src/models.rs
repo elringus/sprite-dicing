@@ -98,31 +98,34 @@ impl Default for Prefs {
 }
 
 /// A texture pixel represented as 8-bit RGBA components.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
-pub struct Pixel {
-    /// Red, green, blue and alpha (opacity) components of the pixel, in 0-255 range.
-    pub rgba: [u8; 4],
-}
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
+pub struct Pixel([u8; 4]);
 
 impl Pixel {
     pub const fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Pixel { rgba: [r, g, b, a] }
+        Pixel([r, g, b, a])
+    }
+    pub const fn from_raw(raw: [u8; 4]) -> Self {
+        Pixel(raw)
     }
     #[cfg(feature = "fs")]
     pub fn from_rgba(rgba: &image::Rgba<u8>) -> Self {
-        Pixel { rgba: rgba.0 }
+        Pixel(rgba.0)
     }
     pub fn r(&self) -> u8 {
-        self.rgba[0]
+        self.0[0]
     }
     pub fn g(&self) -> u8 {
-        self.rgba[1]
+        self.0[1]
     }
     pub fn b(&self) -> u8 {
-        self.rgba[2]
+        self.0[2]
     }
     pub fn a(&self) -> u8 {
-        self.rgba[3]
+        self.0[3]
+    }
+    pub fn to_raw(self) -> [u8; 4] {
+        self.0
     }
 }
 
@@ -150,7 +153,7 @@ impl Texture {
     }
     #[cfg(feature = "fs")]
     pub fn to_image(self) -> Result<image::RgbaImage> {
-        let buf = self.pixels.into_iter().flat_map(|p| p.rgba).collect();
+        let buf = self.pixels.into_iter().flat_map(Pixel::to_raw).collect();
         image::RgbaImage::from_raw(self.width, self.height, buf).ok_or(Error::Image(
             image::error::ImageError::Encoding(image::error::EncodingError::new(
                 image::error::ImageFormatHint::Unknown,
