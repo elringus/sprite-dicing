@@ -69,21 +69,21 @@ impl AtlasFormat {
 ///
 /// returns: [Ok] when operation successful or [Error].
 pub fn dice_in_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> {
-    let sources = collect_sources(dir, fs_prefs)?;
+    let sources = collect_sources(dir, dir, fs_prefs)?;
     let diced = crate::dice(&sources, prefs)?;
     let out_dir = fs_prefs.out.unwrap_or(dir);
     write_atlases(diced.atlases, out_dir, &fs_prefs.atlas_format)?;
     write_sprites(diced.sprites, out_dir)
 }
 
-fn collect_sources(dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
+fn collect_sources(root: &Path, dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
     let mut sprites = vec![];
     for entry in fs::read_dir(dir)? {
         let path = entry?.path();
         if path.is_dir() && prefs.recursive {
-            sprites.extend(collect_sources(&path, prefs)?);
+            sprites.extend(collect_sources(root, &path, prefs)?);
         } else if path.is_file() && is_supported_texture(&path) {
-            sprites.push(create_sprite(dir, &path, prefs)?);
+            sprites.push(create_sprite(root, &path, prefs)?);
         }
     }
 
@@ -105,8 +105,8 @@ fn is_supported_texture(path: &Path) -> bool {
     }
 }
 
-fn create_sprite(dir: &Path, path: &Path, prefs: &FsPrefs) -> Result<SourceSprite> {
-    let id = eval_sprite_id(dir, path, &prefs.separator);
+fn create_sprite(root: &Path, path: &Path, prefs: &FsPrefs) -> Result<SourceSprite> {
+    let id = eval_sprite_id(root, path, &prefs.separator);
     let texture = load_texture(path)?;
     let pivot = None;
     Ok(SourceSprite { id, texture, pivot })
@@ -124,10 +124,10 @@ fn load_texture(path: &Path) -> Result<Texture> {
     }
 }
 
-fn eval_sprite_id(dir: &Path, path: &Path, separator: &str) -> String {
+fn eval_sprite_id(root: &Path, path: &Path, separator: &str) -> String {
     path.with_extension("")
         .iter()
-        .skip(dir.iter().count())
+        .skip(root.iter().count())
         .map(|o| o.to_str().unwrap_or(""))
         .collect::<Vec<_>>()
         .join(separator)
