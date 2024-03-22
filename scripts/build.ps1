@@ -1,6 +1,6 @@
 if (Test-Path target/dist) { rm -r target/dist }
 cargo build -p=abi -p=cli -r --target=x86_64-pc-windows-msvc
-docker run --rm -t -v $pwd\:/io -w /io messense/cargo-zigbuild sh -c "
+docker run --rm -t -v $pwd\:/io -w /io messense/cargo-zigbuild:main sh -c "
 RUSTFLAGS='-C link-arg=-s' cargo zigbuild -p=abi -p=cli -r \
 --target x86_64-unknown-linux-gnu --target aarch64-apple-darwin"
 md target/dist | Out-Null
