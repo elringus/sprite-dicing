@@ -142,12 +142,16 @@ fn write_atlases(atlases: Vec<Texture>, out_dir: &Path, fmt: &AtlasFormat) -> Re
 
 fn write_atlas(texture: Texture, path: &Path) -> Result<()> {
     let img = texture.to_image()?;
-    if ImageFormat::from_path(path)? == ImageFormat::Png {
-        let mut buf = &mut BufWriter::new(File::create(path)?);
-        let e = PngEncoder::new_with_quality(&mut buf, CompressionType::Best, FilterType::Adaptive);
-        img.write_with_encoder(e).map_err(Error::Image)
-    } else {
-        img.save(path).map_err(Error::Image)
+    let mut buf = &mut BufWriter::new(File::create(path)?);
+    match ImageFormat::from_path(path)? {
+        ImageFormat::Png => img
+            .write_with_encoder(PngEncoder::new_with_quality(
+                &mut buf,
+                CompressionType::Best,
+                FilterType::Adaptive,
+            ))
+            .map_err(Error::Image),
+        fmt => img.write_to(&mut buf, fmt).map_err(Error::Image),
     }
 }
 
