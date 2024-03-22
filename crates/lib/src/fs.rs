@@ -14,13 +14,13 @@ use crate::models::*;
 #[derive(Debug, Clone)]
 pub struct FsPrefs<'a> {
     /// Directory path to write generated data; will use input directory when not specified.
-    out: Option<&'a Path>,
-    /// Whether to recursively search for textures inside input directory; false by default.
-    recursive: bool,
+    pub out: Option<&'a Path>,
+    /// When recursive, will use the separator to join ID of nested sprites; false by default.
+    pub recursive: bool,
     /// When recursive enabled, will use the separator when building sprite IDs; '/' by default.
-    separator: String,
+    pub separator: String,
     /// Format to encode generated atlas textures into.
-    atlas_format: AtlasFormat,
+    pub atlas_format: AtlasFormat,
 }
 
 impl Default for FsPrefs<'_> {
@@ -29,7 +29,7 @@ impl Default for FsPrefs<'_> {
             out: None,
             recursive: false,
             separator: "/".to_owned(),
-            atlas_format: AtlasFormat::PNG,
+            atlas_format: AtlasFormat::Png,
         }
     }
 }
@@ -37,24 +37,24 @@ impl Default for FsPrefs<'_> {
 /// Supported encode formats for atlas textures.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum AtlasFormat {
-    PNG,
-    JPEG,
-    WEBP,
-    TGA,
-    DDS,
-    TIFF,
+    Png,
+    Jpeg,
+    Webp,
+    Tga,
+    Dds,
+    Tiff,
 }
 
 impl AtlasFormat {
     /// File extension of the format.
     pub fn extension(&self) -> &'static str {
         match self {
-            AtlasFormat::PNG => "png",
-            AtlasFormat::JPEG => "jpeg",
-            AtlasFormat::WEBP => "webp",
-            AtlasFormat::TGA => "tga",
-            AtlasFormat::DDS => "dds",
-            AtlasFormat::TIFF => "tiff",
+            AtlasFormat::Png => "png",
+            AtlasFormat::Jpeg => "jpeg",
+            AtlasFormat::Webp => "webp",
+            AtlasFormat::Tga => "tga",
+            AtlasFormat::Dds => "dds",
+            AtlasFormat::Tiff => "tiff",
         }
     }
 }
