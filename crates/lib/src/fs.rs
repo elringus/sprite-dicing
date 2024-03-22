@@ -67,7 +67,7 @@ impl AtlasFormat {
 /// * `fs_prefs`: FS-related preferences: out directory, atlas format, etc.
 /// * `prefs`: Dicing-related preferences: unit size, padding, PPU, etc.
 ///
-/// returns: [Ok] when operation successful or [Error].
+/// returns: [Ok] when operation successful, [Error] otherwise.
 pub fn dice_in_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> {
     let sources = collect_sources(dir, dir, fs_prefs)?;
     let diced = crate::dice(&sources, prefs)?;
