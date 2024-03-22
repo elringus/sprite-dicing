@@ -56,7 +56,7 @@ pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
     R, G, B, R,
     B, B, R, G,
 ]));
-pub static UIC4X4: Lazy<Texture> = Lazy::new(|| uic(4, 4));
+pub static PLT4X4: Lazy<Texture> = Lazy::new(|| palette(4, 4));
 
 pub trait AnySource {
     fn texture(&self) -> Texture;
@@ -99,7 +99,7 @@ fn tex(width: u32, height: u32, pixels: Vec<Pixel>) -> Texture {
     }
 }
 
-fn uic(width: u32, height: u32) -> Texture {
+fn palette(width: u32, height: u32) -> Texture {
     let mut pixels = Vec::new();
     for i in 0..=(width * height) as u8 {
         pixels.push(Pixel::new(i, i, i, 255))

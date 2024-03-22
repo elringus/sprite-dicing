@@ -276,13 +276,13 @@ mod tests {
     #[test]
     fn diced_texture_contains_identical_units() {
         assert_eq!(16, dice1(&RGB4X4, 1, 0).units.len());
-        assert_eq!(16, dice1(&UIC4X4, 1, 0).units.len());
+        assert_eq!(16, dice1(&PLT4X4, 1, 0).units.len());
     }
 
     #[test]
     fn unique_doesnt_count_identical_units() {
         assert_eq!(3, dice1(&RGB4X4, 1, 0).unique.len());
-        assert_eq!(16, dice1(&UIC4X4, 1, 0).unique.len());
+        assert_eq!(16, dice1(&PLT4X4, 1, 0).unique.len());
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {
