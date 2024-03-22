@@ -4,9 +4,10 @@
 //! formats on file system, writing generated atlases as images of specified format and
 //! sprite meshes as JSON files.
 
+use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::error::{DecodingError, ImageFormatHint};
 use image::{ImageError, ImageFormat};
-use std::{fs, path::Path};
+use std::{fs, fs::File, io::BufWriter, path::Path};
 
 use crate::models::*;
 
@@ -41,7 +42,6 @@ pub enum AtlasFormat {
     Jpeg,
     Webp,
     Tga,
-    Dds,
     Tiff,
 }
 
@@ -53,7 +53,6 @@ impl AtlasFormat {
             AtlasFormat::Jpeg => "jpeg",
             AtlasFormat::Webp => "webp",
             AtlasFormat::Tga => "tga",
-            AtlasFormat::Dds => "dds",
             AtlasFormat::Tiff => "tiff",
         }
     }
@@ -80,14 +79,11 @@ pub fn dice_in_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> 
 fn collect_sources(dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
     let mut sprites = vec![];
     for entry in fs::read_dir(dir)? {
-        if entry.is_err() {
-            continue;
-        }
-        let path = &entry.unwrap().path();
+        let path = entry?.path();
         if path.is_dir() && prefs.recursive {
-            sprites.extend(collect_sources(path, prefs)?);
-        } else if path.is_file() && is_supported_texture(path) {
-            sprites.push(create_sprite(dir, path, prefs)?);
+            sprites.extend(collect_sources(&path, prefs)?);
+        } else if path.is_file() && is_supported_texture(&path) {
+            sprites.push(create_sprite(dir, &path, prefs)?);
         }
     }
 
@@ -140,9 +136,19 @@ fn eval_sprite_id(dir: &Path, path: &Path, separator: &str) -> String {
 fn write_atlases(atlases: Vec<Texture>, out_dir: &Path, fmt: &AtlasFormat) -> Result<()> {
     atlases.into_iter().enumerate().try_for_each(|(idx, tex)| {
         let name = format!("atlas_{idx}.{}", fmt.extension());
-        let path = out_dir.join(name);
-        tex.to_image()?.save(path).map_err(Error::Image)
+        write_atlas(tex, &out_dir.join(name))
     })
+}
+
+fn write_atlas(texture: Texture, path: &Path) -> Result<()> {
+    let img = texture.to_image()?;
+    if ImageFormat::from_path(path)? == ImageFormat::Png {
+        let mut buf = &mut BufWriter::new(File::create(path)?);
+        let e = PngEncoder::new_with_quality(&mut buf, CompressionType::Best, FilterType::Adaptive);
+        img.write_with_encoder(e).map_err(Error::Image)
+    } else {
+        img.save(path).map_err(Error::Image)
+    }
 }
 
 fn write_sprites(sprites: Vec<DicedSprite>, out_dir: &Path) -> Result<()> {
