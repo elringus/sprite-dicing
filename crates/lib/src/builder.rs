@@ -11,7 +11,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
     for (atlas_idx, atlas) in packed.iter().enumerate() {
         for diced_tex in atlas.packed.iter() {
             let ctx = new_ctx(atlas, atlas_idx, diced_tex, prefs);
-            sprites.push(pack_it(ctx));
+            sprites.push(build_it(ctx));
         }
     }
 
@@ -47,15 +47,15 @@ fn new_ctx<'a>(
     }
 }
 
-fn pack_it(mut ctx: Context) -> DicedSprite {
+fn build_it(mut ctx: Context) -> DicedSprite {
     for unit in ctx.diced.units.iter() {
         let uv_rect = &ctx.uv_rects[&unit.hash];
         build_unit(&mut ctx, &unit.rect, uv_rect);
     }
 
     let rect = eval_boundaries(&ctx);
-    let pivot = eval_pivot(&ctx, &rect);
-    offset_vertices_over_pivot(&mut ctx, &rect, &pivot);
+    let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
+    offset_vertices_over_pivot(&mut ctx, &rect, pivot);
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
@@ -131,16 +131,6 @@ fn eval_boundaries(ctx: &Context) -> Rect {
         y: min_y,
         width: (max_x - min_x).abs(),
         height: (max_y - min_y).abs(),
-    }
-}
-
-fn eval_pivot(ctx: &Context, rect: &Rect) -> Pivot {
-    match &ctx.diced.pivot {
-        Some(source_pivot) => Pivot {
-            x: (source_pivot.x / ctx.ppu - rect.x) / rect.width,
-            y: (source_pivot.y / ctx.ppu - rect.y) / rect.height,
-        },
-        _ => ctx.default_pivot.to_owned(),
     }
 }
 
@@ -303,13 +293,12 @@ mod tests {
     fn sprite_rect_reflects_pivot_offset() {
         assert_eq!(
             build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-0.5, -0.5, 2.0, 2.0)
+            Rect::new(-1.0, -1.0, 2.0, 2.0)
         );
-        // TODO: Pivot should affect the whole rect (currently only width and height).
-        // assert_eq!(
-        //     build(vec![&(&RGB4X4, (0.5, 0.5))], &defaults())[0].rect,
-        //     Rect::new(-0.5, -0.5, 2.0, 2.0)
-        // );
+        assert_eq!(
+            build(vec![&(&RGB4X4, (0.5, 0.5))], &defaults())[0].rect,
+            Rect::new(-2.0, -2.0, 4.0, 4.0)
+        );
     }
 
     #[test]
