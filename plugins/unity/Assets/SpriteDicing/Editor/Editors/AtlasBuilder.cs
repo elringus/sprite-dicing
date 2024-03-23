@@ -87,6 +87,7 @@ namespace SpriteDicing.Editors
                 File.Move(atlasPaths[i], path);
                 atlasPaths[i] = Path.Combine(Path.GetDirectoryName(atlasPath), Path.GetFileName(path));
             }
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             DisplayProgressBar("Building sprites...", 1);
 
