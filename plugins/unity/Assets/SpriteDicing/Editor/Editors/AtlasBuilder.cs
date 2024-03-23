@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.U2D;
 using static SpriteDicing.Editors.EditorProperties;
 
 namespace SpriteDicing.Editors
@@ -27,11 +31,8 @@ namespace SpriteDicing.Editors
         {
             try
             {
-                var sourceTextures = CollectSourceTextures();
-                var dicedTextures = DiceTextures(sourceTextures);
-                var atlasTextures = PackTextures(dicedTextures);
-                BuildDicedSprites(atlasTextures);
-                UpdateCompressionRatio(sourceTextures, atlasTextures);
+                // BuildSharp();
+                BuildRust();
             }
             catch (Exception e)
             {
@@ -42,6 +43,118 @@ namespace SpriteDicing.Editors
                 EditorUtility.ClearProgressBar();
                 GUIUtility.ExitGUI();
             }
+        }
+
+        private void BuildSharp ()
+        {
+            var sourceTextures = CollectSourceTextures();
+            var dicedTextures = DiceTextures(sourceTextures);
+            var atlasTextures = PackTextures(dicedTextures);
+            BuildDicedSprites(atlasTextures);
+            UpdateCompressionRatio(sourceTextures, atlasTextures);
+        }
+
+        private void BuildRust ()
+        {
+            var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
+            var outDir = Path.GetFullPath(Path.GetDirectoryName(atlasPath));
+
+            DisplayProgressBar("Dicing sources...", 1);
+
+            System.Diagnostics.Process.Start(Path.GetFullPath("Assets/dice-windows-x64.exe"),
+                $"\"{Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder))}\"" +
+                $" --out \"{outDir}\"" +
+                (IncludeSubfolders ? " --recursive" : "") +
+                $" --separator ." +
+                $" --size {UnitSize}" +
+                $" --pad {Padding}" +
+                $" --inset {UVInset}" +
+                (TrimTransparent ? " --trim" : "") +
+                $" --limit {AtlasSizeLimit}" +
+                (ForceSquare ? " --square" : "") +
+                (ForcePot ? " --pot" : "") +
+                $" --ppu {PPU}" +
+                $" --pivot {DefaultPivot.x} {DefaultPivot.y}"
+            )?.WaitForExit();
+
+            DisplayProgressBar("Writing atlases...", 1);
+
+            var atlasPaths = Directory.GetFiles(outDir, "atlas_*.png");
+            for (var i = 0; i < atlasPaths.Length; i++)
+            {
+                var path = Path.Combine(outDir, $"{atlasName} 00{i + 1}.png");
+                if (File.Exists(path)) File.Delete(path);
+                File.Move(atlasPaths[i], path);
+                atlasPaths[i] = Path.Combine(Path.GetDirectoryName(atlasPath), Path.GetFileName(path));
+            }
+
+            DisplayProgressBar("Building sprites...", 1);
+
+            var json = File.ReadAllText(Path.Combine(outDir, "sprites.json"));
+            var diced = JsonUtility.FromJson<DicedSprites>($"{{ \"sprites\": {json} }}");
+            var sprites = diced.sprites.Select(BuildSprite);
+            new DicedSpriteSerializer(serializedObject).Serialize(sprites);
+
+            Sprite BuildSprite (DicedSprite data)
+            {
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[data.atlas]);
+                var rect = new UnityEngine.Rect(data.rect.x, data.rect.y, data.rect.width, data.rect.height);
+                var pivot = new Vector2(0.5f, 0.5f);
+                var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
+                var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
+                var vertices = data.vertices.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
+                var uvs = data.uvs.Select(v => new Vector2(v.u, v.v)).ToArray();
+                var triangles = data.indices.Select(i => (ushort)i).ToArray();
+                sprite.name = data.id;
+                sprite.SetVertexCount(vertices.Length);
+                sprite.SetIndices(new NativeArray<ushort>(triangles, Allocator.Temp));
+                sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices, Allocator.Temp));
+                sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs, Allocator.Temp));
+                return sprite;
+            }
+        }
+
+        private static readonly MethodInfo createSpriteMethod =
+            typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
+
+        [Serializable]
+        public struct DicedSprites
+        {
+            public DicedSprite[] sprites;
+        }
+
+        [Serializable]
+        public struct DicedSprite
+        {
+            public string id;
+            public int atlas;
+            public Vertex[] vertices;
+            public UV[] uvs;
+            public int[] indices;
+            public Rect rect;
+        }
+
+        [Serializable]
+        public struct Vertex
+        {
+            public float x;
+            public float y;
+        }
+
+        [Serializable]
+        public struct UV
+        {
+            public float u;
+            public float v;
+        }
+
+        [Serializable]
+        public struct Rect
+        {
+            public float x;
+            public float y;
+            public float width;
+            public float height;
         }
 
         private SourceTexture[] CollectSourceTextures ()
