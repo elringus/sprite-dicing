@@ -75,7 +75,7 @@ namespace SpriteDicing.Editors
                 (ForceSquare ? " --square" : "") +
                 (ForcePot ? " --pot" : "") +
                 $" --ppu {PPU}" +
-                $" --pivot {DefaultPivot.x} {DefaultPivot.y}"
+                (KeepOriginalPivot ? $" --pivot {DefaultPivot.x} {DefaultPivot.y}" : "")
             )?.WaitForExit();
 
             DisplayProgressBar("Writing atlases...", 1);
