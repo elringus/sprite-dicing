@@ -97,6 +97,7 @@ namespace SpriteDicing.Editors
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
             File.Delete(Path.Combine(outDir, "sprites.json"));
             File.Delete(Path.Combine(outDir, "sprites.json.meta"));
+            AssetDatabase.Refresh();
 
             Sprite BuildSprite (DicedSprite data)
             {
