@@ -91,10 +91,12 @@ namespace SpriteDicing.Editors
 
             DisplayProgressBar("Building sprites...", 1);
 
-            var json = File.ReadAllText(Path.Combine(outDir, "sprites.json"));
+            var jsonPath = Path.Combine(outDir, "sprites.json");
+            var json = File.ReadAllText(jsonPath);
             var diced = JsonUtility.FromJson<DicedSprites>($"{{ \"sprites\": {json} }}");
             var sprites = diced.sprites.Select(BuildSprite);
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
+            File.Delete(jsonPath);
 
             Sprite BuildSprite (DicedSprite data)
             {
