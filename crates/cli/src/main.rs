@@ -1,7 +1,7 @@
 //! Command line interface of the library.
 
 use clap::{Parser, ValueEnum};
-use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs};
+use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs, Result};
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -70,7 +70,7 @@ impl From<Format> for AtlasFormat {
     }
 }
 
-fn main() -> sprite_dicing::Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
     let fs_prefs = FsPrefs {
         out: args.out.as_deref(),
