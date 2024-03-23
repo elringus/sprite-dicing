@@ -51,11 +51,12 @@ namespace SpriteDicing.Editors
             var dicedTextures = DiceTextures(sourceTextures);
             var atlasTextures = PackTextures(dicedTextures);
             BuildDicedSprites(atlasTextures);
-            UpdateCompressionRatio(sourceTextures, atlasTextures);
+            UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures.Select(t => t.Texture));
         }
 
         private void BuildRust ()
         {
+            var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
             var outDir = Path.GetFullPath(Path.GetDirectoryName(atlasPath));
 
@@ -98,6 +99,9 @@ namespace SpriteDicing.Editors
             File.Delete(Path.Combine(outDir, "sprites.json"));
             File.Delete(Path.Combine(outDir, "sprites.json.meta"));
             AssetDatabase.Refresh();
+
+            var atlasTextures = atlasPaths.Select(AssetDatabase.LoadAssetAtPath<Texture2D>);
+            UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures);
 
             Sprite BuildSprite (DicedSprite data)
             {
@@ -237,10 +241,10 @@ namespace SpriteDicing.Editors
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
 
-        private void UpdateCompressionRatio (IEnumerable<SourceTexture> sourceTextures, IEnumerable<AtlasTexture> atlasTextures)
+        private void UpdateCompressionRatio (IEnumerable<Texture2D> sourceTextures, IEnumerable<Texture2D> atlasTextures)
         {
-            var sourceSize = sourceTextures.Sum(t => GetAssetSize(t.Texture));
-            var atlasSize = atlasTextures.Sum(t => GetAssetSize(t.Texture));
+            var sourceSize = sourceTextures.Sum(GetAssetSize);
+            var atlasSize = atlasTextures.Sum(GetAssetSize);
             var dataSize = GetDataSize();
             var ratio = sourceSize / (float)(atlasSize + dataSize);
             var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";

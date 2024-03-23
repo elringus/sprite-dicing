@@ -20,7 +20,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 
 struct Context<'a> {
     ppu: f32,
-    default_pivot: &'a Pivot,
+    default_pivot: Option<&'a Pivot>,
     atlas_idx: usize,
     diced: &'a DicedTexture,
     uv_rects: &'a HashMap<u64, FRect>,
@@ -37,7 +37,7 @@ fn new_ctx<'a>(
 ) -> Context<'a> {
     Context {
         ppu: prefs.ppu,
-        default_pivot: &prefs.pivot,
+        default_pivot: prefs.pivot.as_ref(),
         atlas_idx,
         diced,
         uv_rects: &atlas.rects,
@@ -53,17 +53,25 @@ fn build_it(mut ctx: Context) -> DicedSprite {
         build_unit(&mut ctx, &unit.rect, uv_rect);
     }
 
-    let rect = eval_boundaries(&ctx);
-    let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
-    offset_vertices_over_pivot(&mut ctx, &rect, pivot);
+    let mut rect = eval_boundaries(&ctx);
+
+    if ctx.diced.pivot.is_some() || ctx.default_pivot.is_some() {
+        let pivot = ctx
+            .diced
+            .pivot
+            .as_ref()
+            .unwrap_or_else(|| ctx.default_pivot.unwrap());
+        offset_vertices_over_pivot(&mut ctx, &rect, pivot);
+        rect = eval_boundaries(&ctx);
+    }
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
-        rect: eval_boundaries(&ctx),
         atlas_index: ctx.atlas_idx,
         vertices: ctx.vertices,
         uvs: ctx.uvs,
         indices: ctx.indices,
+        rect,
     }
 }
 
@@ -135,11 +143,12 @@ fn eval_boundaries(ctx: &Context) -> Rect {
 }
 
 fn offset_vertices_over_pivot(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
-    // TODO: -sprite_rect.x/y is confusing, remove minus and negate the expression.
-    let origin_x = -sprite_rect.x / sprite_rect.width;
-    let origin_y = -sprite_rect.y / sprite_rect.height;
-    let delta_x = sprite_rect.width * pivot.x - sprite_rect.width * origin_x;
-    let delta_y = sprite_rect.height * pivot.y - sprite_rect.height * origin_y;
+    let offset_x = (pivot.x - sprite_rect.x) / sprite_rect.width;
+    let offset_y = (pivot.y - sprite_rect.y) / sprite_rect.height;
+    let origin_x = sprite_rect.x / sprite_rect.width;
+    let origin_y = sprite_rect.y / sprite_rect.height;
+    let delta_x = sprite_rect.width * offset_x + sprite_rect.width * origin_x;
+    let delta_y = sprite_rect.height * offset_y + sprite_rect.height * origin_y;
     for idx in 0..ctx.vertices.len() {
         ctx.vertices[idx].x -= delta_x;
         ctx.vertices[idx].y -= delta_y;
@@ -204,7 +213,7 @@ mod tests {
     #[test]
     fn zero_pivot_doesnt_offset_vertices() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.0, y: 0.0 },
+            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
@@ -215,7 +224,7 @@ mod tests {
     #[test]
     fn non_zero_pivot_offsets_vertices() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.5, y: 0.5 },
+            pivot: Some(Pivot { x: 0.5, y: 0.5 }),
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
@@ -224,9 +233,9 @@ mod tests {
     }
 
     #[test]
-    fn custom_pivot_overrides_default() {
+    fn sprite_pivot_overrides_default() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.0, y: 0.0 },
+            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0]);
@@ -235,9 +244,9 @@ mod tests {
     }
 
     #[test]
-    fn custom_pivot_doesnt_leak_to_other_sprites() {
+    fn sprite_pivot_doesnt_leak_to_others() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.0, y: 0.0 },
+            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
             ..defaults()
         };
         let sprites = &build(vec![&R1X1, &(&B1X1, (0.5, 0.5))], &prefs);
@@ -293,11 +302,11 @@ mod tests {
     fn sprite_rect_reflects_pivot_offset() {
         assert_eq!(
             build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-1.0, -1.0, 2.0, 2.0)
+            Rect::new(-0.5, -0.5, 2.0, 2.0)
         );
         assert_eq!(
             build(vec![&(&RGB4X4, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-2.0, -2.0, 4.0, 4.0)
+            Rect::new(-0.5, -0.5, 4.0, 4.0)
         );
     }
 
