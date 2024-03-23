@@ -76,7 +76,7 @@ pub struct Prefs {
     /// Higher values will make sprite smaller in conventional space units.
     pub ppu: f32,
     /// Origin of the generated mesh, in relative offsets from top-left corner of the sprite rect.
-    /// When specified, will offset vertices to center mesh around the pivot.
+    /// When specified, offsets vertices to center mesh around the pivot. Usable for animations.
     pub pivot: Option<Pivot>,
 }
 

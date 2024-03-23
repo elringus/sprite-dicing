@@ -9,8 +9,8 @@ namespace SpriteDicing.Editors
     public class DicedSpriteAtlasEditor : Editor
     {
         private static readonly GUIContent ratioContent = new GUIContent("Compression Ratio", "Total size of the source textures divided by size of the generated diced atlas textures plus associated sprite data (higher is better).");
-        private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner. Can be changed after build for each sprite individually.");
-        private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Keep Original", "Whether to preserve original sprites pivot (usable for animations).");
+        private static readonly GUIContent defaultPivotContent = new GUIContent("Default Pivot", "Relative pivot point position in 0 to 1 range, counting from the bottom-left corner.");
+        private static readonly GUIContent keepOriginalPivotContent = new GUIContent("Apply Pivot", "Whether to center diced sprites over specified default or per-sprite pivots by offsetting the vertices (usable for animations).");
         private static readonly GUIContent decoupleSpriteDataContent = new GUIContent("Decouple Sprite Data", "Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.\nWARNING: When rebuilding after changing this option the asset references to previously generated sprites will be lost.");
         private static readonly GUIContent trimTransparentContent = new GUIContent("Trim Transparent", "Improves compression ratio by discarding fully-transparent diced units, but may also change sprite dimensions. Disable to preserve original texture dimensions.");
         private static readonly GUIContent atlasSizeLimitContent = new GUIContent("Atlas Size Limit", "Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached.");
@@ -87,7 +87,7 @@ namespace SpriteDicing.Editors
             var rect = EditorGUILayout.GetControlRect();
             rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-            EditorGUI.BeginDisabledGroup(KeepOriginalPivot);
+            EditorGUI.BeginDisabledGroup(!KeepOriginalPivot);
             DefaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, DefaultPivot);
             EditorGUI.EndDisabledGroup();
             rect.x += rect.width + 5;
