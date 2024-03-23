@@ -45,7 +45,7 @@ struct Args {
     #[arg(long, default_value_t = 100.0)]
     pub ppu: f32,
     /// Origin of the diced sprite mesh, in relative offsets from top-left corner.
-    #[arg(long, value_delimiter = ',', num_args = 2, default_values_t = [0.0, 0.0])]
+    #[arg(long, num_args = 2, default_values_t = [0.0, 0.0])]
     pub pivot: Vec<f32>,
 }
 
