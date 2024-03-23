@@ -105,7 +105,7 @@ namespace SpriteDicing.Editors
                 var rect = new UnityEngine.Rect(data.rect.x * PPU, data.rect.y * PPU, data.rect.width * PPU, data.rect.height * PPU);
                 var args = new object[] { texture, rect, DefaultPivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
-                var vertices = data.vertices.Select(v => new Vector3(v.x, v.y, 0)).ToArray();
+                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height - v.y, 0)).ToArray();
                 var uvs = data.uvs.Select(v => new Vector2(v.u, 1 - v.v)).ToArray();
                 var triangles = data.indices.Select(i => (ushort)i).ToArray();
                 sprite.name = data.id;
