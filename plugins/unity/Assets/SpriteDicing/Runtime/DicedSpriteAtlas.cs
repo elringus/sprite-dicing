@@ -32,7 +32,7 @@ namespace SpriteDicing
         [SerializeField] private int diceUnitSize = 64;
         [SerializeField] private int padding = 2;
         [SerializeField] private float uvInset;
-        [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
+        [SerializeField] private Vector2 defaultPivot = Vector2.zero;
         [SerializeField] private bool keepOriginalPivot;
         [SerializeField] private bool decoupleSpriteData;
         [SerializeField] private bool trimTransparent = true;
