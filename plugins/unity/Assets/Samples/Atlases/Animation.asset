@@ -5752,7 +5752,7 @@ MonoBehaviour:
   diceUnitSize: 128
   padding: 2
   uvInset: 0
-  defaultPivot: {x: 0.5, y: 0.5}
+  defaultPivot: {x: 0, y: 0}
   keepOriginalPivot: 1
   decoupleSpriteData: 0
   trimTransparent: 1
