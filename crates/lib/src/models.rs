@@ -169,7 +169,7 @@ pub struct SourceSprite {
     pub id: String,
     /// Texture containing all the pixels of the sprite.
     pub texture: Texture,
-    /// Relative position of the sprite origin point on the generated mesh. 
+    /// Relative position of the sprite origin point on the generated mesh.
     /// When specified, will offset vertices to center mesh around the pivot.
     /// When not specified, will use default pivot specified in [Prefs], if any.
     pub pivot: Option<Pivot>,
