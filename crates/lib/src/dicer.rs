@@ -1,7 +1,7 @@
 use crate::models::*;
 use std::cmp;
 use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
 pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedTexture>> {
@@ -125,11 +125,8 @@ fn crop_over_borders(rect: &IRect, tex: &Texture) -> URect {
 }
 
 fn hash(pixels: &[Pixel]) -> u64 {
-    // Using std::hash::DefaultHasher breaks build for macOS.
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    for pixel in pixels {
-        pixel.hash(&mut hasher);
-    }
+    let mut hasher = DefaultHasher::new();
+    pixels.hash(&mut hasher);
     hasher.finish()
 }
 
