@@ -20,7 +20,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 
 struct Context<'a> {
     ppu: f32,
-    default_pivot: Option<&'a Pivot>,
+    default_pivot: &'a Pivot,
     atlas_idx: usize,
     diced: &'a DicedTexture,
     uv_rects: &'a HashMap<u64, FRect>,
@@ -37,7 +37,7 @@ fn new_ctx<'a>(
 ) -> Context<'a> {
     Context {
         ppu: prefs.ppu,
-        default_pivot: prefs.pivot.as_ref(),
+        default_pivot: &prefs.pivot,
         atlas_idx,
         diced,
         uv_rects: &atlas.rects,
@@ -54,16 +54,9 @@ fn build_it(mut ctx: Context) -> DicedSprite {
     }
 
     let mut rect = eval_boundaries(&ctx);
-
-    if ctx.diced.pivot.is_some() || ctx.default_pivot.is_some() {
-        let pivot = ctx
-            .diced
-            .pivot
-            .as_ref()
-            .unwrap_or_else(|| ctx.default_pivot.unwrap());
-        offset_vertices_over_pivot(&mut ctx, &rect, pivot);
-        rect = eval_boundaries(&ctx);
-    }
+    let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
+    offset_vertices_over_pivot(&mut ctx, &rect, pivot);
+    rect = eval_boundaries(&ctx);
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
@@ -213,7 +206,7 @@ mod tests {
     #[test]
     fn zero_pivot_doesnt_offset_vertices() {
         let prefs = Prefs {
-            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
@@ -224,7 +217,7 @@ mod tests {
     #[test]
     fn non_zero_pivot_offsets_vertices() {
         let prefs = Prefs {
-            pivot: Some(Pivot { x: 0.5, y: 0.5 }),
+            pivot: Pivot { x: 0.5, y: 0.5 },
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
@@ -235,7 +228,7 @@ mod tests {
     #[test]
     fn sprite_pivot_overrides_default() {
         let prefs = Prefs {
-            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0]);
@@ -246,7 +239,7 @@ mod tests {
     #[test]
     fn sprite_pivot_doesnt_leak_to_others() {
         let prefs = Prefs {
-            pivot: Some(Pivot { x: 0.0, y: 0.0 }),
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
         let sprites = &build(vec![&R1X1, &(&B1X1, (0.5, 0.5))], &prefs);
@@ -378,6 +371,7 @@ mod tests {
             unit_size: 1,
             padding: 0,
             trim_transparent: false,
+            pivot: Pivot { x: 0.0, y: 0.0 },
             ..Prefs::default()
         }
     }

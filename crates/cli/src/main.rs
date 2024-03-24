@@ -45,8 +45,8 @@ struct Args {
     #[arg(long, default_value_t = 100.0)]
     pub ppu: f32,
     /// Origin of the diced sprite mesh, in relative offsets from top-left corner.
-    #[arg(long, num_args = 2)]
-    pub pivot: Option<Vec<f32>>,
+    #[arg(long, num_args = 2, default_values_t = [0.5, 0.5])]
+    pub pivot: Vec<f32>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -87,12 +87,7 @@ fn main() -> Result<()> {
         atlas_square: args.square,
         atlas_pot: args.pot,
         ppu: args.ppu,
-        pivot: if args.pivot.is_some() {
-            let pivot = args.pivot.unwrap();
-            Some(Pivot::new(pivot[0], pivot[1]))
-        } else {
-            None
-        },
+        pivot: Pivot::new(args.pivot[0], args.pivot[1])
     };
     sprite_dicing::dice_in_dir(&args.dir, &fs_prefs, &prefs)
 }

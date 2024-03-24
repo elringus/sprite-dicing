@@ -76,8 +76,7 @@ pub struct Prefs {
     /// Higher values will make sprite smaller in conventional space units.
     pub ppu: f32,
     /// Origin of the generated mesh, in relative offsets from top-left corner of the sprite rect.
-    /// When specified, offsets vertices to center mesh around the pivot. Usable for animations.
-    pub pivot: Option<Pivot>,
+    pub pivot: Pivot,
 }
 
 impl Default for Prefs {
@@ -91,7 +90,7 @@ impl Default for Prefs {
             atlas_square: false,
             atlas_pot: false,
             ppu: 100.0,
-            pivot: None,
+            pivot: Pivot { x: 0.5, y: 0.5 },
         }
     }
 }
@@ -170,8 +169,7 @@ pub struct SourceSprite {
     /// Texture containing all the pixels of the sprite.
     pub texture: Texture,
     /// Relative position of the sprite origin point on the generated mesh.
-    /// When specified, will offset vertices to center mesh around the pivot.
-    /// When not specified, will use default pivot specified in [Prefs], if any.
+    /// When not specified, will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
 }
 
