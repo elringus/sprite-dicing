@@ -29,8 +29,8 @@ struct Args {
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates.
     #[arg(short, long, default_value_t = 0.0)]
     pub inset: f32,
-    /// Discarding fully-transparent dices.
-    #[arg(short, long, default_value_t = true)]
+    /// Discarding fully-transparent diced units.
+    #[arg(short, long, default_value_t = false)]
     pub trim: bool,
     /// Maximum size of a single generated atlas texture.
     #[arg(short, long, default_value_t = 2048)]
