@@ -1,5 +1,4 @@
 #![cfg(test)]
-#![allow(dead_code)]
 
 use crate::models::*;
 use once_cell::sync::Lazy;
@@ -15,7 +14,6 @@ pub const Y: Pixel = Pixel::new(255, 255, 0, 255);
 pub static R1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![R]));
 pub static G1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![G]));
 pub static B1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![B]));
-pub static T1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![T]));
 pub static C1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![C]));
 pub static M1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![M]));
 pub static Y1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![Y]));
@@ -33,6 +31,11 @@ pub static BTGR: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
 pub static BTGT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
     B, T,
     G, T
+]));
+#[rustfmt::skip]
+pub static TTTM: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    T, T,
+    T, M
 ]));
 #[rustfmt::skip]
 pub static TTTT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![

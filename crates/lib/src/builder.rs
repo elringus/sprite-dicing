@@ -172,7 +172,7 @@ mod tests {
             ppu: 0.0,
             ..defaults()
         };
-        build(vec![&R1X1, &B1X1], &prefs);
+        build(vec![&G1X1, &B1X1], &prefs);
     }
 
     #[test]
@@ -295,6 +295,10 @@ mod tests {
         assert_eq!(
             build(vec![&BTGT], &prefs)[0].rect,
             Rect::new(0.0, 0.0, 1.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&TTTM], &prefs)[0].rect,
+            Rect::new(1.0, 1.0, 1.0, 1.0)
         );
     }
 
