@@ -75,7 +75,7 @@ namespace SpriteDicing.Editors
                 (ForceSquare ? " --square" : "") +
                 (ForcePot ? " --pot" : "") +
                 $" --ppu {PPU}" +
-                (KeepOriginalPivot ? $" --pivot {DefaultPivot.x} {DefaultPivot.y}" : "")
+                $" --pivot {DefaultPivot.x} {DefaultPivot.y}"
             )?.WaitForExit();
 
             DisplayProgressBar("Writing atlases...", 1);
@@ -107,7 +107,7 @@ namespace SpriteDicing.Editors
             {
                 var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[data.atlas]);
                 var rect = new UnityEngine.Rect(data.rect.x * PPU, data.rect.y * PPU, data.rect.width * PPU, data.rect.height * PPU);
-                var args = new object[] { texture, rect, DefaultPivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
+                var args = new object[] { texture, rect, DefaultPivot /* or per-sprite */, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
                 var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height - v.y, 0)).ToArray();
                 var uvs = data.uvs.Select(v => new Vector2(v.u, 1 - v.v)).ToArray();
