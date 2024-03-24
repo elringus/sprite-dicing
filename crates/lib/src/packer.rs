@@ -160,7 +160,13 @@ fn bake_atlas(ctx: &Context, size: &USize) -> (Texture, HashMap<u64, FRect>) {
         pixels: vec![Pixel::default(); (size.width * size.height) as usize],
     };
 
-    for (unit_idx, (unit_hash, unit_ref)) in ctx.units.iter().enumerate() {
+    // Hash containers in Rust intentionally randomize order for security, while we need
+    // stable order to produce identical atlases for identical input, hence the sorting here.
+    let mut sorted_hashes = ctx.units.keys().collect::<Vec<_>>();
+    sorted_hashes.sort_unstable();
+
+    for (unit_idx, unit_hash) in sorted_hashes.into_iter().enumerate() {
+        let unit_ref = &ctx.units[unit_hash];
         let row = unit_idx as u32 / units_per_row;
         let column = unit_idx as u32 % units_per_row;
         let unit = &ctx.to_pack[unit_ref.tex_idx].units[unit_ref.unit_idx];
