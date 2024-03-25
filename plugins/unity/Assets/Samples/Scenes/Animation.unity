@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 424524699}
   - component: {fileID: 424524698}
   m_Layer: 0
-  m_Name: AnimatedDicedSprite
+  m_Name: Animated
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -235,7 +235,7 @@ GameObject:
   - component: {fileID: 1719394262}
   - component: {fileID: 1719394259}
   m_Layer: 0
-  m_Name: MainCamera
+  m_Name: Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
