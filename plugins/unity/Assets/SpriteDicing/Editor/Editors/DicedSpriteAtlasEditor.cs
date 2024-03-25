@@ -22,7 +22,7 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent uvInsetContent = new GUIContent("UV Inset", "Relative inset of the diced units UV coordinates. Can be used in addition to (or instead of) `Padding` to prevent texture bleeding artifacts. Won't consume any texture space, but higher values could visually distort the final result.");
         private static readonly GUIContent inputFolderContent = new GUIContent("Input Folder", "Asset folder with source sprite textures.");
         private static readonly GUIContent includeSubfoldersContent = new GUIContent("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
-        private static readonly GUIContent prependSubfolderNamesContent = new GUIContent("Prepend Names", "Whether to prepend sprite names with the subfolder name. Eg: SubfolderName.SpriteName");
+        private static readonly GUIContent separatorContent = new GUIContent("Separator", "When sprite is from a sub-folder(s), the string will be used to separate the folder name(s) and the sprite name.");
         private static readonly int[] diceUnitSizeValues = { 8, 16, 32, 64, 128, 256 };
         private static readonly int[] atlasLimitValues = { 1024, 2048, 4096, 8192 };
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
@@ -32,15 +32,16 @@ namespace SpriteDicing.Editors
         {
             serializedObject.Update();
             InitializeRichStyle();
-            DrawDataGUI();
+            DrawCompressionRatio();
             EditorGUILayout.PropertyField(TrimTransparentProperty, trimTransparentContent);
-            DrawPivotGUI();
-            DrawSizeGUI();
+            DrawPivot();
+            DrawSize();
             PPUProperty.floatValue = Mathf.Max(.001f, EditorGUILayout.FloatField(pixelsPerUnitContent, PPU));
             EditorGUILayout.IntPopup(UnitSizeProperty, diceUnitSizeLabels, diceUnitSizeValues, diceUnitSizeContent);
             DrawPaddingSlider();
             EditorGUILayout.Slider(UVInsetProperty, 0f, .5f, uvInsetContent);
             DrawInputFolderGUI();
+            DrawBuildButton();
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -53,7 +54,7 @@ namespace SpriteDicing.Editors
             richLabelStyle.richText = true;
         }
 
-        private void DrawDataGUI ()
+        private void DrawCompressionRatio ()
         {
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.PropertyField(TexturesProperty, true);
@@ -81,7 +82,7 @@ namespace SpriteDicing.Editors
             return new GUIContent(name, tooltip);
         }
 
-        private void DrawPivotGUI ()
+        private void DrawPivot ()
         {
             EditorGUILayout.BeginHorizontal();
             var rect = EditorGUILayout.GetControlRect();
@@ -89,11 +90,11 @@ namespace SpriteDicing.Editors
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
             DefaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, DefaultPivot);
             rect.x += rect.width + 5;
-            ToggleLeftGUI(rect, KeepOriginalPivotProperty, keepOriginalPivotContent);
+            DrawToggleLeft(rect, KeepOriginalPivotProperty, keepOriginalPivotContent);
             EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawSizeGUI ()
+        private void DrawSize ()
         {
             EditorGUILayout.BeginHorizontal();
             var rect = EditorGUILayout.GetControlRect();
@@ -104,11 +105,11 @@ namespace SpriteDicing.Editors
             rect.x += rect.width + 5;
             rect.width = 60;
             EditorGUI.BeginDisabledGroup(ForcePot);
-            ToggleLeftGUI(rect, ForceSquareProperty, forceSquareContent);
+            DrawToggleLeft(rect, ForceSquareProperty, forceSquareContent);
             EditorGUI.EndDisabledGroup();
             rect.x += rect.width + 5;
             rect.width = 60;
-            ToggleLeftGUI(rect, ForcePotProperty, forcePotContent);
+            DrawToggleLeft(rect, ForcePotProperty, forcePotContent);
             EditorGUILayout.EndHorizontal();
         }
 
@@ -126,13 +127,39 @@ namespace SpriteDicing.Editors
             rect = EditorGUI.PrefixLabel(rect, -1, new GUIContent(" "));
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
             EditorGUIUtility.labelWidth = 50;
-            ToggleLeftGUI(rect, IncludeSubfoldersProperty, includeSubfoldersContent);
-            rect.x += rect.width + 5;
+            DrawToggleLeft(rect, IncludeSubfoldersProperty, includeSubfoldersContent);
+
             EditorGUI.BeginDisabledGroup(!IncludeSubfolders);
-            ToggleLeftGUI(rect, PrependSubfolderNamesProperty, prependSubfolderNamesContent);
+            GUI.skin.textField.padding.top -= 2;
+            GUI.skin.textField.padding.bottom += 2;
+            GUI.skin.textField.fixedHeight = 14;
+            GUI.skin.textField.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.textField.fontStyle = FontStyle.Bold;
+            var textRect = new Rect(rect);
+            textRect.x += rect.width + 5;
+            textRect.y += 2;
+            textRect.width = 14;
+            SeparatorProperty.stringValue = EditorGUI.TextField(textRect, string.Empty, Separator);
+            GUI.skin.textField.padding.top += 2;
+            GUI.skin.textField.padding.bottom -= 2;
+            GUI.skin.textField.fixedHeight = 0;
+            GUI.skin.textField.fontStyle = default;
+            GUI.skin.textField.alignment = default;
+            var labelRect = new Rect(rect);
+            labelRect.x = textRect.x + textRect.width + 3;
+            labelRect.width = rect.width - textRect.width - 10;
+            EditorGUI.LabelField(labelRect, separatorContent);
             EditorGUI.EndDisabledGroup();
+
             EditorGUIUtility.labelWidth = 0;
             EditorGUILayout.EndHorizontal();
+
+            EditorGUI.EndDisabledGroup();
+        }
+
+        private void DrawBuildButton ()
+        {
+            EditorGUI.BeginDisabledGroup(!InputFolder);
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(EditorGUIUtility.labelWidth);
@@ -143,7 +170,7 @@ namespace SpriteDicing.Editors
             EditorGUI.EndDisabledGroup();
         }
 
-        private static void ToggleLeftGUI (Rect position, SerializedProperty property, GUIContent label)
+        private static void DrawToggleLeft (Rect position, SerializedProperty property, GUIContent label)
         {
             var toggleValue = property.boolValue;
             EditorGUI.showMixedValue = property.hasMultipleDifferentValues;

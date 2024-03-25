@@ -38,7 +38,7 @@ namespace SpriteDicing
         [SerializeField] private bool trimTransparent = true;
         [SerializeField] private Object inputFolder;
         [SerializeField] private bool includeSubfolders;
-        [SerializeField] private bool prependSubfolderNames;
+        [SerializeField] private string separator = ".";
         [SerializeField] private string generatedSpritesFolderGuid;
         [SerializeField] private string lastRatioValue = "Unknown (build atlas to update)";
         #pragma warning restore 0169, 0414, 1635, IDE0052

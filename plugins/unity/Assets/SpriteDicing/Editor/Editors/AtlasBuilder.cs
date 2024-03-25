@@ -66,7 +66,7 @@ namespace SpriteDicing.Editors
                 $"\"{Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder))}\"" +
                 $" --out \"{outDir}\"" +
                 (IncludeSubfolders ? " --recursive" : "") +
-                $" --separator ." +
+                $" --separator {Separator}" +
                 $" --size {UnitSize}" +
                 $" --pad {Padding}" +
                 $" --inset {UVInset}" +
@@ -169,7 +169,7 @@ namespace SpriteDicing.Editors
             DisplayProgressBar("Collecting source textures...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
             var texturePaths = TextureFinder.FindAt(inputFolderPath, IncludeSubfolders);
-            var loader = new TextureLoader(PrependSubfolderNames ? inputFolderPath : null);
+            var loader = new TextureLoader(inputFolderPath);
             return texturePaths.Select(loader.Load).ToArray();
         }
 
