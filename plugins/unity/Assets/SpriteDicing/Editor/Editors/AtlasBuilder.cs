@@ -107,9 +107,10 @@ namespace SpriteDicing.Editors
             {
                 var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[data.atlas]);
                 var rect = new UnityEngine.Rect(data.rect.x * PPU, data.rect.y * PPU, data.rect.width * PPU, data.rect.height * PPU);
-                var args = new object[] { texture, rect, DefaultPivot /* or per-sprite */, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
+                var pivot = DefaultPivot /* or per-sprite */;
+                var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
-                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height - v.y, 0)).ToArray();
+                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height - v.y - pivot.y * data.rect.height * 2, 0)).ToArray();
                 var uvs = data.uvs.Select(v => new Vector2(v.u, 1 - v.v)).ToArray();
                 var triangles = data.indices.Select(i => (ushort)i).ToArray();
                 sprite.name = data.id;
