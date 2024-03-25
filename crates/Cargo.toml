@@ -4,3 +4,4 @@ members = ["lib", "abi", "cli"]
 
 [profile.release]
 lto = true
+panic = "abort"
