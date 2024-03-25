@@ -236,6 +236,30 @@ mod tests {
     }
 
     #[test]
+    fn when_trim_enabled_vertices_are_offset_over_transparent_areas() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.5, y: 0.5 },
+            trim_transparent: true,
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
+        assert_eq!(quad.top_left.x, 0.5);
+        assert_eq!(quad.top_left.y, 0.5);
+    }
+
+    #[test]
+    fn when_trim_disabled_vertices_are_not_offset_over_transparent_areas() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.5, y: 0.5 },
+            trim_transparent: false,
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
+        assert_eq!(quad.top_left.x, 0.0);
+        assert_eq!(quad.top_left.y, 0.0);
+    }
+
+    #[test]
     fn sprite_pivot_overrides_default() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.0, y: 0.0 },
@@ -322,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn when_transparent_sprite_is_ignored() {
+    fn transparent_sprites_are_ignored() {
         let prefs = Prefs {
             trim_transparent: true,
             ..defaults()
