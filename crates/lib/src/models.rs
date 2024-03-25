@@ -60,8 +60,8 @@ pub struct Prefs {
     /// addition to (or instead of) [padding] to prevent texture bleeding artifacts. Won't
     /// consume texture space, but higher values could visually distort the rendered sprite.
     pub uv_inset: f32,
-    /// Improves compression ratio by discarding fully-transparent dices, but may also change
-    /// sprite dimensions. Disable to preserve original sprite texture dimensions.
+    /// Whether to trim transparent areas on the built meshes.
+    /// Disable to preserve aspect ratio of the source sprites (usable for animations).
     pub trim_transparent: bool,
     /// Maximum size (width or height) of a single generated atlas texture; will generate
     /// multiple textures when the limit is reached.
@@ -277,6 +277,8 @@ impl UV {
 pub(crate) struct DicedTexture {
     /// Identifier of the [SourceSprite] to which this texture belongs.
     pub id: String,
+    /// Dimensions of the source texture.
+    pub size: USize,
     /// Pivot of the associated [SourceSprite], if any.
     pub pivot: Option<Pivot>,
     /// Associated diced units.

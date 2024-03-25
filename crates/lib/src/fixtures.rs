@@ -18,6 +18,11 @@ pub static C1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![C]));
 pub static M1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![M]));
 pub static Y1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![Y]));
 #[rustfmt::skip]
+pub static RGBY: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    R, G,
+    B, Y
+]));
+#[rustfmt::skip]
 pub static BGRT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
     B, G,
     R, T

@@ -300,7 +300,7 @@ mod tests {
             atlas_size_limit: 4,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &B1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY, &B1X1], &prefs).pop().unwrap();
         assert_eq!(atlas.texture.width, 2);
         assert_eq!(atlas.texture.height, 2);
     }
@@ -311,7 +311,7 @@ mod tests {
             atlas_size_limit: 4,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY, &C1X1], &prefs).pop().unwrap();
         assert_eq!(atlas.texture.width, 3);
         assert_eq!(atlas.texture.height, 2);
     }
@@ -323,7 +323,7 @@ mod tests {
             atlas_square: true,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY, &C1X1], &prefs).pop().unwrap();
         assert_eq!(atlas.texture.width, 3);
         assert_eq!(atlas.texture.height, 3);
     }
@@ -335,7 +335,7 @@ mod tests {
             atlas_pot: true,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY, &C1X1], &prefs).pop().unwrap();
         assert_eq!(atlas.texture.width, 4);
         assert_eq!(atlas.texture.height, 4);
     }
@@ -347,9 +347,9 @@ mod tests {
             atlas_pot: true,
             ..defaults()
         };
-        let atlas = pack(vec![&BGRT, &C1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY, &C1X1], &prefs).pop().unwrap();
         let clear = atlas.texture.pixels.into_iter().filter(|p| p.eq(&T));
-        assert_eq!(clear.count(), 12);
+        assert_eq!(clear.count(), 11);
     }
 
     #[test]
@@ -392,7 +392,6 @@ mod tests {
         Prefs {
             unit_size: 1,
             padding: 0,
-            trim_transparent: false,
             ..Prefs::default()
         }
     }

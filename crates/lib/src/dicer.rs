@@ -26,7 +26,6 @@ pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedT
 struct Context<'a> {
     size: u32,
     pad: u32,
-    trim: bool,
     /// Currently diced source sprite.
     sprite: &'a SourceSprite,
 }
@@ -35,7 +34,6 @@ fn new_ctx<'a>(sprite: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
     Context {
         size: prefs.unit_size,
         pad: prefs.padding,
-        trim: prefs.trim_transparent,
         sprite,
     }
 }
@@ -59,6 +57,7 @@ fn dice_it(ctx: &Context) -> Option<DicedTexture> {
 
     Some(DicedTexture {
         id: ctx.sprite.id.to_owned(),
+        size: USize::new(ctx.sprite.texture.width, ctx.sprite.texture.height),
         unique: units.iter().map(|u| u.hash).collect::<HashSet<_>>(),
         pivot: ctx.sprite.pivot.to_owned(),
         units,
@@ -74,7 +73,7 @@ fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
     };
 
     let unit_pixels = get_pixels(&unit_rect, &ctx.sprite.texture);
-    if ctx.trim && unit_pixels.iter().all(|p| p.a() == 0) {
+    if unit_pixels.iter().all(|p| p.a() == 0) {
         return None;
     }
 
@@ -153,14 +152,21 @@ mod tests {
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&R1X1)], &pref(0, 0, true))
+        assert!(dice(&[src(&R1X1)], &pref(0, 0))
             .is_err_and(|e| e.to_string() == "Unit size can't be zero."));
     }
 
     #[test]
     fn errs_when_padding_is_above_unit_size() {
-        assert!(dice(&[src(&R1X1)], &pref(1, 2, true))
+        assert!(dice(&[src(&R1X1)], &pref(1, 2))
             .is_err_and(|e| e.to_string() == "Padding can't be above unit size."));
+    }
+
+    #[test]
+    fn size_equals_source_texture_dimensions() {
+        let diced = dice1(&RGB4X4, 4, 0);
+        assert_eq!(diced.size.width, 4);
+        assert_eq!(diced.size.height, 4);
     }
 
     #[test]
@@ -184,30 +190,16 @@ mod tests {
     }
 
     #[test]
-    fn transparent_dices_are_ignored_when_trim_enabled() {
-        let prf = &pref(1, 0, true);
+    fn transparent_units_are_ignored() {
+        let prf = &pref(1, 0);
         assert!(dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
         assert!(dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
     }
 
     #[test]
-    fn transparent_dices_are_preserved_when_trim_disabled() {
-        let prf = &pref(1, 0, false);
-        assert!(!dice(&[src(&BGRT)], prf).unwrap().iter().all(is_opaque));
-        assert!(!dice(&[src(&BTGR)], prf).unwrap().iter().all(is_opaque));
-    }
-
-    #[test]
-    fn when_trim_enabled_transparent_sprites_are_ignored() {
-        let prf = &pref(1, 0, true);
+    fn transparent_sprites_are_ignored() {
+        let prf = &pref(1, 0);
         assert!(dice(&[src(&TTTT)], prf).unwrap().is_empty());
-    }
-
-    #[test]
-    fn when_trim_disabled_transparent_sprites_are_not_ignored() {
-        let prf = &pref(1, 0, false);
-        assert!(!dice(&[src(&TTTT)], prf).unwrap().is_empty());
-        assert!(!dice(&[src(&TTTT)], prf).unwrap()[0].units.is_empty());
     }
 
     #[test]
@@ -236,11 +228,11 @@ mod tests {
 
     #[test]
     fn unit_rects_are_mapped_top_left_to_bottom_right() {
-        let units = &dice(&[src(&BGRT)], &pref(1, 0, false)).unwrap()[0].units;
-        assert!(has(units, B, URect::new(0, 0, 1, 1)));
+        let units = &dice(&[src(&RGBY)], &pref(1, 0)).unwrap()[0].units;
+        assert!(has(units, R, URect::new(0, 0, 1, 1)));
         assert!(has(units, G, URect::new(1, 0, 1, 1)));
-        assert!(has(units, R, URect::new(0, 1, 1, 1)));
-        assert!(has(units, T, URect::new(1, 1, 1, 1)));
+        assert!(has(units, B, URect::new(0, 1, 1, 1)));
+        assert!(has(units, Y, URect::new(1, 1, 1, 1)));
         fn has(units: &[DicedUnit], pixel: Pixel, rect: URect) -> bool {
             units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
         }
@@ -283,15 +275,14 @@ mod tests {
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {
-        let pref = pref(size, pad, true);
+        let pref = pref(size, pad);
         dice(&[src(tex)], &pref).unwrap().pop().unwrap()
     }
 
-    fn pref(size: u32, pad: u32, trim: bool) -> Prefs {
+    fn pref(size: u32, pad: u32) -> Prefs {
         Prefs {
             unit_size: size,
             padding: pad,
-            trim_transparent: trim,
             ..Prefs::default()
         }
     }

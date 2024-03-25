@@ -20,6 +20,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 
 struct Context<'a> {
     ppu: f32,
+    trim: bool,
     default_pivot: &'a Pivot,
     atlas_idx: usize,
     diced: &'a DicedTexture,
@@ -37,6 +38,7 @@ fn new_ctx<'a>(
 ) -> Context<'a> {
     Context {
         ppu: prefs.ppu,
+        trim: prefs.trim_transparent,
         default_pivot: &prefs.pivot,
         atlas_idx,
         diced,
@@ -55,8 +57,16 @@ fn build_it(mut ctx: Context) -> DicedSprite {
 
     let mut rect = eval_boundaries(&ctx);
     let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
-    offset_vertices_over_pivot(&mut ctx, &rect, pivot);
-    rect = eval_boundaries(&ctx);
+    offset_vertices(&mut ctx, &rect, pivot);
+
+    if ctx.trim {
+        rect = eval_boundaries(&ctx);
+    } else {
+        rect.width = ctx.diced.size.width as f32 / ctx.ppu;
+        rect.height = ctx.diced.size.height as f32 / ctx.ppu;
+        rect.x = -pivot.x * rect.width;
+        rect.y = -pivot.y * rect.height;
+    }
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
@@ -74,12 +84,11 @@ fn build_unit(ctx: &mut Context, unit_rect: &URect, uv_rect: &FRect) {
 }
 
 fn scale_unit_rect(ctx: &Context, unit_rect: &URect) -> FRect {
-    let ratio = 1.0 / ctx.ppu;
     FRect {
-        x: unit_rect.x as f32 * ratio,
-        y: unit_rect.y as f32 * ratio,
-        width: unit_rect.width as f32 * ratio,
-        height: unit_rect.height as f32 * ratio,
+        x: unit_rect.x as f32 / ctx.ppu,
+        y: unit_rect.y as f32 / ctx.ppu,
+        width: unit_rect.width as f32 / ctx.ppu,
+        height: unit_rect.height as f32 / ctx.ppu,
     }
 }
 
@@ -113,7 +122,6 @@ fn build_quad(ctx: &mut Context, unit_rect: &FRect, uv_rect: &FRect) {
     ctx.indices.extend([i, i + 1, i + 2, i + 2, i + 3, i]);
 }
 
-// TODO: Just use unit_rect?
 fn eval_boundaries(ctx: &Context) -> Rect {
     let mut min_x = f32::INFINITY;
     let mut min_y = f32::INFINITY;
@@ -135,16 +143,18 @@ fn eval_boundaries(ctx: &Context) -> Rect {
     }
 }
 
-fn offset_vertices_over_pivot(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
-    let offset_x = (pivot.x - sprite_rect.x) / sprite_rect.width;
-    let offset_y = (pivot.y - sprite_rect.y) / sprite_rect.height;
-    let origin_x = sprite_rect.x / sprite_rect.width;
-    let origin_y = sprite_rect.y / sprite_rect.height;
-    let delta_x = sprite_rect.width * offset_x + sprite_rect.width * origin_x;
-    let delta_y = sprite_rect.height * offset_y + sprite_rect.height * origin_y;
+fn offset_vertices(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
+    let mut offset_x = pivot.x * sprite_rect.width;
+    let mut offset_y = pivot.y * sprite_rect.height;
+
+    if !ctx.trim {
+        offset_x += pivot.x * (ctx.diced.size.width as f32 / ctx.ppu - sprite_rect.width);
+        offset_y += pivot.y * (ctx.diced.size.height as f32 / ctx.ppu - sprite_rect.height);
+    }
+
     for idx in 0..ctx.vertices.len() {
-        ctx.vertices[idx].x -= delta_x;
-        ctx.vertices[idx].y -= delta_y;
+        ctx.vertices[idx].x -= offset_x;
+        ctx.vertices[idx].y -= offset_y;
     }
 }
 
@@ -298,33 +308,26 @@ mod tests {
     #[test]
     fn sprite_rect_reflects_pivot_offset() {
         assert_eq!(
-            build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-0.5, -0.5, 2.0, 2.0)
+            build(vec![&(&BGRT, (0.0, 0.0))], &defaults())[0].rect,
+            Rect::new(0.0, 0.0, 2.0, 2.0)
         );
         assert_eq!(
-            build(vec![&(&RGB4X4, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-0.5, -0.5, 4.0, 4.0)
+            build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
+            Rect::new(-1.0, -1.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&RGB4X4, (-1.0, 1.0))], &defaults())[0].rect,
+            Rect::new(4.0, -4.0, 4.0, 4.0)
         );
     }
 
     #[test]
-    fn when_transparent_and_trim_enabled_sprite_is_ignored() {
+    fn when_transparent_sprite_is_ignored() {
         let prefs = Prefs {
             trim_transparent: true,
             ..defaults()
         };
         assert!(&build(vec![&TTTT], &prefs).is_empty());
-    }
-
-    #[test]
-    fn when_transparent_and_trim_disabled_sprite_is_build_normally() {
-        let prefs = Prefs {
-            trim_transparent: false,
-            ..defaults()
-        };
-        let sprite = &build(vec![&TTTT], &prefs)[0];
-        assert_eq!(sprite.rect, Rect::new(0.0, 0.0, 2.0, 2.0));
-        assert_eq!(sprite.vertices.len(), 16);
     }
 
     struct Quad {
