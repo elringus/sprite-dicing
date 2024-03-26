@@ -43,6 +43,16 @@ pub static TTTM: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
     T, M
 ]));
 #[rustfmt::skip]
+pub static MTTT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    M, T,
+    T, T
+]));
+#[rustfmt::skip]
+pub static TTMT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+    T, T,
+    M, T
+]));
+#[rustfmt::skip]
 pub static TTTT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
     T, T,
     T, T

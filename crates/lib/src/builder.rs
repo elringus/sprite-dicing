@@ -55,25 +55,9 @@ fn build_it(mut ctx: Context) -> DicedSprite {
         build_unit(&mut ctx, &unit.rect, uv_rect);
     }
 
-    let mut rect = eval_boundaries(&ctx);
     let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
+    let rect = eval_rect(&ctx, pivot);
     offset_vertices(&mut ctx, &rect, pivot);
-
-    if ctx.trim {
-        rect = eval_boundaries(&ctx);
-    } else {
-        rect.width = ctx.diced.size.width as f32 / ctx.ppu;
-        rect.height = ctx.diced.size.height as f32 / ctx.ppu;
-        rect.x = -pivot.x * rect.width;
-        rect.y = -pivot.y * rect.height;
-    }
-
-    let offset_x = ctx.diced.size.width as f32 / ctx.ppu - rect.width;
-    let offset_y = ctx.diced.size.height as f32 / ctx.ppu - rect.height;
-    for idx in 0..ctx.vertices.len() {
-        ctx.vertices[idx].x -= offset_x;
-        ctx.vertices[idx].y -= offset_y;
-    }
 
     DicedSprite {
         id: ctx.diced.id.to_owned(),
@@ -129,7 +113,15 @@ fn build_quad(ctx: &mut Context, unit_rect: &FRect, uv_rect: &FRect) {
     ctx.indices.extend([i, i + 1, i + 2, i + 2, i + 3, i]);
 }
 
-fn eval_boundaries(ctx: &Context) -> Rect {
+fn eval_rect(ctx: &Context, pivot: &Pivot) -> Rect {
+    if ctx.trim {
+        eval_fit_rect(ctx)
+    } else {
+        eval_full_rect(ctx, pivot)
+    }
+}
+
+fn eval_fit_rect(ctx: &Context) -> Rect {
     let mut min_x = f32::INFINITY;
     let mut min_y = f32::INFINITY;
     let mut max_x = f32::NEG_INFINITY;
@@ -142,21 +134,26 @@ fn eval_boundaries(ctx: &Context) -> Rect {
         max_y = max_y.max(vertex.y);
     }
 
-    Rect {
-        x: min_x,
-        y: min_y,
-        width: (max_x - min_x).abs(),
-        height: (max_y - min_y).abs(),
-    }
+    let width = (max_x - min_x).abs();
+    let height = (max_y - min_y).abs();
+    Rect::new(min_x, min_y, width, height)
 }
 
-fn offset_vertices(ctx: &mut Context, sprite_rect: &Rect, pivot: &Pivot) {
-    let mut offset_x = pivot.x * sprite_rect.width;
-    let mut offset_y = pivot.y * sprite_rect.height;
+fn eval_full_rect(ctx: &Context, pivot: &Pivot) -> Rect {
+    let width = ctx.diced.size.width as f32 / ctx.ppu;
+    let height = ctx.diced.size.height as f32 / ctx.ppu;
+    let x = -pivot.x * width;
+    let y = -pivot.y * height;
+    Rect::new(x, y, width, height)
+}
 
-    if !ctx.trim {
-        offset_x += pivot.x * (ctx.diced.size.width as f32 / ctx.ppu - sprite_rect.width);
-        offset_y += pivot.y * (ctx.diced.size.height as f32 / ctx.ppu - sprite_rect.height);
+fn offset_vertices(ctx: &mut Context, rect: &Rect, pivot: &Pivot) {
+    let mut offset_x = pivot.x * rect.width;
+    let mut offset_y = pivot.y * rect.height;
+
+    if ctx.trim {
+        offset_x += rect.x;
+        offset_y += rect.y;
     }
 
     for idx in 0..ctx.vertices.len() {
@@ -188,17 +185,10 @@ mod tests {
     #[test]
     fn sprite_vertices_form_quad() {
         let quad = Quad::from_1x1(&build(vec![&B1X1], &defaults())[0]);
-        assert_eq!(quad.top_left.x, 0.0);
-        assert_eq!(quad.top_left.y, 0.0);
-
-        assert_eq!(quad.bottom_left.x, 0.0);
-        assert_eq!(quad.bottom_left.y, 1.0);
-
-        assert_eq!(quad.bottom_right.x, 1.0);
-        assert_eq!(quad.bottom_right.y, 1.0);
-
-        assert_eq!(quad.top_right.x, 1.0);
-        assert_eq!(quad.top_right.y, 0.0);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_left, Vertex::new(0.0, 1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
+        assert_eq!(quad.top_right, Vertex::new(1.0, 0.0));
     }
 
     #[test]
@@ -208,16 +198,14 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
-        assert_eq!(quad.bottom_right.x, 1.0);
-        assert_eq!(quad.bottom_right.y, 1.0);
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
 
         let prefs = Prefs {
             ppu: 2.0,
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
-        assert_eq!(quad.bottom_right.x, 0.5);
-        assert_eq!(quad.bottom_right.y, 0.5);
+        assert_eq!(quad.bottom_right, Vertex::new(0.5, 0.5));
     }
 
     #[test]
@@ -227,10 +215,8 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
-        assert_eq!(quad.top_left.x, 0.0);
-        assert_eq!(quad.top_left.y, 0.0);
-        assert_eq!(quad.bottom_right.x, 1.0);
-        assert_eq!(quad.bottom_right.y, 1.0);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
     }
 
     #[test]
@@ -240,10 +226,8 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
-        assert_eq!(quad.top_left.x, -0.5);
-        assert_eq!(quad.top_left.y, -0.5);
-        assert_eq!(quad.bottom_right.x, 0.5);
-        assert_eq!(quad.bottom_right.y, 0.5);
+        assert_eq!(quad.top_left, Vertex::new(-0.5, -0.5));
+        assert_eq!(quad.bottom_right, Vertex::new(0.5, 0.5));
     }
 
     #[test]
@@ -253,11 +237,18 @@ mod tests {
             trim_transparent: true,
             ..defaults()
         };
+
         let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
-        assert_eq!(quad.top_left.x, 0.0);
-        assert_eq!(quad.top_left.y, 0.0);
-        assert_eq!(quad.bottom_right.x, 1.0);
-        assert_eq!(quad.bottom_right.y, 1.0);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
+
+        let quad = Quad::from_1x1(&build(vec![&MTTT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
+
+        let quad = Quad::from_1x1(&build(vec![&TTMT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
     }
 
     #[test]
@@ -267,11 +258,18 @@ mod tests {
             trim_transparent: false,
             ..defaults()
         };
+
         let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
-        assert_eq!(quad.top_left.x, 1.0);
-        assert_eq!(quad.top_left.y, 1.0);
-        assert_eq!(quad.bottom_right.x, 2.0);
-        assert_eq!(quad.bottom_right.y, 2.0);
+        assert_eq!(quad.top_left, Vertex::new(1.0, 1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(2.0, 2.0));
+
+        let quad = Quad::from_1x1(&build(vec![&MTTT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 0.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
+
+        let quad = Quad::from_1x1(&build(vec![&TTMT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(0.0, 1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 2.0));
     }
 
     #[test]
@@ -281,11 +279,18 @@ mod tests {
             trim_transparent: true,
             ..defaults()
         };
+
         let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
-        assert_eq!(quad.top_left.x, -1.0);
-        assert_eq!(quad.top_left.y, -1.0);
-        assert_eq!(quad.bottom_right.x, 0.0);
-        assert_eq!(quad.bottom_right.y, 0.0);
+        assert_eq!(quad.top_left, Vertex::new(-1.0, -1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(0.0, 0.0));
+
+        let quad = Quad::from_1x1(&build(vec![&MTTT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(-1.0, -1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(0.0, 0.0));
+
+        let quad = Quad::from_1x1(&build(vec![&TTMT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(-1.0, -1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(0.0, 0.0));
     }
 
     #[test]
@@ -295,11 +300,18 @@ mod tests {
             trim_transparent: false,
             ..defaults()
         };
+
         let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
-        assert_eq!(quad.top_left.x, -1.0);
-        assert_eq!(quad.top_left.y, -1.0);
-        assert_eq!(quad.bottom_right.x, 0.0);
-        assert_eq!(quad.bottom_right.y, 0.0);
+        assert_eq!(quad.top_left, Vertex::new(-1.0, -1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(0.0, 0.0));
+
+        let quad = Quad::from_1x1(&build(vec![&MTTT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(-2.0, -2.0));
+        assert_eq!(quad.bottom_right, Vertex::new(-1.0, -1.0));
+
+        let quad = Quad::from_1x1(&build(vec![&TTMT], &prefs)[0]);
+        assert_eq!(quad.top_left, Vertex::new(-2.0, -1.0));
+        assert_eq!(quad.bottom_right, Vertex::new(-1.0, 0.0));
     }
 
     #[test]
@@ -309,8 +321,7 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0]);
-        assert_eq!(quad.bottom_right.x, 0.5);
-        assert_eq!(quad.bottom_right.y, 0.5);
+        assert_eq!(quad.bottom_right, Vertex::new(0.5, 0.5));
     }
 
     #[test]
@@ -322,10 +333,8 @@ mod tests {
         let sprites = &build(vec![&R1X1, &(&B1X1, (0.5, 0.5))], &prefs);
         let quad1 = Quad::from_1x1(&sprites[1]);
         let quad2 = Quad::from_1x1(&sprites[0]);
-        assert_eq!(quad1.bottom_right.x, 1.0);
-        assert_eq!(quad1.bottom_right.y, 1.0);
-        assert_eq!(quad2.bottom_right.x, 0.5);
-        assert_eq!(quad2.bottom_right.y, 0.5);
+        assert_eq!(quad1.bottom_right, Vertex::new(1.0, 1.0));
+        assert_eq!(quad2.bottom_right, Vertex::new(0.5, 0.5));
     }
 
     #[test]
@@ -357,6 +366,22 @@ mod tests {
     }
 
     #[test]
+    fn sprite_rect_reflects_pivot_offset() {
+        assert_eq!(
+            build(vec![&(&BGRT, (0.0, 0.0))], &defaults())[0].rect,
+            Rect::new(0.0, 0.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
+            Rect::new(-1.0, -1.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&RGB4X4, (-1.0, 1.0))], &defaults())[0].rect,
+            Rect::new(4.0, -4.0, 4.0, 4.0)
+        );
+    }
+
+    #[test]
     fn sprite_rect_reflects_trimming() {
         let prefs = Prefs {
             trim_transparent: true,
@@ -370,21 +395,61 @@ mod tests {
             build(vec![&TTTM], &prefs)[0].rect,
             Rect::new(1.0, 1.0, 1.0, 1.0)
         );
+        assert_eq!(
+            build(vec![&MTTT], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 1.0, 1.0)
+        );
+        assert_eq!(
+            build(vec![&TTMT], &prefs)[0].rect,
+            Rect::new(0.0, 1.0, 1.0, 1.0)
+        );
     }
 
     #[test]
-    fn sprite_rect_reflects_pivot_offset() {
+    fn sprite_rect_not_affected_by_pivot_offset_when_trim_enabled() {
+        let prefs = Prefs {
+            trim_transparent: true,
+            ..defaults()
+        };
         assert_eq!(
-            build(vec![&(&BGRT, (0.0, 0.0))], &defaults())[0].rect,
-            Rect::new(0.0, 0.0, 2.0, 2.0)
+            build(vec![&(&BTGT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 1.0, 2.0)
         );
         assert_eq!(
-            build(vec![&(&BGRT, (0.5, 0.5))], &defaults())[0].rect,
-            Rect::new(-1.0, -1.0, 2.0, 2.0)
+            build(vec![&(&TTTM, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(1.0, 1.0, 1.0, 1.0)
         );
         assert_eq!(
-            build(vec![&(&RGB4X4, (-1.0, 1.0))], &defaults())[0].rect,
-            Rect::new(4.0, -4.0, 4.0, 4.0)
+            build(vec![&(&MTTT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(0.0, 0.0, 1.0, 1.0)
+        );
+        assert_eq!(
+            build(vec![&(&TTMT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(0.0, 1.0, 1.0, 1.0)
+        );
+    }
+
+    #[test]
+    fn sprite_rect_affected_by_pivot_offset_when_trim_disabled() {
+        let prefs = Prefs {
+            trim_transparent: false,
+            ..defaults()
+        };
+        assert_eq!(
+            build(vec![&(&BTGT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(-2.0, -2.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&TTTM, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(-2.0, -2.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&MTTT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(-2.0, -2.0, 2.0, 2.0)
+        );
+        assert_eq!(
+            build(vec![&(&TTMT, (1.0, 1.0))], &prefs)[0].rect,
+            Rect::new(-2.0, -2.0, 2.0, 2.0)
         );
     }
 
