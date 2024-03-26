@@ -88,7 +88,8 @@ namespace SpriteDicing.Editors
             var rect = EditorGUILayout.GetControlRect();
             rect = EditorGUI.PrefixLabel(rect, -1, defaultPivotContent);
             rect.width = Mathf.Max(50, (rect.width - 4) / 2);
-            DefaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, DefaultPivot);
+            var pivot = new Vector2(Mathf.Clamp01(DefaultPivot.x), Mathf.Clamp01(DefaultPivot.y));
+            DefaultPivotProperty.vector2Value = EditorGUI.Vector2Field(rect, string.Empty, pivot);
             rect.x += rect.width + 5;
             DrawToggleLeft(rect, KeepOriginalPivotProperty, keepOriginalPivotContent);
             EditorGUILayout.EndHorizontal();

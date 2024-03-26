@@ -68,6 +68,13 @@ fn build_it(mut ctx: Context) -> DicedSprite {
         rect.y = -pivot.y * rect.height;
     }
 
+    let offset_x = ctx.diced.size.width as f32 / ctx.ppu - rect.width;
+    let offset_y = ctx.diced.size.height as f32 / ctx.ppu - rect.height;
+    for idx in 0..ctx.vertices.len() {
+        ctx.vertices[idx].x -= offset_x;
+        ctx.vertices[idx].y -= offset_y;
+    }
+
     DicedSprite {
         id: ctx.diced.id.to_owned(),
         atlas_index: ctx.atlas_idx,
@@ -220,6 +227,8 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.top_left.x, 0.0);
+        assert_eq!(quad.top_left.y, 0.0);
         assert_eq!(quad.bottom_right.x, 1.0);
         assert_eq!(quad.bottom_right.y, 1.0);
     }
@@ -231,36 +240,70 @@ mod tests {
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&B1X1], &prefs)[0]);
+        assert_eq!(quad.top_left.x, -0.5);
+        assert_eq!(quad.top_left.y, -0.5);
         assert_eq!(quad.bottom_right.x, 0.5);
         assert_eq!(quad.bottom_right.y, 0.5);
     }
 
     #[test]
-    fn when_trim_enabled_vertices_are_offset_over_transparent_areas() {
+    fn when_trim_enabled_vertices_are_not_offset_over_transparent_areas() {
         let prefs = Prefs {
-            pivot: Pivot { x: 0.5, y: 0.5 },
+            pivot: Pivot { x: 0.0, y: 0.0 },
             trim_transparent: true,
-            ..defaults()
-        };
-        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
-        assert_eq!(quad.top_left.x, 0.5);
-        assert_eq!(quad.top_left.y, 0.5);
-    }
-
-    #[test]
-    fn when_trim_disabled_vertices_are_not_offset_over_transparent_areas() {
-        let prefs = Prefs {
-            pivot: Pivot { x: 0.5, y: 0.5 },
-            trim_transparent: false,
             ..defaults()
         };
         let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
         assert_eq!(quad.top_left.x, 0.0);
         assert_eq!(quad.top_left.y, 0.0);
+        assert_eq!(quad.bottom_right.x, 1.0);
+        assert_eq!(quad.bottom_right.y, 1.0);
     }
 
     #[test]
-    fn sprite_pivot_overrides_default() {
+    fn when_trim_disabled_vertices_are_offset_over_transparent_areas() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.0, y: 0.0 },
+            trim_transparent: false,
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
+        assert_eq!(quad.top_left.x, 1.0);
+        assert_eq!(quad.top_left.y, 1.0);
+        assert_eq!(quad.bottom_right.x, 2.0);
+        assert_eq!(quad.bottom_right.y, 2.0);
+    }
+
+    #[test]
+    fn when_trim_enabled_pivot_is_reflected_in_vertices_offset() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 1.0, y: 1.0 },
+            trim_transparent: true,
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
+        assert_eq!(quad.top_left.x, -1.0);
+        assert_eq!(quad.top_left.y, -1.0);
+        assert_eq!(quad.bottom_right.x, 0.0);
+        assert_eq!(quad.bottom_right.y, 0.0);
+    }
+
+    #[test]
+    fn when_trim_disabled_pivot_is_reflected_in_vertices_offset() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 1.0, y: 1.0 },
+            trim_transparent: false,
+            ..defaults()
+        };
+        let quad = Quad::from_1x1(&build(vec![&TTTM], &prefs)[0]);
+        assert_eq!(quad.top_left.x, -1.0);
+        assert_eq!(quad.top_left.y, -1.0);
+        assert_eq!(quad.bottom_right.x, 0.0);
+        assert_eq!(quad.bottom_right.y, 0.0);
+    }
+
+    #[test]
+    fn per_sprite_pivot_overrides_default() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
@@ -271,7 +314,7 @@ mod tests {
     }
 
     #[test]
-    fn sprite_pivot_doesnt_leak_to_others() {
+    fn per_sprite_pivot_doesnt_leak_to_others() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()

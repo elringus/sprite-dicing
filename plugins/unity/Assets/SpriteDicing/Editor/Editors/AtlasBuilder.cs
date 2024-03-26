@@ -110,7 +110,7 @@ namespace SpriteDicing.Editors
                 var pivot = DefaultPivot /* or per-sprite */;
                 var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
-                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height - v.y - pivot.y * data.rect.height * 2, 0)).ToArray();
+                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height * (1 - pivot.y * 2) - v.y)).ToArray();
                 var uvs = data.uvs.Select(v => new Vector2(v.u, 1 - v.v)).ToArray();
                 var triangles = data.indices.Select(i => (ushort)i).ToArray();
                 sprite.name = data.id;
