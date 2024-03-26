@@ -22,35 +22,35 @@ struct Args {
     format: Format,
     /// The size of a single diced unit, in pixels.
     #[arg(short, long, default_value_t = 64)]
-    pub size: u32,
+    size: u32,
     /// The size of border between adjacent diced units, in pixels.
     #[arg(short, long, default_value_t = 2)]
-    pub pad: u32,
+    pad: u32,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates.
     #[arg(short, long, default_value_t = 0.0)]
-    pub inset: f32,
+    inset: f32,
     /// Trim transparent areas on the built meshes.
     #[arg(short, long, default_value_t = false)]
-    pub trim: bool,
+    trim: bool,
     /// Maximum size of a single generated atlas texture.
     #[arg(short, long, default_value_t = 2048)]
-    pub limit: u32,
+    limit: u32,
     /// Force atlas size to always be square.
     #[arg(long, default_value_t = false)]
-    pub square: bool,
+    square: bool,
     /// Force atlas size to always be power of two.
     #[arg(long, default_value_t = false)]
-    pub pot: bool,
+    pot: bool,
     /// Pixel per unit ratio of the diced sprite mesh vertices.
     #[arg(long, default_value_t = 100.0)]
-    pub ppu: f32,
+    ppu: f32,
     /// Origin of the diced sprite mesh, in relative offsets from top-left corner.
     #[arg(long, num_args = 2, default_values_t = [0.5, 0.5])]
-    pub pivot: Vec<f32>,
+    pivot: Vec<f32>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
-pub enum Format {
+enum Format {
     Png,
     Jpeg,
     Webp,
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
         atlas_square: args.square,
         atlas_pot: args.pot,
         ppu: args.ppu,
-        pivot: Pivot::new(args.pivot[0], args.pivot[1])
+        pivot: Pivot::new(args.pivot[0], args.pivot[1]),
     };
     sprite_dicing::dice_in_dir(&args.dir, &fs_prefs, &prefs)
 }
