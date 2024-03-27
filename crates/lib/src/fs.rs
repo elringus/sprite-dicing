@@ -7,15 +7,15 @@
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::error::{DecodingError, ImageFormatHint};
 use image::{ImageError, ImageFormat};
-use std::{fs, fs::File, io::BufWriter, path::Path};
+use std::{fs, fs::File, io::BufWriter, path::Path, path::PathBuf};
 
 use crate::models::*;
 
 /// Preferences for dicing operations involving image encoding and file system access.
 #[derive(Debug, Clone)]
-pub struct FsPrefs<'a> {
+pub struct FsPrefs {
     /// Directory path to write generated data; will use input directory when not specified.
-    pub out: Option<&'a Path>,
+    pub out: Option<PathBuf>,
     /// When recursive, will use the separator to join ID of nested sprites; false by default.
     pub recursive: bool,
     /// When recursive enabled, will use the separator when building sprite IDs; '/' by default.
@@ -24,7 +24,7 @@ pub struct FsPrefs<'a> {
     pub atlas_format: AtlasFormat,
 }
 
-impl Default for FsPrefs<'_> {
+impl Default for FsPrefs {
     fn default() -> Self {
         Self {
             out: None,
@@ -71,7 +71,7 @@ impl AtlasFormat {
 pub fn dice_in_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> {
     let sources = collect_sources(dir, dir, fs_prefs)?;
     let diced = crate::dice(&sources, prefs)?;
-    let out_dir = fs_prefs.out.unwrap_or(dir);
+    let out_dir = fs_prefs.out.as_deref().unwrap_or(dir);
     write_atlases(diced.atlases, out_dir, &fs_prefs.atlas_format)?;
     write_sprites(diced.sprites, out_dir)
 }

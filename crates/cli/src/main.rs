@@ -73,7 +73,7 @@ impl From<Format> for AtlasFormat {
 fn main() -> Result<()> {
     let args = Args::parse();
     let fs_prefs = FsPrefs {
-        out: args.out.as_deref(),
+        out: args.out,
         recursive: args.recursive,
         separator: args.separator,
         atlas_format: args.format.into(),
