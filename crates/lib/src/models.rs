@@ -150,6 +150,16 @@ impl Texture {
         }
     }
     #[cfg(feature = "fs")]
+    pub fn from_dynamic(img: &image::DynamicImage) -> Result<Self> {
+        let rgba = img.as_rgba8().ok_or(image::error::ImageError::Decoding(
+            image::error::DecodingError::new(
+                image::error::ImageFormatHint::Unknown,
+                "Failed to create texture from dynamic image.",
+            ),
+        ))?;
+        Ok(Texture::from_image(rgba))
+    }
+    #[cfg(feature = "fs")]
     pub fn to_image(self) -> Result<image::RgbaImage> {
         let buf = self.pixels.into_iter().flat_map(Pixel::to_raw).collect();
         image::RgbaImage::from_raw(self.width, self.height, buf).ok_or(Error::Image(

@@ -6,6 +6,7 @@
 mod builder;
 mod dicer;
 mod fixtures;
+#[cfg(feature = "fs")]
 mod fs;
 mod models;
 mod packer;

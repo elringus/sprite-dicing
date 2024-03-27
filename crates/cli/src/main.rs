@@ -89,5 +89,5 @@ fn main() -> Result<()> {
         ppu: args.ppu,
         pivot: Pivot::new(args.pivot[0], args.pivot[1]),
     };
-    sprite_dicing::dice_in_dir(&args.dir, &fs_prefs, &prefs)
+    sprite_dicing::dice_dir(&args.dir, &fs_prefs, &prefs)
 }

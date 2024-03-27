@@ -4,7 +4,7 @@ use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs};
 use std::ffi::{c_char, CStr};
 use std::path::Path;
 
-/// ABI wrapper over [sprite_dicing::dice_in_dir].
+/// ABI wrapper over [sprite_dicing::dice_dir].
 ///
 /// # Safety
 ///
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn dice_in_dir(
             y: pivot_y,
         },
     };
-    sprite_dicing::dice_in_dir(dir, &fs_prefs, &prefs).unwrap();
+    sprite_dicing::dice_dir(dir, &fs_prefs, &prefs).unwrap();
 }
 
 unsafe fn to_str<'a>(str: *const c_char) -> &'a str {
