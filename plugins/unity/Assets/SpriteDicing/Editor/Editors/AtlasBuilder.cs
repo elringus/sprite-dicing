@@ -55,7 +55,10 @@ namespace SpriteDicing.Editors
             UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures.Select(t => t.Texture));
         }
 
-        private void BuildRust ()
+        private static readonly MethodInfo createSpriteMethod =
+            typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
+
+        private unsafe void BuildRust ()
         {
             var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
@@ -64,22 +67,41 @@ namespace SpriteDicing.Editors
 
             DisplayProgressBar("Dicing sources...", 1);
 
-            dice_in_dir(
-                dir: inDir,
-                @out: outDir,
-                recursive: IncludeSubfolders,
-                separator: Separator,
-                unit_size: (uint)UnitSize,
-                padding: (uint)Padding,
-                uv_inset: UVInset,
-                trim_transparent: TrimTransparent,
-                atlas_size_limit: (uint)AtlasSizeLimit,
-                atlas_square: ForceSquare,
-                atlas_pot: ForcePot,
-                ppu: PPU,
-                pivot_x: DefaultPivot.x,
-                pivot_y: DefaultPivot.y
-            );
+            var sourceSprites = sourceTextures.Select(s => new CSprite {
+                id = Marshal.StringToHGlobalAnsi(s.Name),
+                bytes = default,
+                extension = default,
+                has_pivot = false,
+                pivot_x = 0,
+                pivot_y = 0
+            }).ToArray();
+
+            var artifacts = default(CArtifacts);
+
+            #pragma warning disable CS8500
+            fixed (CSprite* spritesPtr = &sourceSprites[0])
+                #pragma warning restore CS8500
+                artifacts = dice(
+                    new CSlice<CSprite> {
+                        ptr = spritesPtr,
+                        len = (ulong)sourceSprites.Length
+                    },
+                    new CPrefs {
+                        unit_size = 0,
+                        padding = 0,
+                        uv_inset = 0,
+                        trim_transparent = false,
+                        atlas_size_limit = 0,
+                        atlas_square = false,
+                        atlas_pot = false,
+                        atlas_format = CAtlasFormat.Png,
+                        ppu = 0,
+                        pivot_x = 0,
+                        pivot_y = 0
+                    }
+                );
+
+            var spritesJson = Marshal.PtrToStringAnsi(artifacts.sprites);
 
             DisplayProgressBar("Writing atlases...", 1);
 
@@ -126,25 +148,52 @@ namespace SpriteDicing.Editors
         }
 
         [DllImport("sprite_dicing")]
-        private static extern void dice_in_dir (
-            string dir,
-            string @out,
-            bool recursive,
-            string separator,
-            uint unit_size,
-            uint padding,
-            float uv_inset,
-            bool trim_transparent,
-            uint atlas_size_limit,
-            bool atlas_square,
-            bool atlas_pot,
-            float ppu,
-            float pivot_x,
-            float pivot_y
-        );
+        private static extern CArtifacts dice (CSlice<CSprite> sprites, CPrefs prefs);
 
-        private static readonly MethodInfo createSpriteMethod =
-            typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CSprite
+        {
+            public IntPtr id;
+            public CSlice<byte> bytes;
+            public IntPtr extension;
+            public bool has_pivot;
+            public float pivot_x;
+            public float pivot_y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CPrefs
+        {
+            public uint unit_size;
+            public uint padding;
+            public float uv_inset;
+            public bool trim_transparent;
+            public uint atlas_size_limit;
+            public bool atlas_square;
+            public bool atlas_pot;
+            public CAtlasFormat atlas_format;
+            public float ppu;
+            public float pivot_x;
+            public float pivot_y;
+        }
+
+        private enum CAtlasFormat { Png, Jpeg, Webp, Tga, Tiff }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CArtifacts
+        {
+            public CSlice<CSlice<short>> atlases;
+            public IntPtr sprites;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private unsafe struct CSlice<T>
+        {
+            #pragma warning disable CS8500
+            public T* ptr;
+            #pragma warning restore CS8500
+            public UInt64 len;
+        }
 
         [Serializable]
         public struct DicedSprites
