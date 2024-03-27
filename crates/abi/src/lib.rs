@@ -4,61 +4,50 @@ use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs};
 use std::ffi::{c_char, CStr};
 use std::path::Path;
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct CPrefs {
-    pub out: *const c_char,
-    pub recursive: bool,
-    pub separator: *const c_char,
-    pub size: u32,
-    pub pad: u32,
-    pub inset: f32,
-    pub trim: bool,
-    pub limit: u32,
-    pub square: bool,
-    pub pot: bool,
-    pub ppu: f32,
-    pub px: f32,
-    pub py: f32,
-}
-
 /// ABI wrapper over [sprite_dicing::dice_in_dir].
 ///
 /// # Safety
 ///
 /// Inherent to C/C++ ABI.
 #[no_mangle]
-pub unsafe extern "C" fn dice_in_dir(dir: *const c_char, prefs: CPrefs) {
+pub unsafe extern "C" fn dice_in_dir(
+    dir: *const c_char,
+    out: *const c_char,
+    recursive: bool,
+    separator: *const c_char,
+    unit_size: u32,
+    padding: u32,
+    uv_inset: f32,
+    trim_transparent: bool,
+    atlas_size_limit: u32,
+    atlas_square: bool,
+    atlas_pot: bool,
+    ppu: f32,
+    pivot_x: f32,
+    pivot_y: f32,
+) {
     let dir = Path::new(to_str(dir));
-    let fs_prefs = to_fs_prefs(&prefs);
-    let prefs = to_prefs(&prefs);
-    sprite_dicing::dice_in_dir(dir, &fs_prefs, &prefs).unwrap();
-}
-
-unsafe fn to_fs_prefs(prefs: &CPrefs) -> FsPrefs {
-    FsPrefs {
-        out: Some(Path::new(to_str(prefs.out)).to_owned()),
-        recursive: prefs.recursive,
-        separator: to_str(prefs.separator).to_owned(),
+    let fs_prefs = FsPrefs {
+        out: Some(Path::new(to_str(out)).to_owned()),
+        recursive,
+        separator: to_str(separator).to_owned(),
         atlas_format: AtlasFormat::Png,
-    }
-}
-
-fn to_prefs(prefs: &CPrefs) -> Prefs {
-    Prefs {
-        unit_size: prefs.size,
-        padding: prefs.pad,
-        uv_inset: prefs.inset,
-        trim_transparent: prefs.trim,
-        atlas_size_limit: prefs.limit,
-        atlas_square: prefs.square,
-        atlas_pot: prefs.pot,
-        ppu: prefs.ppu,
+    };
+    let prefs = Prefs {
+        unit_size,
+        padding,
+        uv_inset,
+        trim_transparent,
+        atlas_size_limit,
+        atlas_square,
+        atlas_pot,
+        ppu,
         pivot: Pivot {
-            x: prefs.px,
-            y: prefs.py,
+            x: pivot_x,
+            y: pivot_y,
         },
-    }
+    };
+    sprite_dicing::dice_in_dir(dir, &fs_prefs, &prefs).unwrap();
 }
 
 unsafe fn to_str<'a>(str: *const c_char) -> &'a str {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
@@ -58,25 +59,27 @@ namespace SpriteDicing.Editors
         {
             var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
+            var inDir = Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder));
             var outDir = Path.GetFullPath(Path.GetDirectoryName(atlasPath));
 
             DisplayProgressBar("Dicing sources...", 1);
 
-            System.Diagnostics.Process.Start(Path.GetFullPath("Assets/dice-windows-x64.exe"),
-                $"\"{Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder))}\"" +
-                $" --out \"{outDir}\"" +
-                (IncludeSubfolders ? " --recursive" : "") +
-                $" --separator {Separator}" +
-                $" --size {UnitSize}" +
-                $" --pad {Padding}" +
-                $" --inset {UVInset}" +
-                (TrimTransparent ? " --trim" : "") +
-                $" --limit {AtlasSizeLimit}" +
-                (ForceSquare ? " --square" : "") +
-                (ForcePot ? " --pot" : "") +
-                $" --ppu {PPU}" +
-                $" --pivot {DefaultPivot.x} {DefaultPivot.y}"
-            )?.WaitForExit();
+            dice_in_dir(
+                dir: inDir,
+                @out: outDir,
+                recursive: IncludeSubfolders,
+                separator: Separator,
+                unit_size: (uint)UnitSize,
+                padding: (uint)Padding,
+                uv_inset: UVInset,
+                trim_transparent: TrimTransparent,
+                atlas_size_limit: (uint)AtlasSizeLimit,
+                atlas_square: ForceSquare,
+                atlas_pot: ForcePot,
+                ppu: PPU,
+                pivot_x: DefaultPivot.x,
+                pivot_y: DefaultPivot.y
+            );
 
             DisplayProgressBar("Writing atlases...", 1);
 
@@ -121,6 +124,24 @@ namespace SpriteDicing.Editors
                 return sprite;
             }
         }
+
+        [DllImport("sprite_dicing")]
+        private static extern void dice_in_dir (
+            string dir,
+            string @out,
+            bool recursive,
+            string separator,
+            uint unit_size,
+            uint padding,
+            float uv_inset,
+            bool trim_transparent,
+            uint atlas_size_limit,
+            bool atlas_square,
+            bool atlas_pot,
+            float ppu,
+            float pivot_x,
+            float pivot_y
+        );
 
         private static readonly MethodInfo createSpriteMethod =
             typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
