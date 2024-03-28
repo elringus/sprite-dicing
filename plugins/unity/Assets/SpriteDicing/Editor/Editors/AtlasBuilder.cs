@@ -99,7 +99,7 @@ namespace SpriteDicing.Editors
                 pivot_x = DefaultPivot.x,
                 pivot_y = DefaultPivot.y,
                 ppu = PPU,
-                atlas_format = 0
+                atlas_format = CAtlasFormat.Png
             };
 
             var artifacts = dice(cSliceOfSprites, cPrefs);
@@ -109,10 +109,10 @@ namespace SpriteDicing.Editors
             DisplayProgressBar("Writing atlases...", 1);
 
             Debug.Log($"artifacts.atlases {{ Ptr: {artifacts.atlases.ptr} Len: {artifacts.atlases.len} }}");
-            var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, artifacts.atlases.len);
+            var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, (int)artifacts.atlases.len);
             foreach (var slice in atlasSlices)
                 Debug.Log($"AtlasSlice (bytes) {{ Ptr: {slice.ptr} Len: {slice.len / 1000000f:F1} }}");
-            var atlasBytes = Array.Empty<byte[]>(); //atlasSlices.Select(s => ToManagedBytes(s.ptr, s.len)).ToArray();
+            var atlasBytes = atlasSlices.Select(s => ToManagedBytes(s.ptr, (int)s.len)).ToArray();
             var atlasPaths = new string[atlasBytes.Length];
             for (var i = 0; i < atlasBytes.Length; i++)
             {
@@ -155,21 +155,19 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private static T[] ToManagedStructs<T> (IntPtr ptr, ulong length)
+        private static T[] ToManagedStructs<T> (IntPtr ptr, int length)
         {
-            return new[] { Marshal.PtrToStructure<T>(ptr) };
+            var size = Marshal.SizeOf(typeof(T));
+            Debug.Log(size);
+            var structs = new T[length];
 
-            // var size = Marshal.SizeOf(typeof(T));
-            // Debug.Log(size);
-            // var structs = new T[length];
-            //
-            // for (long i = 0; i < (long)length; i++)
-            // {
-            //     var ins = new IntPtr(ptr.ToInt64() + i * size);
-            //     structs[i] = Marshal.PtrToStructure<T>(ins);
-            // }
-            //
-            // return structs;
+            for (long i = 0; i < length; i++)
+            {
+                var ins = new IntPtr(ptr.ToInt64() + i * size);
+                structs[i] = Marshal.PtrToStructure<T>(ins);
+            }
+
+            return structs;
         }
 
         private static byte[] ToManagedBytes (IntPtr ptr, int length)
@@ -209,9 +207,18 @@ namespace SpriteDicing.Editors
             public float pivot_x;
             public float pivot_y;
             public float ppu;
-            public byte atlas_format;
+            public CAtlasFormat atlas_format;
             public bool atlas_square;
             public bool atlas_pot;
+        }
+
+        public enum CAtlasFormat
+        {
+            Png,
+            Jpeg,
+            Webp,
+            Tga,
+            Tiff,
         }
 
         [StructLayout(LayoutKind.Sequential)]
