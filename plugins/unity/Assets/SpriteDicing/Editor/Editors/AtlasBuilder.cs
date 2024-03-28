@@ -58,7 +58,7 @@ namespace SpriteDicing.Editors
         private static readonly MethodInfo createSpriteMethod =
             typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
 
-        private unsafe void BuildRust ()
+        private void BuildRust ()
         {
             var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
@@ -67,57 +67,65 @@ namespace SpriteDicing.Editors
 
             DisplayProgressBar("Dicing sources...", 1);
 
-            var sourceSprites = sourceTextures.Select(s => new CSprite {
-                id = Marshal.StringToHGlobalAnsi(s.Name),
-                bytes = default,
-                extension = default,
-                has_pivot = false,
-                pivot_x = 0,
-                pivot_y = 0
-            }).ToArray();
-
-            var artifacts = default(CArtifacts);
-
-            #pragma warning disable CS8500
-            fixed (CSprite* spritesPtr = &sourceSprites[0])
-                #pragma warning restore CS8500
-                artifacts = dice(
-                    new CSlice<CSprite> {
-                        ptr = spritesPtr,
-                        len = (ulong)sourceSprites.Length
+            var cBytes = new List<GCHandle>();
+            var cSprites = Pin(sourceTextures.Select(s => {
+                var path = AssetDatabase.GetAssetPath(s.Texture);
+                var bytes = Pin(File.ReadAllBytes(path));
+                cBytes.Add(bytes);
+                return new CSprite {
+                    id = Marshal.StringToHGlobalAnsi(s.Name),
+                    bytes = new CSlice {
+                        ptr = bytes.AddrOfPinnedObject(),
+                        len = (ulong)((byte[])bytes.Target).Length
                     },
-                    new CPrefs {
-                        unit_size = 0,
-                        padding = 0,
-                        uv_inset = 0,
-                        trim_transparent = false,
-                        atlas_size_limit = 0,
-                        atlas_square = false,
-                        atlas_pot = false,
-                        atlas_format = CAtlasFormat.Png,
-                        ppu = 0,
-                        pivot_x = 0,
-                        pivot_y = 0
-                    }
-                );
+                    extension = Marshal.StringToHGlobalAnsi(Path.GetExtension(path).Substring(1)),
+                    has_pivot = s.Pivot.HasValue,
+                    pivot_x = s.Pivot.GetValueOrDefault().x,
+                    pivot_y = s.Pivot.GetValueOrDefault().y
+                };
+            }).ToArray());
+            var cSliceOfSprites = new CSlice {
+                ptr = cSprites.AddrOfPinnedObject(),
+                len = (ulong)((CSprite[])cSprites.Target).Length
+            };
+            var cPrefs = new CPrefs {
+                unit_size = (uint)UnitSize,
+                padding = (uint)Padding,
+                uv_inset = UVInset,
+                trim_transparent = TrimTransparent,
+                atlas_size_limit = (uint)AtlasSizeLimit,
+                atlas_square = ForceSquare,
+                atlas_pot = ForcePot,
+                pivot_x = DefaultPivot.x,
+                pivot_y = DefaultPivot.y,
+                ppu = PPU,
+                atlas_format = 0
+            };
 
-            var spritesJson = Marshal.PtrToStringAnsi(artifacts.sprites);
+            var artifacts = dice(cSliceOfSprites, cPrefs);
+            // cBytes.ForEach(c => c.Free());
+            // cSprites.Free();
 
             DisplayProgressBar("Writing atlases...", 1);
 
-            var atlasPaths = Directory.GetFiles(outDir, "atlas_*.png");
-            for (var i = 0; i < atlasPaths.Length; i++)
+            Debug.Log($"artifacts.atlases {{ Ptr: {artifacts.atlases.ptr} Len: {artifacts.atlases.len} }}");
+            var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, artifacts.atlases.len);
+            foreach (var slice in atlasSlices)
+                Debug.Log($"AtlasSlice (bytes) {{ Ptr: {slice.ptr} Len: {slice.len / 1000000f:F1} }}");
+            var atlasBytes = Array.Empty<byte[]>(); //atlasSlices.Select(s => ToManagedBytes(s.ptr, s.len)).ToArray();
+            var atlasPaths = new string[atlasBytes.Length];
+            for (var i = 0; i < atlasBytes.Length; i++)
             {
                 var path = Path.Combine(outDir, $"{atlasName} 00{i + 1}.png");
-                if (File.Exists(path)) File.Delete(path);
-                File.Move(atlasPaths[i], path);
+                File.WriteAllBytes(path, atlasBytes[i]);
                 atlasPaths[i] = Path.Combine(Path.GetDirectoryName(atlasPath), Path.GetFileName(path));
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             DisplayProgressBar("Building sprites...", 1);
 
-            var json = File.ReadAllText(Path.Combine(outDir, "sprites.json"));
+            // TODO: Marshal.PtrToStringUTF8
+            var json = Marshal.PtrToStringAnsi(artifacts.sprites);
             var diced = JsonUtility.FromJson<DicedSprites>($"{{ \"sprites\": {json} }}");
             var sprites = diced.sprites.Select(BuildSprite);
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
@@ -147,14 +155,43 @@ namespace SpriteDicing.Editors
             }
         }
 
+        private static T[] ToManagedStructs<T> (IntPtr ptr, ulong length)
+        {
+            return new[] { Marshal.PtrToStructure<T>(ptr) };
+
+            // var size = Marshal.SizeOf(typeof(T));
+            // Debug.Log(size);
+            // var structs = new T[length];
+            //
+            // for (long i = 0; i < (long)length; i++)
+            // {
+            //     var ins = new IntPtr(ptr.ToInt64() + i * size);
+            //     structs[i] = Marshal.PtrToStructure<T>(ins);
+            // }
+            //
+            // return structs;
+        }
+
+        private static byte[] ToManagedBytes (IntPtr ptr, int length)
+        {
+            var array = new byte[length];
+            Marshal.Copy(ptr, array, 0, length);
+            return array;
+        }
+
+        private static GCHandle Pin (object obj)
+        {
+            return GCHandle.Alloc(obj, GCHandleType.Pinned);
+        }
+
         [DllImport("sprite_dicing")]
-        private static extern CArtifacts dice (CSlice<CSprite> sprites, CPrefs prefs);
+        public static extern CArtifacts dice (CSlice sprites, CPrefs prefs);
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CSprite
+        public struct CSprite
         {
             public IntPtr id;
-            public CSlice<byte> bytes;
+            public CSlice bytes;
             public IntPtr extension;
             public bool has_pivot;
             public float pivot_x;
@@ -162,37 +199,33 @@ namespace SpriteDicing.Editors
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CPrefs
+        public struct CPrefs
         {
             public uint unit_size;
             public uint padding;
             public float uv_inset;
             public bool trim_transparent;
             public uint atlas_size_limit;
-            public bool atlas_square;
-            public bool atlas_pot;
-            public CAtlasFormat atlas_format;
-            public float ppu;
             public float pivot_x;
             public float pivot_y;
+            public float ppu;
+            public byte atlas_format;
+            public bool atlas_square;
+            public bool atlas_pot;
         }
 
-        private enum CAtlasFormat { Png, Jpeg, Webp, Tga, Tiff }
-
         [StructLayout(LayoutKind.Sequential)]
-        private struct CArtifacts
+        public struct CArtifacts
         {
-            public CSlice<CSlice<short>> atlases;
+            public CSlice atlases;
             public IntPtr sprites;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private unsafe struct CSlice<T>
+        public struct CSlice
         {
-            #pragma warning disable CS8500
-            public T* ptr;
-            #pragma warning restore CS8500
-            public UInt64 len;
+            public IntPtr ptr;
+            public ulong len;
         }
 
         [Serializable]
