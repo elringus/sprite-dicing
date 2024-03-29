@@ -84,7 +84,6 @@
 //         private static List<Sprite> Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
 //             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false, bool trim = true)
 //         {
-//             // TODO: Don't use loader, dicer and packer here; create mock atlas textures instead.
 //             var textureLoader = new TextureLoader();
 //             var sourceTextures = texturePaths.Select(textureLoader.Load);
 //             var dicer = new TextureDicer(unitSize, padding, trim);
