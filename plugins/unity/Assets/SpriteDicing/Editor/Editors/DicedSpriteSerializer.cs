@@ -104,7 +104,7 @@ namespace SpriteDicing.Editors
         private void SetSpritesProperty (IEnumerable<Sprite> value)
         {
             var fieldInfo = target.GetType().GetField(SpritesProperty.name, BindingFlags.NonPublic | BindingFlags.Instance);
-            if (fieldInfo is null) throw new InvalidOperationException();
+            if (fieldInfo is null) throw new InvalidOperationException("Failed to get sprites property in serialized asset.");
             var list = (List<Sprite>)fieldInfo.GetValue(target);
             list.Clear();
             list.AddRange(value);

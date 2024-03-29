@@ -27,34 +27,11 @@ namespace SpriteDicing.Editors
         {
             try
             {
-                var sourceTextures = CollectSourceTextures();
-                var sourceSprites = sourceTextures.Select(s => {
-                    var path = AssetDatabase.GetAssetPath(s.Texture);
-                    return new Native.SourceSprite {
-                        Id = s.Name,
-                        Bytes = File.ReadAllBytes(path),
-                        Format = Path.GetExtension(path).Substring(1),
-                        Pivot = KeepOriginalPivot && s.Pivot.HasValue
-                            ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y }
-                            : default(Native.Pivot?)
-                    };
-                }).ToArray();
-                var prefs = new Native.Prefs {
-                    UnitSize = (uint)UnitSize,
-                    Padding = (uint)Padding,
-                    UVInset = UVInset,
-                    TrimTransparent = TrimTransparent,
-                    AtlasSizeLimit = (uint)AtlasSizeLimit,
-                    AtlasSquare = ForceSquare,
-                    AtlasPOT = ForcePot,
-                    AtlasFormat = Native.AtlasFormat.PNG,
-                    PPU = PPU,
-                    Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
-                };
-                var artifacts = Native.Dice(sourceSprites, prefs);
+                var sources = CollectSourceSprites();
+                var artifacts = Native.Dice(sources, BuildPrefs());
                 var atlases = WriteAtlases(artifacts.Atlases);
                 BuildDicedSprites(artifacts.Sprites, atlases);
-                UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlases);
+                UpdateCompressionRatio(sources, artifacts.Atlases);
                 artifacts.Dispose();
             }
             catch (Exception e)
@@ -68,14 +45,27 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private SourceTexture[] CollectSourceTextures ()
+        private Native.SourceSprite[] CollectSourceSprites ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
-            var texturePaths = TextureFinder.FindAt(inputFolderPath, IncludeSubfolders);
-            var loader = new TextureLoader(inputFolderPath);
+            var texturePaths = SourceFinder.FindAt(inputFolderPath, IncludeSubfolders);
+            var loader = new SourceLoader(inputFolderPath, Separator, KeepOriginalPivot);
             return texturePaths.Select(loader.Load).ToArray();
         }
+
+        private Native.Prefs BuildPrefs () => new Native.Prefs {
+            UnitSize = (uint)UnitSize,
+            Padding = (uint)Padding,
+            UVInset = UVInset,
+            TrimTransparent = TrimTransparent,
+            AtlasSizeLimit = (uint)AtlasSizeLimit,
+            AtlasSquare = ForceSquare,
+            AtlasPOT = ForcePot,
+            AtlasFormat = Native.AtlasFormat.PNG,
+            PPU = PPU,
+            Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
+        };
 
         private Texture2D[] WriteAtlases (IReadOnlyList<byte[]> atlasBytes)
         {
@@ -132,16 +122,23 @@ namespace SpriteDicing.Editors
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
 
-        private void UpdateCompressionRatio (IEnumerable<Texture2D> sourceTextures, IEnumerable<Texture2D> atlasTextures)
+        private void UpdateCompressionRatio (IEnumerable<Native.SourceSprite> sources, IEnumerable<byte[]> atlases)
         {
-            var sourceSize = sourceTextures.Sum(GetAssetSize);
-            var atlasSize = atlasTextures.Sum(GetAssetSize);
+            var sourceSize = sources.Sum(b => b.Bytes.Length / 1024);
+            var atlasSize = atlases.Sum(b => b.Length / 1024);
             var dataSize = GetDataSize();
             var ratio = sourceSize / (float)(atlasSize + dataSize);
             var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
             LastRatioValueProperty.stringValue = $"{sourceSize} KB / ({atlasSize} KB + {dataSize} KB) = <color={color}>{ratio:F2}</color>";
             serializedObject.ApplyModifiedProperties();
             AssetDatabase.SaveAssets();
+
+            long GetAssetSize (UnityEngine.Object asset)
+            {
+                var assetPath = AssetDatabase.GetAssetPath(asset);
+                if (!File.Exists(assetPath)) return 0;
+                return new FileInfo(assetPath).Length / 1024;
+            }
 
             long GetDataSize ()
             {
@@ -150,13 +147,6 @@ namespace SpriteDicing.Editors
                     for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
                         size += GetAssetSize(SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
                 return size / (EditorSettings.serializationMode == SerializationMode.ForceText ? 2 : 1);
-            }
-
-            long GetAssetSize (UnityEngine.Object asset)
-            {
-                var assetPath = AssetDatabase.GetAssetPath(asset);
-                if (!File.Exists(assetPath)) return 0;
-                return new FileInfo(assetPath).Length / 1024;
             }
         }
 

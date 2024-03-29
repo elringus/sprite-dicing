@@ -7,9 +7,9 @@ using UnityEditor;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for finding paths of the texture assets to dice.
+    /// Finds paths of the source sprite textures to dice.
     /// </summary>
-    public static class TextureFinder
+    public static class SourceFinder
     {
         public static IReadOnlyList<string> FindAt (string folderPath, bool includeSubfolders)
         {

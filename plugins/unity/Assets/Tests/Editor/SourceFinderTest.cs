@@ -2,11 +2,11 @@
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
-using static SpriteDicing.TextureFinder;
+using static SpriteDicing.SourceFinder;
 
 namespace SpriteDicing.Test
 {
-    public class TextureFinderTest
+    public class SourceFinderTest
     {
         [Test]
         public void WhenNullFolderExceptionIsThrown ()
