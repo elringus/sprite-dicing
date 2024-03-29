@@ -5,28 +5,27 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Persists raw bytes of the atlases as <see cref="Texture2D"/> assets.
+    /// Imports raw bytes of the atlases as <see cref="Texture2D"/> assets.
     /// </summary>
-    public class AtlasSerializer
+    public class AtlasImporter
     {
         private readonly string basePath;
         private readonly TextureSettings settings;
         private readonly int maxSize;
 
-        public AtlasSerializer (string basePath, TextureSettings settings, int maxSize)
+        public AtlasImporter (string basePath, TextureSettings settings, int maxSize)
         {
             this.basePath = basePath;
             this.settings = settings;
             this.maxSize = maxSize;
         }
 
-        public Texture2D Serialize (byte[] bytes)
+        public Texture2D Import (byte[] bytes)
         {
             var filePath = BuildFilePath();
-            WriteBytes(bytes, filePath);
-            var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
+            File.WriteAllBytes(filePath, bytes);
             ApplyImportSettings(filePath);
-            return png;
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
         }
 
         private string BuildFilePath ()
@@ -37,20 +36,13 @@ namespace SpriteDicing
             return path;
         }
 
-        private void WriteBytes (byte[] bytes, string filePath)
-        {
-            using (var fileStream = File.Create(filePath))
-                fileStream.Write(bytes, 0, bytes.Length);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-
         private void ApplyImportSettings (string filePath)
         {
+            AssetDatabase.ImportAsset(filePath, ImportAssetOptions.ForceSynchronousImport);
             var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
             settings.ApplyExistingOrDefault(importer);
             importer.maxTextureSize = maxSize;
-            AssetDatabase.ImportAsset(filePath);
+            importer.SaveAndReimport();
         }
     }
 }

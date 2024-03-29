@@ -29,7 +29,7 @@ namespace SpriteDicing.Editors
             {
                 var sources = CollectSourceSprites();
                 var artifacts = Native.Dice(sources, BuildPrefs());
-                var atlases = WriteAtlases(artifacts.Atlases);
+                var atlases = ImportAtlases(artifacts.Atlases);
                 BuildDicedSprites(artifacts.Sprites, atlases);
                 UpdateCompressionRatio(sources, artifacts.Atlases);
                 artifacts.Dispose();
@@ -67,14 +67,20 @@ namespace SpriteDicing.Editors
             Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
         };
 
-        private Texture2D[] WriteAtlases (IReadOnlyList<byte[]> atlasBytes)
+        private Texture2D[] ImportAtlases (IReadOnlyList<byte[]> bytes)
         {
-            DisplayProgressBar("Writing atlases...", .5f);
+            DisplayProgressBar("Importing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
-            var serializer = new AtlasSerializer(basePath, textureSettings, AtlasSizeLimit);
-            var atlasTextures = atlasBytes.Select(serializer.Serialize).ToArray();
+            var serializer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
+            var atlasTextures = new Texture2D[bytes.Count];
+            for (int i = 0; i < bytes.Count; i++)
+            {
+                var progress = .5f + .25f * ((i + 1f) / bytes.Count);
+                DisplayProgressBar($"Importing atlases... ({i + 1} of {bytes.Count})", progress);
+                atlasTextures[i] = serializer.Import(bytes[i]);
+            }
             SaveAtlasTextures(atlasTextures);
             return atlasTextures;
 
@@ -108,16 +114,15 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private void BuildDicedSprites (IReadOnlyCollection<Native.DicedSprite> diced, IReadOnlyList<Texture2D> atlases)
+        private void BuildDicedSprites (IReadOnlyList<Native.DicedSprite> diced, IReadOnlyList<Texture2D> atlases)
         {
             var sprites = new List<Sprite>();
             var builder = new SpriteBuilder(PPU, atlases);
-            var total = diced.Count;
-            var built = 0;
-            foreach (var data in diced)
+            for (int i = 0; i < diced.Count; i++)
             {
-                DisplayProgressBar("Building diced sprites...", .5f + .5f * ++built / total);
-                sprites.Add(builder.Build(data));
+                var progress = .75f + .25f * ((i + 1f) / diced.Count);
+                DisplayProgressBar($"Building diced sprites... ({i + 1} of {diced.Count})", progress);
+                sprites.Add(builder.Build(diced[i]));
             }
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
