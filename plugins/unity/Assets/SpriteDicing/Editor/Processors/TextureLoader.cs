@@ -41,7 +41,8 @@ namespace SpriteDicing
         private Vector2? GetSpritePivotOrNull (string texturePath)
         {
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
-            return sprite ? sprite.pivot : (Vector2?)null;
+            if (!sprite) return null;
+            return sprite.pivot / sprite.rect.size;
         }
 
         private static void EnsureReadable (string path)

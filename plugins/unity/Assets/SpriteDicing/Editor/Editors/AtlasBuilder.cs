@@ -72,7 +72,9 @@ namespace SpriteDicing.Editors
                     Id = s.Name,
                     Bytes = File.ReadAllBytes(path),
                     Format = Path.GetExtension(path).Substring(1),
-                    Pivot = s.Pivot.HasValue ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y } : default
+                    Pivot = KeepOriginalPivot && s.Pivot.HasValue
+                        ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y }
+                        : default(Native.Pivot?)
                 };
             }).ToArray();
             var prefs = new Native.Prefs {
@@ -118,7 +120,7 @@ namespace SpriteDicing.Editors
                 var source = sourceSprites.First(s => s.Id == diced.Id);
                 var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[diced.Atlas]);
                 var rect = new Rect(diced.Rect.X * PPU, diced.Rect.Y * PPU, diced.Rect.Width * PPU, diced.Rect.Height * PPU);
-                var pivot = source.Pivot.HasValue ? new Vector2(source.Pivot.Value.X, source.Pivot.Value.Y) : DefaultPivot;
+                var pivot = KeepOriginalPivot && source.Pivot.HasValue ? new Vector2(source.Pivot.Value.X, source.Pivot.Value.Y) : DefaultPivot;
                 var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
                 var vertices = diced.Vertices.Select(v => new Vector3(v.X, diced.Rect.Height * (1 - pivot.y * 2) - v.Y)).ToArray();
