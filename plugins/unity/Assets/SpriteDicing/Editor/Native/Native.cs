@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace SpriteDicing
 {
-    public static class Native
+    public static unsafe class Native
     {
         // TODO: Readonly structs.
 
@@ -132,7 +132,7 @@ namespace SpriteDicing
         private struct CArtifacts
         {
             public CSlice atlases;
-            public IntPtr sprites;
+            public CSlice sprites;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -145,11 +145,11 @@ namespace SpriteDicing
         [StructLayout(LayoutKind.Sequential)]
         private struct CDicedSprite
         {
-            public string id;
-            public int atlas;
-            public CVertex[] vertices;
-            public CUV[] uvs;
-            public int[] indices;
+            public IntPtr id;
+            public ulong atlas;
+            public CSlice vertices;
+            public CSlice uvs;
+            public CSlice indices;
             public CRect rect;
         }
 
@@ -212,39 +212,89 @@ namespace SpriteDicing
                 atlas_format = (byte)prefs.AtlasFormat
             };
 
-            var artifacts = dice(cSliceOfSprites, cPrefs);
+            var diced = dice(cSliceOfSprites, cPrefs);
 
             cBytes.ForEach(c => c.Free());
             cSprites.Free();
 
-            var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, (int)artifacts.atlases.len);
-            var atlasBytes = atlasSlices.Select(s => ToManagedBytes(s.ptr, (int)s.len)).ToArray();
-            var pointers = atlasSlices.Select(s => s.ptr).Append(artifacts.atlases.ptr).ToArray();
-            return new Artifacts(atlasBytes, Array.Empty<DicedSprite>(), pointers);
+            var atlasSlices = MarshalStructs<CSlice>(diced.atlases);
+            var atlases = atlasSlices.Select(s => MarshalBytes(s.ptr, (int)s.len)).ToArray();
+            var cDicedSprites = MarshalStructs<CDicedSprite>(diced.sprites);
+            var dicedSprites = cDicedSprites.Select(MarshalDicedSprite).ToArray();
+            var pointers = atlasSlices.Select(s => s.ptr)
+                .Append(diced.atlases.ptr)
+                .Append(diced.sprites.ptr)
+                .Concat(cDicedSprites.Select(c => c.vertices.ptr))
+                .Concat(cDicedSprites.Select(c => c.uvs.ptr))
+                .Concat(cDicedSprites.Select(c => c.indices.ptr))
+                .ToArray();
+            return new Artifacts(atlases, dicedSprites, pointers);
         }
 
         [DllImport("sprite_dicing")]
         private static extern CArtifacts dice (CSlice sprites, CPrefs prefs);
 
-        private static T[] ToManagedStructs<T> (IntPtr ptr, int length)
+        private static T[] MarshalStructs<T> (CSlice slice)
         {
             var size = Marshal.SizeOf(typeof(T));
-            var structs = new T[length];
+            var structs = new T[slice.len];
 
-            for (long i = 0; i < length; i++)
+            for (long i = 0; i < (int)slice.len; i++)
             {
-                var ins = new IntPtr(ptr.ToInt64() + i * size);
+                var ins = new IntPtr(slice.ptr.ToInt64() + i * size);
                 structs[i] = Marshal.PtrToStructure<T>(ins);
             }
 
             return structs;
         }
 
-        private static byte[] ToManagedBytes (IntPtr ptr, int length)
+        private static byte[] MarshalBytes (IntPtr ptr, int length)
         {
             var array = new byte[length];
             Marshal.Copy(ptr, array, 0, length);
             return array;
+        }
+
+        private static DicedSprite MarshalDicedSprite (CDicedSprite c)
+        {
+            return new DicedSprite {
+                // TODO: Marshal.PtrToStringUTF8
+                Id = Marshal.PtrToStringAnsi(c.id),
+                Atlas = (int)c.atlas,
+                Vertices = MarshalStructs<CVertex>(c.vertices).Select(MarshalVertex).ToArray(),
+                UVs = MarshalStructs<CUV>(c.vertices).Select(MarshalUV).ToArray(),
+                Indices = MarshalIndices(c.indices),
+                Rect = MarshalRect(c.rect)
+            };
+        }
+
+        private static Vertex MarshalVertex (CVertex c)
+        {
+            return new Vertex { X = c.x, Y = c.y };
+        }
+
+        private static UV MarshalUV (CUV c)
+        {
+            return new UV { U = c.u, V = c.v };
+        }
+
+        private static int[] MarshalIndices (CSlice slice)
+        {
+            var array = new int[slice.len];
+            var longPtr = (ulong*)slice.ptr;
+            for (int i = 0; i < array.Length; ++i)
+                array[i] = (int)*longPtr++;
+            return array;
+        }
+
+        private static Rect MarshalRect (CRect c)
+        {
+            return new Rect {
+                X = c.x,
+                Y = c.y,
+                Width = c.width,
+                Height = c.height
+            };
         }
 
         private static GCHandle Pin (object obj)

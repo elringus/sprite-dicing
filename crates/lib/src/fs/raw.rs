@@ -1,5 +1,4 @@
 use crate::fs::common::*;
-use crate::fs::json;
 use image::error::{DecodingError, ImageFormatHint};
 use image::{ImageError, ImageFormat};
 use std::io::Cursor;
@@ -23,8 +22,8 @@ pub struct RawSprite<'a> {
 pub struct RawArtifacts {
     /// Raw bytes of atlas textures containing unique pixel content of the diced sprites.
     pub atlases: Vec<Vec<u8>>,
-    /// JSON strings of diced sprites with data to reconstruct source spites: mesh, uvs, etc.
-    pub sprites: String,
+    /// Generated diced sprites with data to reconstruct source spites: mesh, uvs, etc.
+    pub sprites: Vec<DicedSprite>,
 }
 
 /// Packs specified raw sprites into raw atlas textures and sprite meshes serialized in JSON.
@@ -44,7 +43,7 @@ pub fn dice_raw(sprites: &[RawSprite], prefs: &Prefs, fmt: &AtlasFormat) -> Resu
         .into_iter()
         .map(|a| encode_raw(a, fmt.image()))
         .collect::<Result<Vec<_>>>()?;
-    let sprites = json::sprites_to_json(&diced.sprites);
+    let sprites = diced.sprites;
     Ok(RawArtifacts { atlases, sprites })
 }
 

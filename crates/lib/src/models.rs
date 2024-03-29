@@ -203,7 +203,7 @@ pub struct DicedSprite {
     /// Local position of the generated sprite mesh vertices.
     pub vertices: Vec<Vertex>,
     /// Atlas texture coordinates mapped to the [vertices] vector.
-    pub uvs: Vec<UV>,
+    pub uvs: Vec<Uv>,
     /// Mesh face (triangle) indices to the [vertices] and [uvs] vectors.
     pub indices: Vec<usize>,
     /// Rect of the sprite in conventional units space, aka boundaries.
@@ -269,16 +269,16 @@ impl Vertex {
 
 /// Represents position on a texture, relative to its dimensions.
 #[derive(Debug, Clone, PartialEq)]
-pub struct UV {
+pub struct Uv {
     /// Position over horizontal axis, relative to texture width, in 0.0 to 1.0 range.
     pub u: f32,
     /// Position over vertical axis, relative to texture height, in 0.0 to 1.0 range.
     pub v: f32,
 }
 
-impl UV {
+impl Uv {
     pub fn new(u: f32, v: f32) -> Self {
-        UV { u, v }
+        Uv { u, v }
     }
 }
 

@@ -26,7 +26,7 @@ struct Context<'a> {
     diced: &'a DicedTexture,
     uv_rects: &'a HashMap<u64, FRect>,
     vertices: Vec<Vertex>,
-    uvs: Vec<UV>,
+    uvs: Vec<Uv>,
     indices: Vec<usize>,
 }
 
@@ -104,10 +104,10 @@ fn build_quad(ctx: &mut Context, unit_rect: &FRect, uv_rect: &FRect) {
     ]);
 
     ctx.uvs.extend([
-        UV { u: u_min, v: v_min },
-        UV { u: u_min, v: v_max },
-        UV { u: u_max, v: v_max },
-        UV { u: u_max, v: v_min },
+        Uv { u: u_min, v: v_min },
+        Uv { u: u_min, v: v_max },
+        Uv { u: u_max, v: v_max },
+        Uv { u: u_max, v: v_min },
     ]);
 
     ctx.indices.extend([i, i + 1, i + 2, i + 2, i + 3, i]);
