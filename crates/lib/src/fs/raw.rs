@@ -12,7 +12,7 @@ pub struct RawSprite<'a> {
     /// Raw bytes content of the texture.
     pub bytes: &'a [u8],
     /// Format of the sprite texture represented as file extension (w/o leading dot).
-    pub extension: String,
+    pub format: String,
     /// Relative position of the sprite origin point on the generated mesh.
     /// When not specified, will use default pivot specified in [Prefs].
     pub pivot: Option<Pivot>,
@@ -56,10 +56,10 @@ fn encode_raw(texture: Texture, fmt: ImageFormat) -> Result<Vec<u8>> {
 }
 
 fn decode_raw(raw: &RawSprite) -> Result<SourceSprite> {
-    let fmt = ImageFormat::from_extension(&raw.extension).ok_or(ImageError::Decoding(
+    let fmt = ImageFormat::from_extension(&raw.format).ok_or(ImageError::Decoding(
         DecodingError::new(
             ImageFormatHint::Unknown,
-            format!("Failed to resolve texture format from '{}'.", raw.extension),
+            format!("Failed to resolve texture format from '{}'.", raw.format),
         ),
     ))?;
     let img = image::load_from_memory_with_format(raw.bytes, fmt)?;

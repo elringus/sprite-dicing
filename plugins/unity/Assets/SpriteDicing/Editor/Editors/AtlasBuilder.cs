@@ -99,7 +99,7 @@ namespace SpriteDicing.Editors
                 pivot_x = DefaultPivot.x,
                 pivot_y = DefaultPivot.y,
                 ppu = PPU,
-                atlas_format = CAtlasFormat.Png
+                atlas_format = 0
             };
 
             var artifacts = dice(cSliceOfSprites, cPrefs);
@@ -191,6 +191,7 @@ namespace SpriteDicing.Editors
             public IntPtr id;
             public CSlice bytes;
             public IntPtr extension;
+            [MarshalAs(UnmanagedType.I1)]
             public bool has_pivot;
             public float pivot_x;
             public float pivot_y;
@@ -202,23 +203,17 @@ namespace SpriteDicing.Editors
             public uint unit_size;
             public uint padding;
             public float uv_inset;
+            [MarshalAs(UnmanagedType.I1)]
             public bool trim_transparent;
             public uint atlas_size_limit;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool atlas_square;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool atlas_pot;
+            public byte atlas_format;
+            public float ppu;
             public float pivot_x;
             public float pivot_y;
-            public float ppu;
-            public CAtlasFormat atlas_format;
-            public bool atlas_square;
-            public bool atlas_pot;
-        }
-
-        public enum CAtlasFormat
-        {
-            Png,
-            Jpeg,
-            Webp,
-            Tga,
-            Tiff,
         }
 
         [StructLayout(LayoutKind.Sequential)]
