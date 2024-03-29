@@ -5,17 +5,19 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Serializes raw bytes as <see cref="Texture2D"/> assets.
+    /// Persists raw bytes of the atlases as <see cref="Texture2D"/> assets.
     /// </summary>
-    public class TextureSerializer
+    public class AtlasSerializer
     {
         private readonly string basePath;
         private readonly TextureSettings settings;
+        private readonly int maxSize;
 
-        public TextureSerializer (string basePath, TextureSettings settings)
+        public AtlasSerializer (string basePath, TextureSettings settings, int maxSize)
         {
             this.basePath = basePath;
             this.settings = settings;
+            this.maxSize = maxSize;
         }
 
         public Texture2D Serialize (byte[] bytes)
@@ -23,8 +25,7 @@ namespace SpriteDicing
             var filePath = BuildFilePath();
             WriteBytes(bytes, filePath);
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
-            var maxSize = Mathf.NextPowerOfTwo(Mathf.Max(png.width, png.height));
-            ApplyImportSettings(filePath, maxSize);
+            ApplyImportSettings(filePath);
             return png;
         }
 
@@ -44,7 +45,7 @@ namespace SpriteDicing
             AssetDatabase.Refresh();
         }
 
-        private void ApplyImportSettings (string filePath, int maxSize)
+        private void ApplyImportSettings (string filePath)
         {
             var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
             settings.ApplyExistingOrDefault(importer);

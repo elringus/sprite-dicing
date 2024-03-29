@@ -83,7 +83,7 @@ namespace SpriteDicing.Editors
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
-            var serializer = new TextureSerializer(basePath, textureSettings);
+            var serializer = new AtlasSerializer(basePath, textureSettings, AtlasSizeLimit);
             var atlasTextures = atlasBytes.Select(serializer.Serialize).ToArray();
             SaveAtlasTextures(atlasTextures);
             return atlasTextures;
