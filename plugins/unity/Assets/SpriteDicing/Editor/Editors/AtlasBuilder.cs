@@ -62,7 +62,7 @@ namespace SpriteDicing.Editors
         {
             var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
-            var inDir = Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder));
+            // var inDir = Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder));
             var outDir = Path.GetFullPath(Path.GetDirectoryName(atlasPath));
 
             DisplayProgressBar("Dicing sources...", 1);
@@ -103,15 +103,12 @@ namespace SpriteDicing.Editors
             };
 
             var artifacts = dice(cSliceOfSprites, cPrefs);
-            // cBytes.ForEach(c => c.Free());
-            // cSprites.Free();
+            cBytes.ForEach(c => c.Free());
+            cSprites.Free();
 
             DisplayProgressBar("Writing atlases...", 1);
 
-            Debug.Log($"artifacts.atlases {{ Ptr: {artifacts.atlases.ptr} Len: {artifacts.atlases.len} }}");
             var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, (int)artifacts.atlases.len);
-            foreach (var slice in atlasSlices)
-                Debug.Log($"AtlasSlice (bytes) {{ Ptr: {slice.ptr} Len: {slice.len / 1000000f:F1} }}");
             var atlasBytes = atlasSlices.Select(s => ToManagedBytes(s.ptr, (int)s.len)).ToArray();
             var atlasPaths = new string[atlasBytes.Length];
             for (var i = 0; i < atlasBytes.Length; i++)
@@ -136,6 +133,10 @@ namespace SpriteDicing.Editors
             var atlasTextures = atlasPaths.Select(AssetDatabase.LoadAssetAtPath<Texture2D>);
             UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures);
 
+            foreach (var slice in atlasSlices)
+                Marshal.FreeHGlobal(slice.ptr);
+            Marshal.FreeHGlobal(artifacts.atlases.ptr);
+
             Sprite BuildSprite (DicedSprite data)
             {
                 var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[data.atlas]);
@@ -158,7 +159,6 @@ namespace SpriteDicing.Editors
         private static T[] ToManagedStructs<T> (IntPtr ptr, int length)
         {
             var size = Marshal.SizeOf(typeof(T));
-            Debug.Log(size);
             var structs = new T[length];
 
             for (long i = 0; i < length; i++)
