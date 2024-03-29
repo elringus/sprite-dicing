@@ -153,6 +153,7 @@ namespace SpriteDicing
             public CSlice uvs;
             public CSlice indices;
             public CRect rect;
+            public CPivot Pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -276,7 +277,8 @@ namespace SpriteDicing
                 Vertices = MarshalSlice<CVertex>(c.vertices).Select(MarshalVertex).ToArray(),
                 UVs = MarshalSlice<CUV>(c.uvs).Select(MarshalUV).ToArray(),
                 Indices = MarshalIndices(c.indices),
-                Rect = MarshalRect(c.rect)
+                Rect = MarshalRect(c.rect),
+                Pivot = MarshalPivot(c.Pivot)
             };
         }
 
@@ -307,6 +309,11 @@ namespace SpriteDicing
                 Width = c.width,
                 Height = c.height
             };
+        }
+
+        private static Pivot MarshalPivot (CPivot c)
+        {
+            return new Pivot { X = c.x, Y = c.y };
         }
 
         private static GCHandle Pin (object obj)
