@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace SpriteDicing
@@ -48,8 +49,8 @@ namespace SpriteDicing
         /// <summary>
         /// Retrieves a diced sprite with the specified name.
         /// </summary>
-        /// <param name="spriteName">Name of the sprite to retrieve.</param>
+        /// <param name="name">Name of the sprite to retrieve.</param>
         /// <returns>Diced sprite with the specified name or null if not found.</returns>
-        public Sprite GetSprite (string spriteName) => sprites.Find(s => s.name == spriteName);
+        [CanBeNull] public Sprite GetSprite (string name) => sprites.Find(s => s.name == name);
     }
 }
