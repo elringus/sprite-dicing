@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
@@ -32,8 +31,8 @@ namespace SpriteDicing.Editors
         {
             try
             {
-                // BuildSharp();
-                BuildRust();
+                // BuildManaged();
+                BuildNative();
             }
             catch (Exception e)
             {
@@ -46,7 +45,7 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private void BuildSharp ()
+        private void BuildManaged ()
         {
             var sourceTextures = CollectSourceTextures();
             var dicedTextures = DiceTextures(sourceTextures);
@@ -58,7 +57,7 @@ namespace SpriteDicing.Editors
         private static readonly MethodInfo createSpriteMethod =
             typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
 
-        private void BuildRust ()
+        private void BuildNative ()
         {
             var sourceTextures = CollectSourceTextures();
             var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
@@ -67,64 +66,43 @@ namespace SpriteDicing.Editors
 
             DisplayProgressBar("Dicing sources...", 1);
 
-            var cBytes = new List<GCHandle>();
-            var cSprites = Pin(sourceTextures.Select(s => {
+            var sourceSprites = sourceTextures.Select(s => {
                 var path = AssetDatabase.GetAssetPath(s.Texture);
-                var bytes = Pin(File.ReadAllBytes(path));
-                cBytes.Add(bytes);
-                return new CSprite {
-                    id = Marshal.StringToHGlobalAnsi(s.Name),
-                    bytes = new CSlice {
-                        ptr = bytes.AddrOfPinnedObject(),
-                        len = (ulong)((byte[])bytes.Target).Length
-                    },
-                    extension = Marshal.StringToHGlobalAnsi(Path.GetExtension(path).Substring(1)),
-                    has_pivot = s.Pivot.HasValue,
-                    pivot_x = s.Pivot.GetValueOrDefault().x,
-                    pivot_y = s.Pivot.GetValueOrDefault().y
+                return new Native.SourceSprite {
+                    Id = s.Name,
+                    Bytes = File.ReadAllBytes(path),
+                    Format = Path.GetExtension(path).Substring(1),
+                    Pivot = s.Pivot.HasValue ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y } : default
                 };
-            }).ToArray());
-            var cSliceOfSprites = new CSlice {
-                ptr = cSprites.AddrOfPinnedObject(),
-                len = (ulong)((CSprite[])cSprites.Target).Length
+            }).ToArray();
+            var prefs = new Native.Prefs {
+                UnitSize = (uint)UnitSize,
+                Padding = (uint)Padding,
+                UVInset = UVInset,
+                TrimTransparent = TrimTransparent,
+                AtlasSizeLimit = (uint)AtlasSizeLimit,
+                AtlasSquare = ForceSquare,
+                AtlasPOT = ForcePot,
+                AtlasFormat = Native.AtlasFormat.PNG,
+                PPU = PPU,
+                Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
             };
-            var cPrefs = new CPrefs {
-                unit_size = (uint)UnitSize,
-                padding = (uint)Padding,
-                uv_inset = UVInset,
-                trim_transparent = TrimTransparent,
-                atlas_size_limit = (uint)AtlasSizeLimit,
-                atlas_square = ForceSquare,
-                atlas_pot = ForcePot,
-                pivot_x = DefaultPivot.x,
-                pivot_y = DefaultPivot.y,
-                ppu = PPU,
-                atlas_format = 0
-            };
-
-            var artifacts = dice(cSliceOfSprites, cPrefs);
-            cBytes.ForEach(c => c.Free());
-            cSprites.Free();
+            var artifacts = Native.Dice(sourceSprites, prefs);
 
             DisplayProgressBar("Writing atlases...", 1);
 
-            var atlasSlices = ToManagedStructs<CSlice>(artifacts.atlases.ptr, (int)artifacts.atlases.len);
-            var atlasBytes = atlasSlices.Select(s => ToManagedBytes(s.ptr, (int)s.len)).ToArray();
-            var atlasPaths = new string[atlasBytes.Length];
-            for (var i = 0; i < atlasBytes.Length; i++)
+            var atlasPaths = new string[artifacts.Atlases.Count];
+            for (var i = 0; i < artifacts.Atlases.Count; i++)
             {
                 var path = Path.Combine(outDir, $"{atlasName} 00{i + 1}.png");
-                File.WriteAllBytes(path, atlasBytes[i]);
+                File.WriteAllBytes(path, artifacts.Atlases[i]);
                 atlasPaths[i] = Path.Combine(Path.GetDirectoryName(atlasPath), Path.GetFileName(path));
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             DisplayProgressBar("Building sprites...", 1);
 
-            // TODO: Marshal.PtrToStringUTF8
-            var json = Marshal.PtrToStringAnsi(artifacts.sprites);
-            var diced = JsonUtility.FromJson<DicedSprites>($"{{ \"sprites\": {json} }}");
-            var sprites = diced.sprites.Select(BuildSprite);
+            var sprites = artifacts.Sprites.Select(BuildSprite);
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
             File.Delete(Path.Combine(outDir, "sprites.json"));
             File.Delete(Path.Combine(outDir, "sprites.json.meta"));
@@ -133,141 +111,26 @@ namespace SpriteDicing.Editors
             var atlasTextures = atlasPaths.Select(AssetDatabase.LoadAssetAtPath<Texture2D>);
             UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures);
 
-            foreach (var slice in atlasSlices)
-                Marshal.FreeHGlobal(slice.ptr);
-            Marshal.FreeHGlobal(artifacts.atlases.ptr);
+            artifacts.Dispose();
 
-            Sprite BuildSprite (DicedSprite data)
+            Sprite BuildSprite (Native.DicedSprite diced)
             {
-                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[data.atlas]);
-                var rect = new UnityEngine.Rect(data.rect.x * PPU, data.rect.y * PPU, data.rect.width * PPU, data.rect.height * PPU);
-                var pivot = DefaultPivot /* or per-sprite */;
+                var source = sourceSprites.First(s => s.Id == diced.Id);
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[diced.Atlas]);
+                var rect = new Rect(diced.Rect.X * PPU, diced.Rect.Y * PPU, diced.Rect.Width * PPU, diced.Rect.Height * PPU);
+                var pivot = source.Pivot.HasValue ? new Vector2(source.Pivot.Value.X, source.Pivot.Value.Y) : DefaultPivot;
                 var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
                 var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
-                var vertices = data.vertices.Select(v => new Vector3(v.x, data.rect.height * (1 - pivot.y * 2) - v.y)).ToArray();
-                var uvs = data.uvs.Select(v => new Vector2(v.u, 1 - v.v)).ToArray();
-                var triangles = data.indices.Select(i => (ushort)i).ToArray();
-                sprite.name = data.id;
+                var vertices = diced.Vertices.Select(v => new Vector3(v.X, diced.Rect.Height * (1 - pivot.y * 2) - v.Y)).ToArray();
+                var uvs = diced.UVs.Select(v => new Vector2(v.U, 1 - v.V)).ToArray();
+                var triangles = diced.Indices.Select(i => (ushort)i).ToArray();
+                sprite.name = diced.Id;
                 sprite.SetVertexCount(vertices.Length);
                 sprite.SetIndices(new NativeArray<ushort>(triangles, Allocator.Temp));
                 sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices, Allocator.Temp));
                 sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs, Allocator.Temp));
                 return sprite;
             }
-        }
-
-        private static T[] ToManagedStructs<T> (IntPtr ptr, int length)
-        {
-            var size = Marshal.SizeOf(typeof(T));
-            var structs = new T[length];
-
-            for (long i = 0; i < length; i++)
-            {
-                var ins = new IntPtr(ptr.ToInt64() + i * size);
-                structs[i] = Marshal.PtrToStructure<T>(ins);
-            }
-
-            return structs;
-        }
-
-        private static byte[] ToManagedBytes (IntPtr ptr, int length)
-        {
-            var array = new byte[length];
-            Marshal.Copy(ptr, array, 0, length);
-            return array;
-        }
-
-        private static GCHandle Pin (object obj)
-        {
-            return GCHandle.Alloc(obj, GCHandleType.Pinned);
-        }
-
-        [DllImport("sprite_dicing")]
-        public static extern CArtifacts dice (CSlice sprites, CPrefs prefs);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CSprite
-        {
-            public IntPtr id;
-            public CSlice bytes;
-            public IntPtr extension;
-            [MarshalAs(UnmanagedType.I1)]
-            public bool has_pivot;
-            public float pivot_x;
-            public float pivot_y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CPrefs
-        {
-            public uint unit_size;
-            public uint padding;
-            public float uv_inset;
-            [MarshalAs(UnmanagedType.I1)]
-            public bool trim_transparent;
-            public uint atlas_size_limit;
-            [MarshalAs(UnmanagedType.I1)]
-            public bool atlas_square;
-            [MarshalAs(UnmanagedType.I1)]
-            public bool atlas_pot;
-            public byte atlas_format;
-            public float ppu;
-            public float pivot_x;
-            public float pivot_y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CArtifacts
-        {
-            public CSlice atlases;
-            public IntPtr sprites;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CSlice
-        {
-            public IntPtr ptr;
-            public ulong len;
-        }
-
-        [Serializable]
-        public struct DicedSprites
-        {
-            public DicedSprite[] sprites;
-        }
-
-        [Serializable]
-        public struct DicedSprite
-        {
-            public string id;
-            public int atlas;
-            public Vertex[] vertices;
-            public UV[] uvs;
-            public int[] indices;
-            public Rect rect;
-        }
-
-        [Serializable]
-        public struct Vertex
-        {
-            public float x;
-            public float y;
-        }
-
-        [Serializable]
-        public struct UV
-        {
-            public float u;
-            public float v;
-        }
-
-        [Serializable]
-        public struct Rect
-        {
-            public float x;
-            public float y;
-            public float width;
-            public float height;
         }
 
         private SourceTexture[] CollectSourceTextures ()
