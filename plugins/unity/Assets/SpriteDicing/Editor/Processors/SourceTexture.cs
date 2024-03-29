@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Represents original texture and associated data required to generate sliced sprite.
+    /// Represents original texture and associated data required to generate diced sprite.
     /// </summary>
     public class SourceTexture
     {

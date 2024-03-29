@@ -64,6 +64,7 @@ mod tests {
                 uvs: vec![Uv::new(0.1, 0.2), Uv::new(0.3, 0.4)],
                 indices: vec![1, 2, 3],
                 rect: Rect::new(0.5, 0.5, 100.0, 50.0),
+                pivot: Pivot::new(0.0, 0.0)
             },
             DicedSprite {
                 id: "img".to_owned(),
@@ -72,6 +73,7 @@ mod tests {
                 uvs: vec![Uv::new(0.01, 0.02)],
                 indices: vec![0],
                 rect: Rect::new(-1.5, 0.0, 0.0, 10.10),
+                pivot: Pivot::new(0.0, 0.0)
             },
         ];
         assert_eq!(

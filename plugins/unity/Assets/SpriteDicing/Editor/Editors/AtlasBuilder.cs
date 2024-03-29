@@ -2,12 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.U2D;
 using static SpriteDicing.Editors.EditorProperties;
 
 namespace SpriteDicing.Editors
@@ -31,8 +27,35 @@ namespace SpriteDicing.Editors
         {
             try
             {
-                // BuildManaged();
-                BuildNative();
+                var sourceTextures = CollectSourceTextures();
+                var sourceSprites = sourceTextures.Select(s => {
+                    var path = AssetDatabase.GetAssetPath(s.Texture);
+                    return new Native.SourceSprite {
+                        Id = s.Name,
+                        Bytes = File.ReadAllBytes(path),
+                        Format = Path.GetExtension(path).Substring(1),
+                        Pivot = KeepOriginalPivot && s.Pivot.HasValue
+                            ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y }
+                            : default(Native.Pivot?)
+                    };
+                }).ToArray();
+                var prefs = new Native.Prefs {
+                    UnitSize = (uint)UnitSize,
+                    Padding = (uint)Padding,
+                    UVInset = UVInset,
+                    TrimTransparent = TrimTransparent,
+                    AtlasSizeLimit = (uint)AtlasSizeLimit,
+                    AtlasSquare = ForceSquare,
+                    AtlasPOT = ForcePot,
+                    AtlasFormat = Native.AtlasFormat.PNG,
+                    PPU = PPU,
+                    Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
+                };
+                var artifacts = Native.Dice(sourceSprites, prefs);
+                var atlases = WriteAtlases(artifacts.Atlases);
+                BuildDicedSprites(artifacts.Sprites, atlases);
+                UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlases);
+                artifacts.Dispose();
             }
             catch (Exception e)
             {
@@ -45,96 +68,6 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private void BuildManaged ()
-        {
-            var sourceTextures = CollectSourceTextures();
-            var dicedTextures = DiceTextures(sourceTextures);
-            var atlasTextures = PackTextures(dicedTextures);
-            BuildDicedSprites(atlasTextures);
-            UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures.Select(t => t.Texture));
-        }
-
-        private static readonly MethodInfo createSpriteMethod =
-            typeof(Sprite).GetMethod("CreateSprite", BindingFlags.NonPublic | BindingFlags.Static);
-
-        private void BuildNative ()
-        {
-            var sourceTextures = CollectSourceTextures();
-            var atlasName = Path.GetFileNameWithoutExtension(atlasPath);
-            // var inDir = Path.GetFullPath(AssetDatabase.GetAssetPath(InputFolder));
-            var outDir = Path.GetFullPath(Path.GetDirectoryName(atlasPath));
-
-            DisplayProgressBar("Dicing sources...", 1);
-
-            var sourceSprites = sourceTextures.Select(s => {
-                var path = AssetDatabase.GetAssetPath(s.Texture);
-                return new Native.SourceSprite {
-                    Id = s.Name,
-                    Bytes = File.ReadAllBytes(path),
-                    Format = Path.GetExtension(path).Substring(1),
-                    Pivot = KeepOriginalPivot && s.Pivot.HasValue
-                        ? new Native.Pivot { X = s.Pivot.Value.x, Y = s.Pivot.Value.y }
-                        : default(Native.Pivot?)
-                };
-            }).ToArray();
-            var prefs = new Native.Prefs {
-                UnitSize = (uint)UnitSize,
-                Padding = (uint)Padding,
-                UVInset = UVInset,
-                TrimTransparent = TrimTransparent,
-                AtlasSizeLimit = (uint)AtlasSizeLimit,
-                AtlasSquare = ForceSquare,
-                AtlasPOT = ForcePot,
-                AtlasFormat = Native.AtlasFormat.PNG,
-                PPU = PPU,
-                Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
-            };
-            var artifacts = Native.Dice(sourceSprites, prefs);
-
-            DisplayProgressBar("Writing atlases...", 1);
-
-            var atlasPaths = new string[artifacts.Atlases.Count];
-            for (var i = 0; i < artifacts.Atlases.Count; i++)
-            {
-                var path = Path.Combine(outDir, $"{atlasName} 00{i + 1}.png");
-                File.WriteAllBytes(path, artifacts.Atlases[i]);
-                atlasPaths[i] = Path.Combine(Path.GetDirectoryName(atlasPath), Path.GetFileName(path));
-            }
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-
-            DisplayProgressBar("Building sprites...", 1);
-
-            var sprites = artifacts.Sprites.Select(BuildSprite);
-            new DicedSpriteSerializer(serializedObject).Serialize(sprites);
-            File.Delete(Path.Combine(outDir, "sprites.json"));
-            File.Delete(Path.Combine(outDir, "sprites.json.meta"));
-            AssetDatabase.Refresh();
-
-            var atlasTextures = atlasPaths.Select(AssetDatabase.LoadAssetAtPath<Texture2D>);
-            UpdateCompressionRatio(sourceTextures.Select(t => t.Texture), atlasTextures);
-
-            artifacts.Dispose();
-
-            Sprite BuildSprite (Native.DicedSprite diced)
-            {
-                var source = sourceSprites.First(s => s.Id == diced.Id);
-                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPaths[diced.Atlas]);
-                var rect = new Rect(diced.Rect.X * PPU, diced.Rect.Y * PPU, diced.Rect.Width * PPU, diced.Rect.Height * PPU);
-                var pivot = KeepOriginalPivot && source.Pivot.HasValue ? new Vector2(source.Pivot.Value.X, source.Pivot.Value.Y) : DefaultPivot;
-                var args = new object[] { texture, rect, pivot, PPU, (uint)0, SpriteMeshType.Tight, Vector4.zero, false };
-                var sprite = (Sprite)createSpriteMethod.Invoke(null, args);
-                var vertices = diced.Vertices.Select(v => new Vector3(v.X, diced.Rect.Height * (1 - pivot.y * 2) - v.Y)).ToArray();
-                var uvs = diced.UVs.Select(v => new Vector2(v.U, 1 - v.V)).ToArray();
-                var triangles = diced.Indices.Select(i => (ushort)i).ToArray();
-                sprite.name = diced.Id;
-                sprite.SetVertexCount(vertices.Length);
-                sprite.SetIndices(new NativeArray<ushort>(triangles, Allocator.Temp));
-                sprite.SetVertexAttribute(VertexAttribute.Position, new NativeArray<Vector3>(vertices, Allocator.Temp));
-                sprite.SetVertexAttribute(VertexAttribute.TexCoord0, new NativeArray<Vector2>(uvs, Allocator.Temp));
-                return sprite;
-            }
-        }
-
         private SourceTexture[] CollectSourceTextures ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
@@ -144,27 +77,14 @@ namespace SpriteDicing.Editors
             return texturePaths.Select(loader.Load).ToArray();
         }
 
-        private List<DicedTexture> DiceTextures (IReadOnlyList<SourceTexture> sourceTextures)
+        private Texture2D[] WriteAtlases (IReadOnlyList<byte[]> atlasBytes)
         {
-            var dicer = new TextureDicer(UnitSize, Padding, TrimTransparent);
-            var dicedTextures = new List<DicedTexture>();
-            for (int i = 0; i < sourceTextures.Count; i++)
-            {
-                DisplayProgressBar("Dicing textures...", .5f * i / sourceTextures.Count);
-                dicedTextures.Add(dicer.Dice(sourceTextures[i]));
-            }
-            return dicedTextures;
-        }
-
-        private List<AtlasTexture> PackTextures (IReadOnlyList<DicedTexture> dicedTextures)
-        {
-            DisplayProgressBar("Packing dices...", .5f);
+            DisplayProgressBar("Writing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
             var serializer = new TextureSerializer(basePath, textureSettings);
-            var packer = new TexturePacker(serializer, UVInset, ForceSquare, ForcePot, AtlasSizeLimit, UnitSize, Padding);
-            var atlasTextures = packer.Pack(dicedTextures);
+            var atlasTextures = atlasBytes.Select(serializer.Serialize).ToArray();
             SaveAtlasTextures(atlasTextures);
             return atlasTextures;
 
@@ -189,25 +109,25 @@ namespace SpriteDicing.Editors
                 TexturesProperty.arraySize = 0;
             }
 
-            void SaveAtlasTextures (IReadOnlyList<AtlasTexture> textures)
+            void SaveAtlasTextures (IReadOnlyList<Texture2D> textures)
             {
                 TexturesProperty.arraySize = textures.Count;
                 for (int i = 0; i < textures.Count; i++)
-                    TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i].Texture;
+                    TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i];
                 serializedObject.ApplyModifiedProperties();
             }
         }
 
-        private void BuildDicedSprites (IReadOnlyCollection<AtlasTexture> atlasTextures)
+        private void BuildDicedSprites (IReadOnlyCollection<Native.DicedSprite> diced, IReadOnlyList<Texture2D> atlases)
         {
             var sprites = new List<Sprite>();
-            var builder = new SpriteBuilder(PPU, DefaultPivot, KeepOriginalPivot);
-            float total = atlasTextures.Sum(a => a.DicedTextures.Count), built = 0;
-            foreach (var atlasTexture in atlasTextures)
-            foreach (var dicedTexture in atlasTexture.DicedTextures)
+            var builder = new SpriteBuilder(PPU, atlases);
+            var total = diced.Count;
+            var built = 0;
+            foreach (var data in diced)
             {
                 DisplayProgressBar("Building diced sprites...", .5f + .5f * ++built / total);
-                sprites.Add(builder.Build(atlasTexture, dicedTexture));
+                sprites.Add(builder.Build(data));
             }
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }

@@ -66,6 +66,7 @@ fn build_it(mut ctx: Context) -> DicedSprite {
         uvs: ctx.uvs,
         indices: ctx.indices,
         rect,
+        pivot: pivot.to_owned(),
     }
 }
 
@@ -315,13 +316,27 @@ mod tests {
     }
 
     #[test]
+    fn when_no_per_sprite_pivot_uses_default() {
+        let prefs = Prefs {
+            pivot: Pivot { x: 0.0, y: 0.0 },
+            ..defaults()
+        };
+        let sprite = &build(vec![&B1X1], &prefs)[0];
+        let quad = Quad::from_1x1(sprite);
+        assert_eq!(quad.bottom_right, Vertex::new(1.0, 1.0));
+        assert_eq!(sprite.pivot, Pivot::new(0.0, 0.0));
+    }
+
+    #[test]
     fn per_sprite_pivot_overrides_default() {
         let prefs = Prefs {
             pivot: Pivot { x: 0.0, y: 0.0 },
             ..defaults()
         };
-        let quad = Quad::from_1x1(&build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0]);
+        let sprite = &build(vec![&(&B1X1, (0.5, 0.5))], &prefs)[0];
+        let quad = Quad::from_1x1(sprite);
         assert_eq!(quad.bottom_right, Vertex::new(0.5, 0.5));
+        assert_eq!(sprite.pivot, Pivot::new(0.5, 0.5));
     }
 
     #[test]
@@ -335,6 +350,8 @@ mod tests {
         let quad2 = Quad::from_1x1(&sprites[0]);
         assert_eq!(quad1.bottom_right, Vertex::new(1.0, 1.0));
         assert_eq!(quad2.bottom_right, Vertex::new(0.5, 0.5));
+        assert_eq!(sprites[1].pivot, Pivot::new(0.0, 0.0));
+        assert_eq!(sprites[0].pivot, Pivot::new(0.5, 0.5));
     }
 
     #[test]

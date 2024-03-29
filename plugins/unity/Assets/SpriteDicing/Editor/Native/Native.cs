@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace SpriteDicing
 {
+    /// <summary>
+    /// Managed wrapper over native dicing library.
+    /// </summary>
     public static unsafe class Native
     {
         // TODO: Readonly structs.
@@ -69,6 +72,7 @@ namespace SpriteDicing
             public IReadOnlyList<UV> UVs { get; set; }
             public IReadOnlyList<int> Indices { get; set; }
             public Rect Rect { get; set; }
+            public Pivot Pivot { get; set; }
         }
 
         public struct Vertex
@@ -105,8 +109,7 @@ namespace SpriteDicing
             public IntPtr format;
             [MarshalAs(UnmanagedType.I1)]
             public bool has_pivot;
-            public float pivot_x;
-            public float pivot_y;
+            public CPivot pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -124,8 +127,7 @@ namespace SpriteDicing
             public bool atlas_pot;
             public byte atlas_format;
             public float ppu;
-            public float pivot_x;
-            public float pivot_y;
+            public CPivot pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -176,6 +178,13 @@ namespace SpriteDicing
             public float height;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CPivot
+        {
+            public float x;
+            public float y;
+        }
+
         public static Artifacts Dice (IEnumerable<SourceSprite> sprites, Prefs prefs)
         {
             var cBytes = new List<GCHandle>();
@@ -190,8 +199,7 @@ namespace SpriteDicing
                     },
                     format = Marshal.StringToHGlobalAnsi(s.Format),
                     has_pivot = s.Pivot.HasValue,
-                    pivot_x = s.Pivot.GetValueOrDefault().X,
-                    pivot_y = s.Pivot.GetValueOrDefault().Y
+                    pivot = new CPivot { x = s.Pivot.GetValueOrDefault().X, y = s.Pivot.GetValueOrDefault().Y }
                 };
             }).ToArray());
             var cSliceOfSprites = new CSlice {
@@ -232,8 +240,7 @@ namespace SpriteDicing
                 atlas_size_limit = prefs.AtlasSizeLimit,
                 atlas_square = prefs.AtlasSquare,
                 atlas_pot = prefs.AtlasPOT,
-                pivot_x = prefs.Pivot.X,
-                pivot_y = prefs.Pivot.Y,
+                pivot = new CPivot { x = prefs.Pivot.X, y = prefs.Pivot.Y },
                 ppu = prefs.PPU,
                 atlas_format = (byte)prefs.AtlasFormat
             };

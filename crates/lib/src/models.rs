@@ -208,6 +208,8 @@ pub struct DicedSprite {
     pub indices: Vec<usize>,
     /// Rect of the sprite in conventional units space, aka boundaries.
     pub rect: Rect,
+    /// Relative position of the sprite origin point on the generated mesh.
+    pub pivot: Pivot,
 }
 
 /// A rectangle in conventional units space.

@@ -5,9 +5,9 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for serializing textures as PNG assets.
+    /// Serializes raw bytes as <see cref="Texture2D"/> assets.
     /// </summary>
-    public class TextureSerializer : ITextureSerializer
+    public class TextureSerializer
     {
         private readonly string basePath;
         private readonly TextureSettings settings;
@@ -18,14 +18,13 @@ namespace SpriteDicing
             this.settings = settings;
         }
 
-        public Texture2D Serialize (Texture2D texture)
+        public Texture2D Serialize (byte[] bytes)
         {
             var filePath = BuildFilePath();
-            SaveAsPNG(texture, filePath);
+            WriteBytes(bytes, filePath);
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
-            var maxSize = Mathf.NextPowerOfTwo(Mathf.Max(texture.width, texture.height));
+            var maxSize = Mathf.NextPowerOfTwo(Mathf.Max(png.width, png.height));
             ApplyImportSettings(filePath, maxSize);
-            Object.DestroyImmediate(texture);
             return png;
         }
 
@@ -37,9 +36,8 @@ namespace SpriteDicing
             return path;
         }
 
-        private void SaveAsPNG (Texture2D texture, string filePath)
+        private void WriteBytes (byte[] bytes, string filePath)
         {
-            var bytes = texture.EncodeToPNG();
             using (var fileStream = File.Create(filePath))
                 fileStream.Write(bytes, 0, bytes.Length);
             AssetDatabase.SaveAssets();

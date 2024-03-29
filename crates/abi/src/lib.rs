@@ -11,8 +11,7 @@ pub struct CSourceSprite {
     bytes: CSlice<u8>,
     format: *const c_char,
     has_pivot: bool,
-    pivot_x: f32,
-    pivot_y: f32,
+    pivot: CPivot,
 }
 
 #[repr(C)]
@@ -27,8 +26,7 @@ pub struct CPrefs {
     atlas_pot: bool,
     atlas_format: u8,
     ppu: f32,
-    pivot_x: f32,
-    pivot_y: f32,
+    pivot: CPivot,
 }
 
 #[repr(C)]
@@ -40,6 +38,7 @@ pub struct CDicedSprite {
     pub uvs: CSlice<CUv>,
     pub indices: CSlice<u64>,
     pub rect: CRect,
+    pub pivot: CPivot,
 }
 
 #[repr(C)]
@@ -63,6 +62,13 @@ pub struct CRect {
     pub y: f32,
     pub width: f32,
     pub height: f32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct CPivot {
+    pub x: f32,
+    pub y: f32,
 }
 
 #[repr(C)]
@@ -102,8 +108,8 @@ unsafe fn to_sprite<'a>(c: &CSourceSprite) -> RawSprite<'a> {
         format: to_str(c.format).to_owned(),
         pivot: if c.has_pivot {
             Some(Pivot {
-                x: c.pivot_x,
-                y: c.pivot_y,
+                x: c.pivot.x,
+                y: c.pivot.y,
             })
         } else {
             None
@@ -119,6 +125,7 @@ unsafe fn to_c_sprite(sprite: &DicedSprite) -> CDicedSprite {
         uvs: to_c_slice(sprite.uvs.iter().map(to_c_uv).collect()),
         indices: to_c_slice(sprite.indices.iter().map(|i| *i as u64).collect()),
         rect: to_c_rect(&sprite.rect),
+        pivot: to_c_pivot(&sprite.pivot),
     }
 }
 
@@ -139,6 +146,10 @@ fn to_c_rect(rect: &Rect) -> CRect {
     }
 }
 
+fn to_c_pivot(p: &Pivot) -> CPivot {
+    CPivot { x: p.x, y: p.y }
+}
+
 fn to_prefs(c: CPrefs) -> Prefs {
     Prefs {
         unit_size: c.unit_size,
@@ -150,8 +161,8 @@ fn to_prefs(c: CPrefs) -> Prefs {
         atlas_pot: c.atlas_pot,
         ppu: c.ppu,
         pivot: Pivot {
-            x: c.pivot_x,
-            y: c.pivot_y,
+            x: c.pivot.x,
+            y: c.pivot.y,
         },
     }
 }
