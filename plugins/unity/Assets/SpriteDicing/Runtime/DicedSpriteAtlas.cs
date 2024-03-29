@@ -47,10 +47,17 @@ namespace SpriteDicing
         #endif
 
         /// <summary>
-        /// Retrieves a diced sprite with the specified name.
+        /// Retrieves diced sprite with the specified name.
         /// </summary>
         /// <param name="name">Name of the sprite to retrieve.</param>
         /// <returns>Diced sprite with the specified name or null if not found.</returns>
-        [CanBeNull] public Sprite GetSprite (string name) => sprites.Find(s => s.name == name);
+        [CanBeNull]
+        public Sprite GetSprite (string name)
+        {
+            for (var i = 0; i < sprites.Count; i++)
+                if (sprites[i].name == name)
+                    return sprites[i];
+            return null;
+        }
     }
 }
