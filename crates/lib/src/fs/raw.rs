@@ -26,11 +26,11 @@ pub struct RawArtifacts {
     pub sprites: Vec<DicedSprite>,
 }
 
-/// Packs specified raw sprites into raw atlas textures and sprite meshes serialized in JSON.
+/// Packs specified raw sprite textures into raw atlas textures.
 ///
 /// # Arguments
 ///
-/// * `sprites`: Raw sprites to pack.
+/// * `sprites`: Raw sprite textures to pack.
 /// * `prefs`: Dicing operation preferences.
 /// * `fmt`: Format of the generated raw atlas textures.
 ///
