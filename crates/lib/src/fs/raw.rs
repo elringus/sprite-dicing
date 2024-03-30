@@ -36,17 +36,19 @@ pub struct RawArtifacts {
 ///
 /// returns: Generated raw assets when operation successful, [Error] otherwise.
 pub fn dice_raw(sprites: &[RawSprite], prefs: &Prefs, fmt: &AtlasFormat) -> Result<RawArtifacts> {
-    let mut sources = Vec::with_capacity(sprites.len());
+    let total = sprites.len();
+    let mut sources = Vec::with_capacity(total);
     for (idx, sprite) in sprites.iter().enumerate() {
-        Progress::report(prefs, 0, idx, sources.len(), "Decoding source textures");
+        Progress::report(prefs, 0, idx, total, "Decoding source textures");
         sources.push(decode_raw(sprite)?);
     }
 
     let diced = crate::dice(&sources, prefs)?;
 
-    let mut atlases = Vec::with_capacity(diced.atlases.len());
+    let total = diced.atlases.len();
+    let mut atlases = Vec::with_capacity(total);
     for (idx, atlas) in diced.atlases.into_iter().enumerate() {
-        Progress::report(prefs, 4, idx, sources.len(), "Encoding atlases textures");
+        Progress::report(prefs, 4, idx, total, "Encoding atlases textures");
         atlases.push(encode_raw(atlas, fmt.image())?);
     }
 

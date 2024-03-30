@@ -13,10 +13,11 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
         return Err(Error::Spec("Unit size can't be above atlas size limit."));
     }
 
+    let total = diced.len();
     let mut atlases = vec![];
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
-        Progress::report(prefs, 2, 0, ctx.to_pack.len(), "Packing diced units");
+        Progress::report(prefs, 2, total - ctx.to_pack.len(), total, "Packing units");
         atlases.push(pack_it(&mut ctx)?);
         ctx.packed.clear();
         ctx.units.clear();

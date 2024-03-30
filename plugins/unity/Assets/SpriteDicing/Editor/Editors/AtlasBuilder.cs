@@ -64,7 +64,8 @@ namespace SpriteDicing.Editors
             AtlasPOT = ForcePot,
             AtlasFormat = Native.AtlasFormat.PNG,
             PPU = PPU,
-            Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y }
+            Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y },
+            OnProgress = p => DisplayProgressBar(p.Activity, p.Ratio / 2)
         };
 
         private Texture2D[] ImportAtlases (IReadOnlyList<byte[]> bytes)

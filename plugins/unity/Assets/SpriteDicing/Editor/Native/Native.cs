@@ -32,6 +32,7 @@ namespace SpriteDicing
             public AtlasFormat AtlasFormat { get; set; }
             public float PPU { get; set; }
             public Pivot Pivot { get; set; }
+            public ProgressCallback OnProgress { get; set; }
         }
 
         public enum AtlasFormat : byte
@@ -101,6 +102,14 @@ namespace SpriteDicing
             public float Height { get; set; }
         }
 
+        public struct Progress
+        {
+            public float Ratio { get; set; }
+            public string Activity { get; set; }
+        }
+
+        public delegate void ProgressCallback (Progress progress);
+
         [StructLayout(LayoutKind.Sequential)]
         private struct CSourceSprite
         {
@@ -128,6 +137,9 @@ namespace SpriteDicing
             public byte atlas_format;
             public float ppu;
             public CPivot pivot;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool has_progress_callback;
+            public CProgressCallback progress_callback;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -186,6 +198,15 @@ namespace SpriteDicing
             public float y;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CProgress
+        {
+            public float ratio;
+            public IntPtr activity;
+        }
+
+        private delegate void CProgressCallback (CProgress progress);
+
         public static Artifacts Dice (IEnumerable<SourceSprite> sprites, Prefs prefs)
         {
             var pts = new List<IntPtr>();
@@ -210,7 +231,9 @@ namespace SpriteDicing
             atlas_pot = prefs.AtlasPOT,
             pivot = MarshalPivot(prefs.Pivot),
             ppu = prefs.PPU,
-            atlas_format = (byte)prefs.AtlasFormat
+            atlas_format = (byte)prefs.AtlasFormat,
+            has_progress_callback = prefs.OnProgress != null,
+            progress_callback = p => prefs.OnProgress(MarshalProgress(p))
         };
 
         private static T[] MarshalSlice<T> (CSlice c, List<IntPtr> pts)
@@ -284,15 +307,15 @@ namespace SpriteDicing
             return sprites.Select(s => MarshalDicedSprite(s, pts)).ToArray();
         }
 
-        private static Vertex MarshalVertex (CVertex c)
-        {
-            return new Vertex { X = c.x, Y = c.y };
-        }
+        private static Vertex MarshalVertex (CVertex c) => new Vertex {
+            X = c.x,
+            Y = c.y
+        };
 
-        private static UV MarshalUV (CUV c)
-        {
-            return new UV { U = c.u, V = c.v };
-        }
+        private static UV MarshalUV (CUV c) => new UV {
+            U = c.u,
+            V = c.v
+        };
 
         private static int[] MarshalIndices (CSlice c)
         {
@@ -310,14 +333,20 @@ namespace SpriteDicing
             Height = c.height
         };
 
-        private static Pivot MarshalPivot (CPivot c)
-        {
-            return new Pivot { X = c.x, Y = c.y };
-        }
+        private static Pivot MarshalPivot (CPivot c) => new Pivot {
+            X = c.x,
+            Y = c.y
+        };
 
-        private static CPivot MarshalPivot (Pivot p)
-        {
-            return new CPivot { x = p.X, y = p.Y };
-        }
+        private static CPivot MarshalPivot (Pivot p) => new CPivot {
+            x = p.X,
+            y = p.Y
+        };
+
+        private static Progress MarshalProgress (CProgress p) => new Progress {
+            Ratio = p.ratio,
+            // TODO: Marshal.PtrToStringUTF8
+            Activity = Marshal.PtrToStringAnsi(p.activity)
+        };
     }
 }

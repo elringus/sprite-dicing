@@ -1,6 +1,8 @@
 //! C/C++ application binary interface of the library.
 
-use sprite_dicing::{AtlasFormat, DicedSprite, Pivot, Prefs, RawSprite, Rect, Uv, Vertex};
+use sprite_dicing::{
+    AtlasFormat, DicedSprite, Pivot, Prefs, Progress, RawSprite, Rect, Uv, Vertex,
+};
 use std::ffi::{c_char, CStr, CString};
 use std::mem;
 
@@ -27,6 +29,15 @@ pub struct CPrefs {
     atlas_format: u8,
     ppu: f32,
     pivot: CPivot,
+    has_progress_callback: bool,
+    progress_callback: unsafe extern "C" fn(CProgress),
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct CArtifacts {
+    atlases: CSlice<CSlice<u8>>,
+    sprites: CSlice<CDicedSprite>,
 }
 
 #[repr(C)]
@@ -73,9 +84,9 @@ pub struct CPivot {
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
-pub struct CArtifacts {
-    atlases: CSlice<CSlice<u8>>,
-    sprites: CSlice<CDicedSprite>,
+pub struct CProgress {
+    pub ratio: f32,
+    pub activity: *const c_char,
 }
 
 #[repr(C)]
@@ -85,7 +96,7 @@ pub struct CSlice<T> {
     len: u64,
 }
 
-/// ABI wrapper over [sprite_dicing::dice_raw].
+/// C ABI wrapper over [sprite_dicing::dice_raw].
 ///
 /// # Safety
 ///
@@ -150,6 +161,13 @@ fn to_c_pivot(p: &Pivot) -> CPivot {
     CPivot { x: p.x, y: p.y }
 }
 
+fn to_c_progress(p: Progress) -> CProgress {
+    CProgress {
+        ratio: p.ratio,
+        activity: to_c_str(&p.activity),
+    }
+}
+
 fn to_prefs(c: CPrefs) -> Prefs {
     Prefs {
         unit_size: c.unit_size,
@@ -164,7 +182,13 @@ fn to_prefs(c: CPrefs) -> Prefs {
             x: c.pivot.x,
             y: c.pivot.y,
         },
-        on_progress: None,
+        on_progress: if c.has_progress_callback {
+            Some(Box::new(move |p| unsafe {
+                (c.progress_callback)(to_c_progress(p))
+            }))
+        } else {
+            None
+        },
     }
 }
 
