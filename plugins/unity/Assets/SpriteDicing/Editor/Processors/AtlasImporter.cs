@@ -5,7 +5,7 @@ using UnityEngine;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Imports raw bytes of the atlases as <see cref="Texture2D"/> assets.
+    /// Serializes and imports raw bytes of the atlases as <see cref="Texture2D"/> assets.
     /// </summary>
     public class AtlasImporter
     {
@@ -20,11 +20,19 @@ namespace SpriteDicing
             this.maxSize = maxSize;
         }
 
-        public Texture2D Import (byte[] bytes)
+        public string Write (byte[] bytes)
         {
             var filePath = BuildFilePath();
             File.WriteAllBytes(filePath, bytes);
-            ApplyImportSettings(filePath);
+            return filePath;
+        }
+
+        public Texture2D Import (string filePath)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
+            settings.ApplyExistingOrDefault(importer);
+            importer.maxTextureSize = maxSize;
+            importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(filePath);
         }
 
@@ -34,15 +42,6 @@ namespace SpriteDicing
             var path = string.Empty;
             do { path = $"{basePath} {++index:000}.png"; } while (File.Exists(path));
             return path;
-        }
-
-        private void ApplyImportSettings (string filePath)
-        {
-            AssetDatabase.ImportAsset(filePath, ImportAssetOptions.ForceSynchronousImport);
-            var importer = (TextureImporter)AssetImporter.GetAtPath(filePath);
-            settings.ApplyExistingOrDefault(importer);
-            importer.maxTextureSize = maxSize;
-            importer.SaveAndReimport();
         }
     }
 }

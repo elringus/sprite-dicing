@@ -68,19 +68,21 @@ namespace SpriteDicing.Editors
             OnProgress = p => DisplayProgressBar(p.Activity, p.Ratio / 2)
         };
 
-        private Texture2D[] ImportAtlases (IReadOnlyList<byte[]> bytes)
+        private Texture2D[] ImportAtlases (IReadOnlyList<byte[]> atlasBytes)
         {
             DisplayProgressBar("Importing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
             var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
-            var serializer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
-            var atlasTextures = new Texture2D[bytes.Count];
-            for (int i = 0; i < bytes.Count; i++)
+            var importer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
+            var paths = atlasBytes.Select(importer.Write).ToArray();
+            AssetDatabase.Refresh();
+            var atlasTextures = new Texture2D[paths.Length];
+            for (int i = 0; i < paths.Length; i++)
             {
-                var progress = .5f + .25f * ((i + 1f) / bytes.Count);
-                DisplayProgressBar($"Importing atlases... ({i + 1} of {bytes.Count})", progress);
-                atlasTextures[i] = serializer.Import(bytes[i]);
+                var progress = .5f + .25f * ((i + 1f) / paths.Length);
+                DisplayProgressBar($"Importing atlases... ({i + 1} of {paths.Length})", progress);
+                atlasTextures[i] = importer.Import(paths[i]);
             }
             SaveAtlasTextures(atlasTextures);
             return atlasTextures;
