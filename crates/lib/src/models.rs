@@ -426,7 +426,7 @@ impl FRect {
     }
 }
 
-/// A size of arbitrary entity in unsigned integer space.
+/// Size of arbitrary entity in unsigned integer space.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub(crate) struct USize {
     /// Width of the entity.
