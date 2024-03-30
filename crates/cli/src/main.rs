@@ -1,6 +1,7 @@
 //! Command line interface of the library.
 
 use clap::{Parser, ValueEnum};
+use indicatif::{ProgressBar, ProgressStyle};
 use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs, Result};
 use std::path::PathBuf;
 
@@ -72,6 +73,11 @@ impl From<Format> for AtlasFormat {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    let bar = ProgressBar::new(100).with_style(
+        ProgressStyle::with_template("{spinner} [{elapsed}] [{bar}] {msg}")
+            .unwrap()
+            .progress_chars("#>-"),
+    );
     let fs_prefs = FsPrefs {
         out: args.out,
         recursive: args.recursive,
@@ -88,6 +94,10 @@ fn main() -> Result<()> {
         atlas_pot: args.pot,
         ppu: args.ppu,
         pivot: Pivot::new(args.pivot[0], args.pivot[1]),
+        on_progress: Some(Box::new(move |p| {
+            bar.set_position((p.ratio * 100.0) as u64);
+            bar.set_message(p.activity);
+        })),
     };
     sprite_dicing::dice_dir(&args.dir, &fs_prefs, &prefs)
 }

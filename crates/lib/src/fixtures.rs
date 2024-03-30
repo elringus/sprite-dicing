@@ -2,6 +2,8 @@
 
 use crate::models::*;
 use once_cell::sync::Lazy;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub const R: Pixel = Pixel::new(255, 0, 0, 255);
 pub const G: Pixel = Pixel::new(0, 255, 0, 255);
@@ -75,6 +77,17 @@ pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
     B, B, R, G,
 ]));
 pub static PLT4X4: Lazy<Texture> = Lazy::new(|| palette(4, 4));
+
+pub fn sample_progress(act: impl Fn(Prefs)) -> Progress {
+    let progress = Rc::new(RefCell::new(None));
+    let progress_copy = progress.clone();
+    let prefs = Prefs {
+        on_progress: Some(Box::new(move |s| *progress_copy.borrow_mut() = Some(s))),
+        ..Prefs::default()
+    };
+    act(prefs);
+    progress.take().unwrap()
+}
 
 pub trait AnySource {
     fn texture(&self) -> Texture;

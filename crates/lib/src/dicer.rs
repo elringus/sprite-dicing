@@ -13,7 +13,8 @@ pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedT
     }
 
     let mut textures = vec![];
-    for sprite in sprites {
+    for (idx, sprite) in sprites.iter().enumerate() {
+        Progress::report(prefs, 1, idx, sprites.len(), "Dicing source textures");
         let ctx = new_ctx(sprite, prefs);
         if let Some(texture) = dice_it(&ctx) {
             textures.push(texture);
@@ -272,6 +273,12 @@ mod tests {
     fn unique_doesnt_count_identical_units() {
         assert_eq!(3, dice1(&RGB4X4, 1, 0).unique.len());
         assert_eq!(16, dice1(&PLT4X4, 1, 0).unique.len());
+    }
+
+    #[test]
+    fn reports_progress() {
+        let progress = sample_progress(|p| drop(dice(&[src(&B1X1)], &p)));
+        assert_eq!(progress.ratio, 0.4);
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {

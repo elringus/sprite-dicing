@@ -36,22 +36,22 @@ pub struct RawArtifacts {
 ///
 /// returns: Generated raw assets when operation successful, [Error] otherwise.
 pub fn dice_raw(sprites: &[RawSprite], prefs: &Prefs, fmt: &AtlasFormat) -> Result<RawArtifacts> {
-    let sprites = sprites.iter().map(decode_raw).collect::<Result<Vec<_>>>()?;
-    let diced = crate::dice(&sprites, prefs)?;
-    let atlases = diced
-        .atlases
-        .into_iter()
-        .map(|a| encode_raw(a, fmt.image()))
-        .collect::<Result<Vec<_>>>()?;
+    let mut sources = Vec::with_capacity(sprites.len());
+    for (idx, sprite) in sprites.iter().enumerate() {
+        Progress::report(prefs, 0, idx, sources.len(), "Decoding source textures");
+        sources.push(decode_raw(sprite)?);
+    }
+
+    let diced = crate::dice(&sources, prefs)?;
+
+    let mut atlases = Vec::with_capacity(diced.atlases.len());
+    for (idx, atlas) in diced.atlases.into_iter().enumerate() {
+        Progress::report(prefs, 4, idx, sources.len(), "Encoding atlases textures");
+        atlases.push(encode_raw(atlas, fmt.image())?);
+    }
+
     let sprites = diced.sprites;
     Ok(RawArtifacts { atlases, sprites })
-}
-
-fn encode_raw(texture: Texture, fmt: ImageFormat) -> Result<Vec<u8>> {
-    let img = texture.to_image()?;
-    let mut buf = Cursor::new(Vec::new());
-    write_image(img, fmt, &mut buf)?;
-    Ok(buf.into_inner())
 }
 
 fn decode_raw(raw: &RawSprite) -> Result<SourceSprite> {
@@ -67,4 +67,11 @@ fn decode_raw(raw: &RawSprite) -> Result<SourceSprite> {
         texture: Texture::from_dynamic(&img)?,
         pivot: raw.pivot.to_owned(),
     })
+}
+
+fn encode_raw(texture: Texture, fmt: ImageFormat) -> Result<Vec<u8>> {
+    let img = texture.to_image()?;
+    let mut buf = Cursor::new(Vec::new());
+    write_image(img, fmt, &mut buf)?;
+    Ok(buf.into_inner())
 }

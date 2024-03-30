@@ -16,6 +16,7 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
     let mut atlases = vec![];
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
+        Progress::report(prefs, 2, 0, ctx.to_pack.len(), "Packing diced units");
         atlases.push(pack_it(&mut ctx)?);
         ctx.packed.clear();
         ctx.units.clear();
@@ -380,6 +381,12 @@ mod tests {
         let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
         let rect = atlas.rects.values().next().unwrap();
         assert_eq!(*rect, FRect::new(0.25, 0.25, 0.25, 0.25));
+    }
+
+    #[test]
+    fn reports_progress() {
+        let progress = sample_progress(|p| drop(pack(vec![&M1X1], &p)));
+        assert_eq!(progress.ratio, 0.6);
     }
 
     fn pack(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<Atlas> {

@@ -47,7 +47,6 @@ impl From<image::ImageError> for Error {
 impl std::error::Error for Error {}
 
 /// Preferences for a dicing operation.
-#[derive(Debug, Clone)]
 pub struct Prefs {
     /// The size of a single diced unit, in pixels. Larger values result in less generated mesh
     /// overhead, but may also diminish number of reused texture regions.
@@ -77,6 +76,8 @@ pub struct Prefs {
     pub ppu: f32,
     /// Origin of the generated mesh, in relative offsets from top-left corner of the sprite rect.
     pub pivot: Pivot,
+    /// Callback to invoke when dicing operation progress changes in a meaningful way.
+    pub on_progress: Option<ProgressCallback>,
 }
 
 impl Default for Prefs {
@@ -91,6 +92,36 @@ impl Default for Prefs {
             atlas_pot: false,
             ppu: 100.0,
             pivot: Pivot { x: 0.5, y: 0.5 },
+            on_progress: None,
+        }
+    }
+}
+
+/// Callback for notifying on dicing progress updates.
+pub type ProgressCallback = Box<dyn Fn(Progress)>;
+
+/// Progress of a dicing operation.
+#[derive(Debug, Clone)]
+pub struct Progress {
+    /// Ratio of the completed to remaining work, in 0.0 to 1.0 range.
+    pub ratio: f32,
+    /// Description of the currently performed activity.
+    pub activity: String,
+}
+
+impl Progress {
+    pub(crate) fn report(prefs: &Prefs, stage: u8, idx: usize, len: usize, activity: &str) {
+        // Stages:
+        // 0 Decoding source textures (raw only)
+        // 1 Dicing source textures
+        // 2 Packing diced units
+        // 3 Building diced sprites
+        // 4 Encoding atlas textures (raw only)
+        if let Some(cb) = &prefs.on_progress {
+            let num = idx + 1;
+            let ratio = (stage as f32 / 5.0) + 0.2 * (num as f32 / len as f32);
+            let activity = format!("{activity}... ({num} of {len})");
+            cb(Progress { ratio, activity });
         }
     }
 }

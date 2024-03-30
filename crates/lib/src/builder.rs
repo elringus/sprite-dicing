@@ -7,9 +7,12 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
         return Err(Error::Spec("PPU can't be zero or negative."));
     }
 
-    let mut sprites = vec![];
+    let total = packed.iter().map(|a| a.packed.len()).sum();
+    let mut sprites = Vec::with_capacity(total);
+
     for (atlas_idx, atlas) in packed.iter().enumerate() {
         for diced_tex in atlas.packed.iter() {
+            Progress::report(prefs, 3, sprites.len(), total, "Building diced sprites");
             let ctx = new_ctx(atlas, atlas_idx, diced_tex, prefs);
             sprites.push(build_it(ctx));
         }
@@ -477,6 +480,12 @@ mod tests {
             ..defaults()
         };
         assert!(&build(vec![&TTTT], &prefs).is_empty());
+    }
+
+    #[test]
+    fn reports_progress() {
+        let progress = sample_progress(|p| drop(build(vec![&BTGT], &p)));
+        assert_eq!(progress.ratio, 0.8);
     }
 
     struct Quad {

@@ -39,24 +39,24 @@ impl Default for FsPrefs {
 ///
 /// returns: [Ok] when operation successful, [Error] otherwise.
 pub fn dice_dir(dir: &Path, fs_prefs: &FsPrefs, prefs: &Prefs) -> Result<()> {
-    let sources = collect_sources(dir, dir, fs_prefs)?;
+    let paths = collect_sources(dir, fs_prefs)?;
+    let sources = load_sources(dir, &paths, prefs, fs_prefs)?;
     let diced = crate::dice(&sources, prefs)?;
     let out_dir = fs_prefs.out.as_deref().unwrap_or(dir);
-    write_atlases(diced.atlases, out_dir, &fs_prefs.atlas_format)?;
+    write_atlases(diced.atlases, out_dir, &fs_prefs.atlas_format, prefs)?;
     write_sprites(diced.sprites, out_dir)
 }
 
-fn collect_sources(root: &Path, dir: &Path, prefs: &FsPrefs) -> Result<Vec<SourceSprite>> {
+fn collect_sources(dir: &Path, prefs: &FsPrefs) -> Result<Vec<PathBuf>> {
     let mut sprites = vec![];
     for entry in fs::read_dir(dir)? {
         let path = entry?.path();
         if path.is_dir() && prefs.recursive {
-            sprites.extend(collect_sources(root, &path, prefs)?);
+            sprites.extend(collect_sources(&path, prefs)?);
         } else if path.is_file() && is_supported_texture(&path) {
-            sprites.push(create_sprite(root, &path, prefs)?);
+            sprites.push(path);
         }
     }
-
     Ok(sprites)
 }
 
@@ -73,6 +73,20 @@ fn is_supported_texture(path: &Path) -> bool {
         ),
         Err(_) => false,
     }
+}
+
+fn load_sources(
+    root: &Path,
+    paths: &[PathBuf],
+    prefs: &Prefs,
+    fs_prefs: &FsPrefs,
+) -> Result<Vec<SourceSprite>> {
+    let mut sprites = Vec::with_capacity(paths.len());
+    for (idx, path) in paths.iter().enumerate() {
+        Progress::report(prefs, 0, idx, paths.len(), "Loading source textures");
+        sprites.push(create_sprite(root, path, fs_prefs)?);
+    }
+    Ok(sprites)
 }
 
 fn create_sprite(root: &Path, path: &Path, prefs: &FsPrefs) -> Result<SourceSprite> {
@@ -103,23 +117,25 @@ fn eval_sprite_id(root: &Path, path: &Path, separator: &str) -> String {
         .join(separator)
 }
 
-fn write_atlases(atlases: Vec<Texture>, out_dir: &Path, fmt: &AtlasFormat) -> Result<()> {
-    atlases.into_iter().enumerate().try_for_each(|(idx, tex)| {
+fn write_atlases(tex: Vec<Texture>, dir: &Path, fmt: &AtlasFormat, prefs: &Prefs) -> Result<()> {
+    let total = tex.len();
+    tex.into_iter().enumerate().try_for_each(|(idx, tex)| {
+        Progress::report(prefs, 4, idx, total, "Writing atlas textures");
         let name = format!("atlas_{idx}.{}", fmt.extension());
-        write_atlas(tex, &out_dir.join(name))
+        write_atlas(tex, &dir.join(name))
     })
 }
 
-fn write_atlas(texture: Texture, path: &Path) -> Result<()> {
+fn write_atlas(tex: Texture, path: &Path) -> Result<()> {
     let buf = &mut BufWriter::new(File::create(path)?);
     let fmt = ImageFormat::from_path(path)?;
-    let img = texture.to_image()?;
+    let img = tex.to_image()?;
     write_image(img, fmt, buf)
 }
 
-fn write_sprites(sprites: Vec<DicedSprite>, out_dir: &Path) -> Result<()> {
+fn write_sprites(sprites: Vec<DicedSprite>, dir: &Path) -> Result<()> {
     let json = json::sprites_to_json(&sprites);
-    let path = out_dir.join("sprites.json");
+    let path = dir.join("sprites.json");
     fs::write(path, json).map_err(Error::Io)
 }
 

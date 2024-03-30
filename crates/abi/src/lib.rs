@@ -164,6 +164,7 @@ fn to_prefs(c: CPrefs) -> Prefs {
             x: c.pivot.x,
             y: c.pivot.y,
         },
+        on_progress: None,
     }
 }
 
