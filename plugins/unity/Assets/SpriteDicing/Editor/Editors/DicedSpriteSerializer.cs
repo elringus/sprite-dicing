@@ -29,7 +29,6 @@ namespace SpriteDicing.Editors
             if (DecoupleSpriteData) SerializeDecoupled(newSprites);
             else SerializeEmbedded(newSprites);
             SetSpritesProperty(newSprites);
-            AssetDatabase.SaveAssets();
         }
 
         private void SerializeDecoupled (List<Sprite> newSprites)
@@ -46,7 +45,6 @@ namespace SpriteDicing.Editors
             {
                 foreach (var asset in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
                     UnityEngine.Object.DestroyImmediate(asset, true);
-                AssetDatabase.SaveAssets();
             }
 
             string GetOrCreateGeneratedSpritesFolder ()
@@ -78,7 +76,6 @@ namespace SpriteDicing.Editors
             DeleteDecoupledSprites();
             foreach (var sprite in AssetDatabase.LoadAllAssetRepresentationsAtPath(atlasPath))
                 UpdateExistingSprite(sprite as Sprite);
-            AssetDatabase.SaveAssets();
             foreach (var sprite in newSprites)
                 if (!AssetDatabase.IsSubAsset(sprite))
                     AssetDatabase.AddObjectToAsset(sprite, target);
