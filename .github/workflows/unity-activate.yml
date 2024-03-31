@@ -1,6 +1,7 @@
 name: activate unity license
 
 on:
+  pull_request:
   workflow_dispatch: {}
 
 jobs:
