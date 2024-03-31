@@ -5549,7 +5549,7 @@ MonoBehaviour:
   includeSubfolders: 0
   separator: .
   generatedSpritesFolderGuid: 
-  lastRatioValue: 3873 KB / (3678 KB + 707 KB) = <color=red>0.88</color>
+  lastRatioValue: 3873 KB / (3678 KB + 708 KB) = <color=red>0.88</color>
 --- !u!213 &165850116375607491
 Sprite:
   m_ObjectHideFlags: 0
