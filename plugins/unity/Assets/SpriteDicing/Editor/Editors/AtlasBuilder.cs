@@ -132,14 +132,15 @@ namespace SpriteDicing.Editors
 
         private void UpdateCompressionRatio (IEnumerable<Native.SourceSprite> sources, IEnumerable<byte[]> atlases)
         {
+            AssetDatabase.SaveAssets();
             var sourceSize = sources.Sum(b => b.Bytes.Length / 1024);
             var atlasSize = atlases.Sum(b => b.Length / 1024);
             var dataSize = GetDataSize();
             var ratio = sourceSize / (float)(atlasSize + dataSize);
             var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
             LastRatioValueProperty.stringValue = $"{sourceSize} KB / ({atlasSize} KB + {dataSize} KB) = <color={color}>{ratio:F2}</color>";
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
-            AssetDatabase.SaveAssets();
+            LastRatioValueProperty.serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(target);
 
             long GetAssetSize (UnityEngine.Object asset)
             {
