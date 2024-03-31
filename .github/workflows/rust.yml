@@ -9,6 +9,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings" # Fail on Clippy warnings
 
 jobs:
   test_and_cover:
@@ -21,12 +22,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate code coverage
+      - name: Lint sources
         run: |
           cd crates
-          cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+          cargo clippy --all-targets --all-features
 
-      - name: Upload coverage report
+      - name: Generate code coverage
+        run: cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+
+      - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
           token: ${{secrets.CODECOV_TOKEN}}
