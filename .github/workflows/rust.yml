@@ -29,7 +29,9 @@ jobs:
           cargo clippy --all-targets --all-features
 
       - name: Generate code coverage
-        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+        run: |
+          cd crates
+          cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
