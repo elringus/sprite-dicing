@@ -1,0 +1,3 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="diced-sprite" style="background-image: url(&quot;project://database/Assets/Samples/Atlases/Flat.asset?fileID=-8417724031649448382&amp;guid=dd0b19c22aab3cb49b0100d308452a02&amp;type=2#Man&quot;); -unity-background-scale-mode: scale-to-fit; flex-grow: 1;" />
+</ui:UXML>
