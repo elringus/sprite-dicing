@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -78,12 +77,10 @@ namespace SpriteDicing.Test
                 Pivot = new Native.Pivot { X = pivot.x, Y = pivot.y },
                 OnProgress = onProgress
             };
-            using var diced = Native.Dice(sources, prefs);
+            var diced = Native.Dice(sources, prefs);
             var atlases = diced.Atlases.Select(bytes => {
                 var tex = new Texture2D(2, 2);
-                var copy = new byte[bytes.Length];
-                Array.Copy(bytes, copy, bytes.Length);
-                ImageConversion.LoadImage(tex, copy);
+                ImageConversion.LoadImage(tex, bytes);
                 return tex;
             }).ToArray();
             var builder = new SpriteBuilder(ppu, atlases);
