@@ -1,12 +1,9 @@
 name: test unity plugin
 
 on:
-  pull_request:
   workflow_dispatch:
+  pull_request:
   push:
-    branches:
-      - main
-  pull_request_target:
     branches:
       - main
 
@@ -25,6 +22,8 @@ jobs:
         id: tests
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: plugins/unity
           githubToken: ${{ secrets.GITHUB_TOKEN }}
