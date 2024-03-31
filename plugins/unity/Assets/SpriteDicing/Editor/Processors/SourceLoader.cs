@@ -37,7 +37,7 @@ namespace SpriteDicing
         {
             if (!path.Contains(root))
                 throw new Exception($"Name root `{root}` is not valid for `{path}` path.");
-            var local = path.Substring(root.Length + 1);
+            var local = path[(root.Length + 1)..];
             return Path.GetFileNameWithoutExtension(local.Replace("/", separator));
         }
 

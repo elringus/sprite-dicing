@@ -221,7 +221,7 @@ namespace SpriteDicing
         [DllImport("sprite_dicing")]
         private static extern CArtifacts dice (CSlice sprites, CPrefs prefs);
 
-        private static CPrefs MarshalPrefs (Prefs prefs) => new CPrefs {
+        private static CPrefs MarshalPrefs (Prefs prefs) => new() {
             unit_size = prefs.UnitSize,
             padding = prefs.Padding,
             uv_inset = prefs.UVInset,
@@ -282,7 +282,7 @@ namespace SpriteDicing
             return MarshalSlice(sprites, pins);
         }
 
-        private static CSourceSprite MarshalSourceSprite (SourceSprite s, List<GCHandle> pins) => new CSourceSprite {
+        private static CSourceSprite MarshalSourceSprite (SourceSprite s, List<GCHandle> pins) => new() {
             id = Marshal.StringToHGlobalAnsi(s.Id),
             bytes = MarshalSlice(s.Bytes, pins),
             format = Marshal.StringToHGlobalAnsi(s.Format),
@@ -290,7 +290,7 @@ namespace SpriteDicing
             pivot = new CPivot { x = s.Pivot.GetValueOrDefault().X, y = s.Pivot.GetValueOrDefault().Y }
         };
 
-        private static DicedSprite MarshalDicedSprite (CDicedSprite c, List<IntPtr> pts) => new DicedSprite {
+        private static DicedSprite MarshalDicedSprite (CDicedSprite c, List<IntPtr> pts) => new() {
             // TODO: Marshal.PtrToStringUTF8
             Id = Marshal.PtrToStringAnsi(c.id),
             Atlas = (int)c.atlas,
@@ -307,12 +307,12 @@ namespace SpriteDicing
             return sprites.Select(s => MarshalDicedSprite(s, pts)).ToArray();
         }
 
-        private static Vertex MarshalVertex (CVertex c) => new Vertex {
+        private static Vertex MarshalVertex (CVertex c) => new() {
             X = c.x,
             Y = c.y
         };
 
-        private static UV MarshalUV (CUV c) => new UV {
+        private static UV MarshalUV (CUV c) => new() {
             U = c.u,
             V = c.v
         };
@@ -326,24 +326,24 @@ namespace SpriteDicing
             return array;
         }
 
-        private static Rect MarshalRect (CRect c) => new Rect {
+        private static Rect MarshalRect (CRect c) => new() {
             X = c.x,
             Y = c.y,
             Width = c.width,
             Height = c.height
         };
 
-        private static Pivot MarshalPivot (CPivot c) => new Pivot {
+        private static Pivot MarshalPivot (CPivot c) => new() {
             X = c.x,
             Y = c.y
         };
 
-        private static CPivot MarshalPivot (Pivot p) => new CPivot {
+        private static CPivot MarshalPivot (Pivot p) => new() {
             x = p.X,
             y = p.Y
         };
 
-        private static Progress MarshalProgress (CProgress p) => new Progress {
+        private static Progress MarshalProgress (CProgress p) => new() {
             Ratio = p.ratio,
             // TODO: Marshal.PtrToStringUTF8
             Activity = Marshal.PtrToStringAnsi(p.activity)

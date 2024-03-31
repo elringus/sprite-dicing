@@ -63,7 +63,7 @@ namespace SpriteDicing.Editors
             void UpdateExistingSprite (string path)
             {
                 var existingSpriteName = Path.GetFileNameWithoutExtension(path);
-                if (newSprites.Find(s => s.name == existingSpriteName) is Sprite newSprite)
+                if (newSprites.Find(s => s.name == existingSpriteName) is { } newSprite)
                 {
                     var existingSprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
                     EditorUtility.CopySerialized(newSprite, existingSprite);
@@ -92,7 +92,7 @@ namespace SpriteDicing.Editors
 
             void UpdateExistingSprite (Sprite existingSprite)
             {
-                if (newSprites.Find(s => s.name == existingSprite.name) is Sprite newSprite)
+                if (newSprites.Find(s => s.name == existingSprite.name) is { } newSprite)
                 {
                     EditorUtility.CopySerialized(newSprite, existingSprite);
                     newSprites[newSprites.IndexOf(newSprite)] = existingSprite;

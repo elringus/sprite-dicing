@@ -19,8 +19,8 @@ namespace SpriteDicing
         /// </summary>
         public IReadOnlyList<Texture2D> Textures => textures;
 
-        [SerializeField] private List<Sprite> sprites = new List<Sprite>();
-        [SerializeField] private List<Texture2D> textures = new List<Texture2D>();
+        [SerializeField] private List<Sprite> sprites = new();
+        [SerializeField] private List<Texture2D> textures = new();
 
         #if UNITY_EDITOR
         // Editor-only data to track source sprite textures and store build configuration.
@@ -33,7 +33,7 @@ namespace SpriteDicing
         [SerializeField] private int diceUnitSize = 64;
         [SerializeField] private int padding = 2;
         [SerializeField] private float uvInset;
-        [SerializeField] private Vector2 defaultPivot = new Vector2(.5f, .5f);
+        [SerializeField] private Vector2 defaultPivot = new(.5f, .5f);
         [SerializeField] private bool keepOriginalPivot;
         [SerializeField] private bool decoupleSpriteData;
         [SerializeField] private bool trimTransparent = true;

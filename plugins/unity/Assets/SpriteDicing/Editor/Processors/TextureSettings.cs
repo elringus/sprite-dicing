@@ -12,9 +12,8 @@ namespace SpriteDicing
     {
         private const string defaultPlatformId = "default";
         private static readonly string[] platformIds = GetPlatformIds();
-        private readonly TextureImporterSettings @base = new TextureImporterSettings();
-        private readonly Dictionary<string, TextureImporterPlatformSettings> platforms =
-            new Dictionary<string, TextureImporterPlatformSettings>();
+        private readonly TextureImporterSettings @base = new();
+        private readonly Dictionary<string, TextureImporterPlatformSettings> platforms = new();
 
         public void TryImportExisting (Texture texture)
         {

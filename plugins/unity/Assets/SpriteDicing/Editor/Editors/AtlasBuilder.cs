@@ -54,7 +54,7 @@ namespace SpriteDicing.Editors
             return texturePaths.Select(loader.Load).ToArray();
         }
 
-        private Native.Prefs BuildPrefs () => new Native.Prefs {
+        private Native.Prefs BuildPrefs () => new() {
             UnitSize = (uint)UnitSize,
             Padding = (uint)Padding,
             UVInset = UVInset,
@@ -160,7 +160,7 @@ namespace SpriteDicing.Editors
 
         private void DisplayProgressBar (string activity, float progress)
         {
-            if (!buildStartTime.HasValue) buildStartTime = EditorApplication.timeSinceStartup;
+            buildStartTime ??= EditorApplication.timeSinceStartup;
             var elapsed = TimeSpan.FromSeconds(EditorApplication.timeSinceStartup - buildStartTime.Value);
             var title = $"Building Diced Atlas ({elapsed:mm\\:ss})";
             if (EditorUtility.DisplayCancelableProgressBar(title, activity, progress))
