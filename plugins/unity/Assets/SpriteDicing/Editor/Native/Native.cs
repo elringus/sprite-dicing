@@ -10,29 +10,27 @@ namespace SpriteDicing
     /// </summary>
     public static unsafe class Native
     {
-        // TODO: Readonly structs.
-
-        public struct SourceSprite
+        public readonly struct SourceSprite
         {
-            public string Id { get; set; }
-            public byte[] Bytes { get; set; }
-            public string Format { get; set; }
-            public Pivot? Pivot { get; set; }
+            public string Id { get; init; }
+            public byte[] Bytes { get; init; }
+            public string Format { get; init; }
+            public Pivot? Pivot { get; init; }
         }
 
-        public struct Prefs
+        public readonly struct Prefs
         {
-            public uint UnitSize { get; set; }
-            public uint Padding { get; set; }
-            public float UVInset { get; set; }
-            public bool TrimTransparent { get; set; }
-            public uint AtlasSizeLimit { get; set; }
-            public bool AtlasSquare { get; set; }
-            public bool AtlasPOT { get; set; }
-            public AtlasFormat AtlasFormat { get; set; }
-            public float PPU { get; set; }
-            public Pivot Pivot { get; set; }
-            public ProgressCallback OnProgress { get; set; }
+            public uint UnitSize { get; init; }
+            public uint Padding { get; init; }
+            public float UVInset { get; init; }
+            public bool TrimTransparent { get; init; }
+            public uint AtlasSizeLimit { get; init; }
+            public bool AtlasSquare { get; init; }
+            public bool AtlasPOT { get; init; }
+            public AtlasFormat AtlasFormat { get; init; }
+            public float PPU { get; init; }
+            public Pivot Pivot { get; init; }
+            public ProgressCallback OnProgress { get; init; }
         }
 
         public enum AtlasFormat : byte
@@ -65,47 +63,47 @@ namespace SpriteDicing
             }
         }
 
-        public struct DicedSprite
+        public readonly struct DicedSprite
         {
-            public string Id { get; set; }
-            public int Atlas { get; set; }
-            public IReadOnlyList<Vertex> Vertices { get; set; }
-            public IReadOnlyList<UV> UVs { get; set; }
-            public IReadOnlyList<int> Indices { get; set; }
-            public Rect Rect { get; set; }
-            public Pivot Pivot { get; set; }
+            public string Id { get; init; }
+            public int Atlas { get; init; }
+            public IReadOnlyList<Vertex> Vertices { get; init; }
+            public IReadOnlyList<UV> UVs { get; init; }
+            public IReadOnlyList<int> Indices { get; init; }
+            public Rect Rect { get; init; }
+            public Pivot Pivot { get; init; }
         }
 
-        public struct Vertex
+        public readonly struct Vertex
         {
-            public float X { get; set; }
-            public float Y { get; set; }
+            public float X { get; init; }
+            public float Y { get; init; }
         }
 
-        public struct UV
+        public readonly struct UV
         {
-            public float U { get; set; }
-            public float V { get; set; }
+            public float U { get; init; }
+            public float V { get; init; }
         }
 
-        public struct Pivot
+        public readonly struct Pivot
         {
-            public float X { get; set; }
-            public float Y { get; set; }
+            public float X { get; init; }
+            public float Y { get; init; }
         }
 
-        public struct Rect
+        public readonly struct Rect
         {
-            public float X { get; set; }
-            public float Y { get; set; }
-            public float Width { get; set; }
-            public float Height { get; set; }
+            public float X { get; init; }
+            public float Y { get; init; }
+            public float Width { get; init; }
+            public float Height { get; init; }
         }
 
-        public struct Progress
+        public readonly struct Progress
         {
-            public float Ratio { get; set; }
-            public string Activity { get; set; }
+            public float Ratio { get; init; }
+            public string Activity { get; init; }
         }
 
         public delegate void ProgressCallback (Progress progress);

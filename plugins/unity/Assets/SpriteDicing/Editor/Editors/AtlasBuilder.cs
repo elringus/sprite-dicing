@@ -28,11 +28,10 @@ namespace SpriteDicing.Editors
             try
             {
                 var sources = CollectSourceSprites();
-                var diced = Native.Dice(sources, BuildPrefs());
+                using var diced = Native.Dice(sources, BuildPrefs());
                 var atlases = ImportAtlases(diced.Atlases);
                 BuildDicedSprites(diced.Sprites, atlases);
                 UpdateCompressionRatio(sources, diced.Atlases);
-                diced.Dispose();
             }
             catch (Exception e)
             {
