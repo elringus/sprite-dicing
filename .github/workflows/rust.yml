@@ -16,7 +16,7 @@ jobs:
     name: test and cover
     runs-on: ubuntu-latest
     container:
-      image: xd009642/tarpaulin:develop-nightly
+      image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
