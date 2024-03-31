@@ -51,7 +51,6 @@ namespace SpriteDicing.Test
             IsEmpty(Build(new[] { TTTT }, trim: true));
         }
 
-        
         [Test]
         public void ProgressIsReported ()
         {

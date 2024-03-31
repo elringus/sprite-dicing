@@ -1,0 +1,38 @@
+name: test unity plugin
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    branches:
+      - main
+
+jobs:
+
+  cover:
+    name: test and cover
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tests and generate coverage report
+        uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          testMode: editmode
+          coverageOptions: useProjectSettings;generateAdditionalMetrics
+          customParameters: -debugCodeOptimization -enableCodeCoverage
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          projectPath: plugins/unity
+          files: ${{ steps.tests.outputs.coveragePath }}/**/*.xml
+          fail_ci_if_error: true
