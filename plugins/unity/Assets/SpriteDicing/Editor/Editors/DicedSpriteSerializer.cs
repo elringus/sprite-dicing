@@ -53,10 +53,10 @@ namespace SpriteDicing.Editors
             {
                 var existingPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
                 if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
-                var newPath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
+                var newPath = atlasPath[..atlasPath.LastIndexOf(".", StringComparison.Ordinal)];
                 Directory.CreateDirectory(newPath);
                 GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(newPath);
-                serializedObject.ApplyModifiedProperties();
+                serializedObject.ApplyModifiedPropertiesWithoutUndo();
                 return newPath;
             }
 
@@ -124,7 +124,7 @@ namespace SpriteDicing.Editors
             var vertexDataCount = vertexData.FindPropertyRelative("m_VertexCount");
             indexContainer.ClearArray();
             vertexDataCount.intValue = 0;
-            serializedSprite.ApplyModifiedProperties();
+            serializedSprite.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }
