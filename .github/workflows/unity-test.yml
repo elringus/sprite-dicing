@@ -26,6 +26,7 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
+          projectPath: plugins/unity
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           testMode: editmode
           coverageOptions: useProjectSettings;generateAdditionalMetrics
@@ -34,6 +35,5 @@ jobs:
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
-          projectPath: plugins/unity
           files: ${{ steps.tests.outputs.coveragePath }}/**/*.xml
           fail_ci_if_error: true
