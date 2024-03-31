@@ -23,6 +23,7 @@ jobs:
 
       - name: Generate code coverage
         run: |
+          cd crates
           cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
 
       - name: Upload coverage report
