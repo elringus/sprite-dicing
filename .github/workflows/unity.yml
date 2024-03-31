@@ -26,12 +26,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ matrix.projectPath }}/Library
-          key:
-            Library-${{ matrix.projectPath }}-${{ matrix.targetPlatform }}-${{
-            hashFiles(matrix.projectPath) }}
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ matrix.projectPath }}-${{ matrix.targetPlatform }}-
-            Library-${{ matrix.projectPath }}-
             Library-
 
       - name: Run tests and generate coverage report
