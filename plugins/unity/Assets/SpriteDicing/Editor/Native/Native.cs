@@ -289,8 +289,7 @@ namespace SpriteDicing
         };
 
         private static DicedSprite MarshalDicedSprite (CDicedSprite c, List<IntPtr> pts) => new() {
-            // TODO: Marshal.PtrToStringUTF8
-            Id = Marshal.PtrToStringAnsi(c.id),
+            Id = Marshal.PtrToStringUTF8(c.id),
             Atlas = (int)c.atlas,
             Vertices = MarshalSlice<CVertex>(c.vertices, pts).Select(MarshalVertex).ToArray(),
             UVs = MarshalSlice<CUV>(c.uvs, pts).Select(MarshalUV).ToArray(),
@@ -343,8 +342,7 @@ namespace SpriteDicing
 
         private static Progress MarshalProgress (CProgress p) => new() {
             Ratio = p.ratio,
-            // TODO: Marshal.PtrToStringUTF8
-            Activity = Marshal.PtrToStringAnsi(p.activity)
+            Activity = Marshal.PtrToStringUTF8(p.activity)
         };
     }
 }
