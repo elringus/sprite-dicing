@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using NUnit.Framework;
-using UnityEditor;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
 using static SpriteDicing.Test.Helpers.Paths;
@@ -74,11 +73,6 @@ namespace SpriteDicing.Test
             string separator = ".", bool keepPivot = true)
         {
             return new SourceLoader(root, separator, keepPivot).Load(texturePath);
-        }
-
-        private static TextureImporter GetImporter (string texturePath)
-        {
-            return (TextureImporter)AssetImporter.GetAtPath(texturePath);
         }
     }
 }
