@@ -25,6 +25,7 @@ jobs:
       - name: Check formatting
         run: |
           cd crates
+          rustup component add rustfmt
           cargo fmt --all -- --check
 
       - name: Lint sources
