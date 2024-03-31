@@ -8,6 +8,9 @@ using UnityEngine;
 
 namespace SpriteDicing
 {
+    /// <summary>
+    /// Resolves and applies Unity texture import settings.
+    /// </summary>
     public class TextureSettings
     {
         private const string defaultPlatformId = "default";

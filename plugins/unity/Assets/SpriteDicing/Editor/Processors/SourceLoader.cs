@@ -28,15 +28,17 @@ namespace SpriteDicing
             return new Native.SourceSprite {
                 Id = BuildID(texturePath),
                 Bytes = File.ReadAllBytes(texturePath),
-                Format = Path.GetExtension(texturePath).Substring(1),
+                Format = Path.GetExtension(texturePath)[1..],
                 Pivot = GetPivot(texturePath)
             };
         }
 
         private string BuildID (string path)
         {
+            if (!Path.HasExtension(path))
+                throw new ArgumentException($"Invalid source texture path: {path}", nameof(path));
             if (!path.Contains(root))
-                throw new Exception($"Name root `{root}` is not valid for `{path}` path.");
+                throw new ArgumentException($"Name root `{root}` is not valid for `{path}` path.", nameof(path));
             var local = path[(root.Length + 1)..];
             return Path.GetFileNameWithoutExtension(local.Replace("/", separator));
         }

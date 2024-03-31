@@ -9,7 +9,7 @@ using UnityEngine.U2D;
 namespace SpriteDicing
 {
     /// <summary>
-    /// Responsible for creating sprite assets from the diced data.
+    /// Creates sprite assets from the diced data.
     /// </summary>
     public class SpriteBuilder
     {
