@@ -22,7 +22,7 @@ namespace SpriteDicing.Editors
         private static readonly GUIContent uvInsetContent = new("UV Inset", "Relative inset of the diced units UV coordinates. Can be used in addition to (or instead of) `Padding` to prevent texture bleeding artifacts. Won't consume any texture space, but higher values could visually distort the final result.");
         private static readonly GUIContent inputFolderContent = new("Input Folder", "Asset folder with source sprite textures.");
         private static readonly GUIContent includeSubfoldersContent = new("Include Subfolders", "Whether to recursively search for textures inside the input folder.");
-        private static readonly GUIContent separatorContent = new("Separator", "When sprite is from a sub-folder(s), the string will be used to separate the folder name(s) and the sprite name.");
+        private static readonly GUIContent separatorContent = new("Separator", "When sprite is from a sub-folder(s), the separator will be used to join the folder name(s) and the sprite name.");
         private static readonly int[] diceUnitSizeValues = { 8, 16, 32, 64, 128, 256 };
         private static readonly int[] atlasLimitValues = { 1024, 2048, 4096, 8192 };
         private static readonly GUIContent[] diceUnitSizeLabels = diceUnitSizeValues.Select(pair => new GUIContent(pair.ToString())).ToArray();
