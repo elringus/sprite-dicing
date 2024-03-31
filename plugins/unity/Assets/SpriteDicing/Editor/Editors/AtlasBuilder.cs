@@ -113,7 +113,7 @@ namespace SpriteDicing.Editors
                 TexturesProperty.arraySize = textures.Count;
                 for (int i = 0; i < textures.Count; i++)
                     TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue = textures[i];
-                serializedObject.ApplyModifiedProperties();
+                serializedObject.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
