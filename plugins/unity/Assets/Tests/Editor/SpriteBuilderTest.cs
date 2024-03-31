@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -80,7 +81,9 @@ namespace SpriteDicing.Test
             using var diced = Native.Dice(sources, prefs);
             var atlases = diced.Atlases.Select(bytes => {
                 var tex = new Texture2D(2, 2);
-                ImageConversion.LoadImage(tex, bytes);
+                var copy = new byte[bytes.Length];
+                Array.Copy(bytes, copy, bytes.Length);
+                ImageConversion.LoadImage(tex, copy);
                 return tex;
             }).ToArray();
             var builder = new SpriteBuilder(ppu, atlases);
