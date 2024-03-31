@@ -22,6 +22,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check formatting
+        run:
+          cd crates
+          rustup component add fmt
+          cargo fmt --all --check
+
       - name: Lint sources
         run: |
           cd crates
