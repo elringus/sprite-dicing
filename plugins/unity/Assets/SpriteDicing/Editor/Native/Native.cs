@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using UnityEngine.TestTools;
 
 namespace SpriteDicing
 {
@@ -56,6 +57,7 @@ namespace SpriteDicing
                 this.pts = pts;
             }
 
+            [ExcludeFromCoverage]
             public void Dispose ()
             {
                 foreach (var ptr in pts)
