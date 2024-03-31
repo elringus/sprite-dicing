@@ -25,6 +25,7 @@ jobs:
       - name: Lint sources
         run: |
           cd crates
+          rustup component add clippy
           cargo clippy --all-targets --all-features
 
       - name: Generate code coverage
