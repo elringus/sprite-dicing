@@ -1,1 +1,1 @@
-cargo tarpaulin -p sprite_dicing cli
+cargo tarpaulin --lib --all-features --exclude-files abi/*/*
