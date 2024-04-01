@@ -1,1 +1,1 @@
-cargo tarpaulin --lib --all-features --exclude-files abi/*/*
+cargo tarpaulin --all-features --exclude-files abi/*/* cli/*/*
