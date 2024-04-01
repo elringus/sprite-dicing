@@ -4,17 +4,11 @@ mod abi;
 mod cli;
 mod common;
 
-// use crate::common::*;
-// use sprite_dicing::{Prefs, RawArtifacts};
-// 
-// #[test]
-// fn foo() {
-//     assert!(reproducible(
-//         &MONO,
-//         RawArtifacts {
-//             atlases: vec![],
-//             sprites: vec![]
-//         },
-//         &Prefs::default()
-//     ));
-// }
+use crate::common::*;
+use sprite_dicing::{AtlasFormat, Prefs};
+
+#[test]
+fn raw_artifacts_reproducible() {
+    let diced = sprite_dicing::dice_raw(&MONO, &Prefs::default(), &AtlasFormat::Png).unwrap();
+    assert_repro(&MONO, diced, &Prefs::default());
+}

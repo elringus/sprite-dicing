@@ -15,7 +15,7 @@ fn cache(fixture: &'static str) -> Vec<RawSprite> {
 
 fn create_sprite<'a>(path: &Path, bytes: &'a [u8]) -> RawSprite<'a> {
     RawSprite {
-        id: path.to_str().unwrap().to_owned(),
+        id: path.file_name().unwrap().to_str().unwrap().to_owned(),
         bytes,
         format: path.extension().unwrap().to_str().unwrap().to_owned(),
         pivot: None,
