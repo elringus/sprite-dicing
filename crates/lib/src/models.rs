@@ -390,18 +390,6 @@ pub(crate) struct IRect {
     pub height: u32,
 }
 
-impl IRect {
-    #[allow(dead_code)] // Used in tests.
-    pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
-        IRect {
-            x,
-            y,
-            width,
-            height,
-        }
-    }
-}
-
 /// A rectangle in floating point space.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct FRect {
@@ -438,5 +426,37 @@ pub(crate) struct USize {
 impl USize {
     pub fn new(width: u32, height: u32) -> Self {
         USize { width, height }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::ColorType;
+
+    #[test]
+    fn can_create_pixel_from_raw() {
+        let pixel = Pixel::from_raw([1, 2, 3, 4]);
+        assert_eq!(pixel.r(), 1);
+        assert_eq!(pixel.g(), 2);
+        assert_eq!(pixel.b(), 3);
+        assert_eq!(pixel.a(), 4);
+    }
+
+    #[test]
+    fn can_create_texture_from_dynamic() {
+        let img = image::DynamicImage::new(2, 2, ColorType::Rgba8);
+        let tex = Texture::from_dynamic(&img).unwrap();
+        assert_eq!(2, tex.width);
+        assert_eq!(2, tex.height);
+        assert!(tex.pixels.iter().all(|p| p.a() == 0));
+    }
+
+    #[test]
+    fn errs_when_dynamic_texture_is_not_rgba8() {
+        let img = image::DynamicImage::new(2, 2, ColorType::Rgb8);
+        assert!(
+            Texture::from_dynamic(&img).is_err_and(|e| e.to_string().contains("error decoding"))
+        );
     }
 }

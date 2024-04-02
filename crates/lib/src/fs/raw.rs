@@ -74,6 +74,63 @@ fn decode_raw(raw: &RawSprite) -> Result<SourceSprite> {
 fn encode_raw(texture: Texture, fmt: ImageFormat) -> Result<Vec<u8>> {
     let img = texture.to_image()?;
     let mut buf = Cursor::new(Vec::new());
-    write_image(img, fmt, &mut buf)?;
+    write_image(img, fmt, &mut buf).unwrap();
     Ok(buf.into_inner())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::{ColorType, DynamicImage};
+
+    #[test]
+    fn propagates_errors_from_core_lib() {
+        let prefs = Prefs {
+            unit_size: 0,
+            ..Prefs::default()
+        };
+        assert!(dice_raw(&[], &prefs, &AtlasFormat::Png)
+            .is_err_and(|e| e.to_string() == "Unit size can't be zero."));
+    }
+
+    #[test]
+    fn errs_on_invalid_source() {
+        let prefs = Prefs {
+            unit_size: 1,
+            padding: 0,
+            ..Prefs::default()
+        };
+        let source = RawSprite {
+            id: "foo".to_owned(),
+            bytes: &[0],
+            format: "png".to_owned(),
+            pivot: None,
+        };
+        assert!(dice_raw(&[source], &prefs, &AtlasFormat::Png).is_err());
+    }
+
+    #[test]
+    fn errs_on_non_rgba8_source() {
+        let img = DynamicImage::new(2, 2, ColorType::Rgb8);
+        let mut bytes: Vec<u8> = Vec::new();
+        img.write_to(&mut Cursor::new(&mut bytes), ImageFormat::Tga)
+            .unwrap();
+
+        let prefs = Prefs {
+            unit_size: 1,
+            padding: 0,
+            ..Prefs::default()
+        };
+        let source = RawSprite {
+            id: "foo".to_owned(),
+            bytes: &bytes,
+            format: "tga".to_owned(),
+            pivot: None,
+        };
+        assert!(dice_raw(&[source], &prefs, &AtlasFormat::Png)
+            .err()
+            .unwrap()
+            .to_string()
+            .contains("Failed to create texture from dynamic image."));
+    }
 }

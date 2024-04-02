@@ -13,29 +13,6 @@ fn reproduces() {
 }
 
 #[test]
-fn errs_on_invalid_spec() {
-    let prefs = Prefs {
-        unit_size: 0,
-        ..Prefs::default()
-    };
-    assert!(sprite_dicing::dice_raw(&MONO, &prefs, &AtlasFormat::Png)
-        .is_err_and(|e| e.to_string() == "Unit size can't be zero."));
-}
-
-#[test]
-fn errs_on_invalid_source() {
-    let prefs = Prefs {
-        unit_size: 1,
-        padding: 0,
-        ..Prefs::default()
-    };
-    let mut mono = MONO.to_owned();
-    let byte = vec![0u8];
-    mono[0].bytes = &byte;
-    assert!(sprite_dicing::dice_raw(&mono, &prefs, &AtlasFormat::Png).is_err());
-}
-
-#[test]
 fn atlas_not_square_when_not_forced() {
     let prefs = Prefs {
         unit_size: 1,
