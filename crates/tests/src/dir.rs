@@ -21,7 +21,7 @@ fn mono_reproduces_in_dir() {
         ..FsPrefs::default()
     };
 
-    sprite_dicing::dice_dir(&get_mono_dir(), &fs_prefs, &prefs).unwrap();
+    sprite_dicing::dice_dir(&get_fixture_dir("mono"), &fs_prefs, &prefs).unwrap();
     assert_repro(&MONO, build_arts_from_dir(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();
 }
@@ -41,8 +41,30 @@ fn can_write_webp() {
         ..FsPrefs::default()
     };
 
-    sprite_dicing::dice_dir(&get_mono_dir(), &fs_prefs, &prefs).unwrap();
+    sprite_dicing::dice_dir(&get_fixture_dir("mono"), &fs_prefs, &prefs).unwrap();
     assert_repro(&MONO, build_arts_from_dir(&out_dir, &fs_prefs), &prefs);
+    fs::remove_dir_all(out_dir).unwrap();
+}
+
+#[test]
+fn errs_on_invalid_dir() {
+    let prefs = Prefs::default();
+    let fs_prefs = FsPrefs::default();
+    assert!(
+        sprite_dicing::dice_dir(&get_fixture_dir("foo"), &fs_prefs, &prefs)
+            .is_err_and(|e| e.to_string().contains("cannot find the path"))
+    );
+}
+
+#[test]
+fn errs_on_invalid_sources() {
+    let out_dir = create_temp_dir();
+    let prefs = Prefs::default();
+    let fs_prefs = FsPrefs::default();
+    assert!(
+        sprite_dicing::dice_dir(&get_fixture_dir("invalid"), &fs_prefs, &prefs)
+            .is_err_and(|e| e.to_string().contains("error decoding"))
+    );
     fs::remove_dir_all(out_dir).unwrap();
 }
 
@@ -111,7 +133,7 @@ fn create_temp_dir() -> PathBuf {
     tmp_dir
 }
 
-fn get_mono_dir() -> PathBuf {
+fn get_fixture_dir(fixture: &'static str) -> PathBuf {
     let crate_dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from_str(&format!("{}/fixtures/mono", crate_dir)).unwrap()
+    PathBuf::from_str(&format!("{crate_dir}/fixtures/{fixture}")).unwrap()
 }
