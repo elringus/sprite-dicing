@@ -53,20 +53,14 @@ struct Args {
 #[derive(Debug, Clone, ValueEnum)]
 enum Format {
     Png,
-    Jpeg,
     Webp,
-    Tga,
-    Tiff,
 }
 
 impl From<Format> for AtlasFormat {
     fn from(value: Format) -> Self {
         match value {
             Format::Png => AtlasFormat::Png,
-            Format::Jpeg => AtlasFormat::Jpeg,
             Format::Webp => AtlasFormat::Webp,
-            Format::Tga => AtlasFormat::Tga,
-            Format::Tiff => AtlasFormat::Tiff,
         }
     }
 }

@@ -7,10 +7,7 @@ pub(crate) use crate::models::*;
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum AtlasFormat {
     Png,
-    Jpeg,
     Webp,
-    Tga,
-    Tiff,
 }
 
 impl AtlasFormat {
@@ -18,20 +15,14 @@ impl AtlasFormat {
     pub fn extension(&self) -> &'static str {
         match self {
             AtlasFormat::Png => "png",
-            AtlasFormat::Jpeg => "jpeg",
             AtlasFormat::Webp => "webp",
-            AtlasFormat::Tga => "tga",
-            AtlasFormat::Tiff => "tiff",
         }
     }
 
     pub fn image(&self) -> ImageFormat {
         match self {
             AtlasFormat::Png => ImageFormat::Png,
-            AtlasFormat::Jpeg => ImageFormat::Jpeg,
             AtlasFormat::Webp => ImageFormat::WebP,
-            AtlasFormat::Tga => ImageFormat::Tga,
-            AtlasFormat::Tiff => ImageFormat::Tiff,
         }
     }
 }

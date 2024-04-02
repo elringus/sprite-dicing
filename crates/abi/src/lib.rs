@@ -195,10 +195,7 @@ fn to_prefs(c: CPrefs) -> Prefs {
 unsafe fn to_format(c: u8) -> AtlasFormat {
     match c {
         0 => AtlasFormat::Png,
-        1 => AtlasFormat::Jpeg,
-        2 => AtlasFormat::Webp,
-        3 => AtlasFormat::Tga,
-        4 => AtlasFormat::Tiff,
+        1 => AtlasFormat::Webp,
         _ => AtlasFormat::Png,
     }
 }

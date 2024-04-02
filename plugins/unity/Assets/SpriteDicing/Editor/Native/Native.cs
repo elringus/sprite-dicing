@@ -37,10 +37,7 @@ namespace SpriteDicing
         public enum AtlasFormat : byte
         {
             PNG,
-            JPEG,
-            WEBP,
-            TGA,
-            TIFF
+            WEBP
         }
 
         public class Artifacts : IDisposable
