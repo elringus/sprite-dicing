@@ -47,6 +47,27 @@ fn can_write_webp() {
 }
 
 #[test]
+fn can_find_sources_in_nested_directories() {
+    let out_dir = create_temp_dir();
+
+    let prefs = Prefs {
+        unit_size: 1,
+        padding: 0,
+        ..Prefs::default()
+    };
+    let fs_prefs = FsPrefs {
+        out: Some(out_dir.to_owned()),
+        recursive: true,
+        ..FsPrefs::default()
+    };
+
+    sprite_dicing::dice_dir(&get_fixture_dir("nested"), &fs_prefs, &prefs).unwrap();
+    let arts = build_arts_from_dir(&out_dir, &fs_prefs);
+    assert_eq!(arts.sprites.len(), 6);
+    fs::remove_dir_all(out_dir).unwrap();
+}
+
+#[test]
 fn errs_on_invalid_dir() {
     let prefs = Prefs::default();
     let fs_prefs = FsPrefs::default();

@@ -65,7 +65,6 @@ fn is_supported_texture(path: &Path) -> bool {
         Ok(fmt) => matches!(
             fmt,
             ImageFormat::Png
-                | ImageFormat::Jpeg
                 | ImageFormat::WebP
                 | ImageFormat::Tga
                 | ImageFormat::Dds

@@ -45,6 +45,9 @@ fn load_bytes(dir: &Path) -> HashMap<PathBuf, Vec<u8>> {
     let mut map = HashMap::new();
     for entry in fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
+        if path.is_dir() {
+            continue;
+        }
         let bytes = fs::read(&path).unwrap();
         map.insert(path, bytes);
     }
