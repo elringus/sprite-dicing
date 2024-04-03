@@ -60,5 +60,16 @@ namespace SpriteDicing.Test
         {
             return AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
         }
+
+        public static TextureImporter GetImporter (string texturePath)
+        {
+            return (TextureImporter)AssetImporter.GetAtPath(texturePath);
+        }
+
+        public static TextureImporter GetImporter (Texture2D texture)
+        {
+            var texturePath = AssetDatabase.GetAssetPath(texture);
+            return GetImporter(texturePath);
+        }
     }
 }

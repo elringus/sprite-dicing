@@ -4,13 +4,14 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using static NUnit.Framework.Assert;
+using static SpriteDicing.Test.Helpers;
 
 namespace SpriteDicing.Test
 {
     public class AtlasImporterTest
     {
         private const string tempFolder = "Temp";
-        private const string tempRoot = Helpers.TextureFolderPath + "/" + tempFolder;
+        private const string tempRoot = TextureFolderPath + "/" + tempFolder;
         private static readonly Native.Texture mockTexture = new() {
             Width = 1,
             Height = 1,
@@ -24,7 +25,7 @@ namespace SpriteDicing.Test
         [SetUp]
         public void SetUp ()
         {
-            AssetDatabase.CreateFolder(Helpers.TextureFolderPath, tempFolder);
+            AssetDatabase.CreateFolder(TextureFolderPath, tempFolder);
             basePath = $"{tempRoot}/{Guid.NewGuid():N}";
             textureSettings = new TextureSettings();
             importer = new AtlasImporter(basePath, textureSettings, 1);
@@ -143,12 +144,6 @@ namespace SpriteDicing.Test
             var path = importer.Save(texture);
             AssetDatabase.Refresh();
             return importer.Import(path);
-        }
-
-        private TextureImporter GetImporter (Texture2D png)
-        {
-            var path = AssetDatabase.GetAssetPath(png);
-            return (TextureImporter)AssetImporter.GetAtPath(path);
         }
     }
 }

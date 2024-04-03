@@ -56,17 +56,20 @@ namespace SpriteDicing
 
         private Native.Texture BuildTexture (string texturePath)
         {
+            EnsureReadable(texturePath);
             var asset = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             return new Native.Texture {
                 Width = (uint)asset.width,
                 Height = (uint)asset.height,
-                Pixels = BuildPixels(asset.GetPixels32())
+                Pixels = BuildPixels(asset)
             };
         }
 
-        private Native.Pixel[] BuildPixels (Color32[] colors)
+        private Native.Pixel[] BuildPixels (Texture2D asset)
         {
+            var colors = asset.GetPixels32(); // GetPixelData is actually slower in editor.
             var pixels = new Native.Pixel[colors.Length];
+
             for (int i = 0; i < colors.Length; i++)
             {
                 var c = colors[i];
@@ -74,10 +77,19 @@ namespace SpriteDicing
                     R = c.r,
                     G = c.g,
                     B = c.b,
-                    A = c.a,
+                    A = c.a
                 };
             }
+
             return pixels;
+        }
+
+        private void EnsureReadable (string texturePath)
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(texturePath);
+            importer.isReadable = true;
+            importer.crunchedCompression = false;
+            importer.SaveAndReimport();
         }
     }
 }

@@ -74,6 +74,22 @@ namespace SpriteDicing.Test
             AreEqual("2x2.BTGR", Load(BTGR, separator: ".").Id);
         }
 
+        [Test]
+        public void WhenNotReadableBecomesReadableAfterLoad ()
+        {
+            GetImporter(RGB3x1).isReadable = false;
+            Load(RGB3x1);
+            IsTrue(GetImporter(RGB3x1).isReadable);
+        }
+
+        [Test]
+        public void WhenCrunchedBecomesNotCrunchedAfterLoad ()
+        {
+            GetImporter(RGB4x4).crunchedCompression = true;
+            Load(RGB4x4);
+            IsFalse(GetImporter(RGB4x4).crunchedCompression);
+        }
+
         private static Native.SourceSprite Load (string texturePath, string root = TextureFolderPath,
             string separator = ".", bool keepPivot = true)
         {
