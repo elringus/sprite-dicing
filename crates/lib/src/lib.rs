@@ -1,18 +1,9 @@
-//! APIs for generating atlas textures and diced sprite meshes from/to raw pixels.
-//! When `fs` feature is enabled, additionally provides APIs to read and decode textures of
-//! various formats from the file system as well as to write generated atlases into textures
-//! of various formats and to serialize diced sprite meshes as JSON files.
-
 mod builder;
 mod dicer;
 mod fixtures;
-#[cfg(feature = "fs")]
-mod fs;
 mod models;
 mod packer;
 
-#[cfg(feature = "fs")]
-pub use fs::*;
 pub use models::*;
 
 /// Splits specified sprite textures into chunks, discards identical ones, joins unique

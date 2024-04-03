@@ -1,8 +1,14 @@
 //! Command line interface of the library.
 
-use clap::{Parser, ValueEnum};
+mod dir;
+mod img;
+mod json;
+mod models;
+
+use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
-use sprite_dicing::{AtlasFormat, FsPrefs, Pivot, Prefs, Result};
+use models::*;
+use sprite_dicing::{Pivot, Prefs};
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
@@ -19,8 +25,8 @@ struct Args {
     #[arg(long, default_value = "/")]
     separator: String,
     /// Format of the generated atlas textures.
-    #[arg(short, long, value_enum, default_value_t = Format::Png)]
-    format: Format,
+    #[arg(short, long, value_enum, default_value_t = AtlasFormat::Png)]
+    format: AtlasFormat,
     /// The size of a single diced unit, in pixels.
     #[arg(short, long, default_value_t = 64)]
     size: u32,
@@ -50,21 +56,6 @@ struct Args {
     pivot: Vec<f32>,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
-enum Format {
-    Png,
-    Webp,
-}
-
-impl From<Format> for AtlasFormat {
-    fn from(value: Format) -> Self {
-        match value {
-            Format::Png => AtlasFormat::Png,
-            Format::Webp => AtlasFormat::Webp,
-        }
-    }
-}
-
 fn main() -> Result<()> {
     let args = Args::parse();
     let bar = ProgressBar::new(100).with_style(
@@ -76,7 +67,7 @@ fn main() -> Result<()> {
         out: args.out,
         recursive: args.recursive,
         separator: args.separator,
-        atlas_format: args.format.into(),
+        atlas_format: args.format,
     };
     let prefs = Prefs {
         unit_size: args.size,
@@ -93,5 +84,5 @@ fn main() -> Result<()> {
             bar.set_message(p.activity);
         })),
     };
-    sprite_dicing::dice_dir(&args.dir, &fs_prefs, &prefs)
+    dir::dice_dir(&args.dir, &fs_prefs, &prefs)
 }

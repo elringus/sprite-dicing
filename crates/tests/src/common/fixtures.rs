@@ -1,55 +1,70 @@
+use crate::common::img;
+use image::RgbaImage;
 use once_cell::sync::Lazy;
-use sprite_dicing::RawSprite;
+use sprite_dicing::SourceSprite;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub static MONO: Lazy<Vec<RawSprite>> = Lazy::new(|| cache("mono"));
+pub const MONO: &str = "mono";
+// pub const NESTED: &str = "nested";
+// pub const EXOTIC: &str = "exotic";
+// pub const INVALID: &str = "invalid";
 
-static BYTES: Lazy<HashMap<String, HashMap<PathBuf, Vec<u8>>>> = Lazy::new(cache_bytes);
+pub static RAW: Lazy<RawsByFixture> = Lazy::new(cache_raws);
+pub static SRC: Lazy<SourcesByFixture> = Lazy::new(cache_sources);
 
-fn cache(fixture: &'static str) -> Vec<RawSprite> {
-    let src = &BYTES[fixture];
-    src.iter().map(|s| create_sprite(s.0, s.1)).collect()
+pub type SourcesByFixture = HashMap<String, Vec<SourceSprite>>;
+pub type RawsByFixture = HashMap<String, RawBySpriteId>;
+pub type RawBySpriteId = HashMap<String, RgbaImage>;
+
+fn cache_raws() -> RawsByFixture {
+    let mut raws = HashMap::new();
+    for entry in fs::read_dir(get_fixtures_root()).unwrap() {
+        let root = entry.unwrap().path();
+        let fixture = root.file_name().unwrap().to_str().unwrap().to_owned();
+        let images = img::load_all(&root)
+            .into_iter()
+            .map(|(path, image)| (build_id(&path, &root), image))
+            .collect();
+        raws.insert(fixture, images);
+    }
+    raws
 }
 
-fn create_sprite<'a>(path: &Path, bytes: &'a [u8]) -> RawSprite<'a> {
-    RawSprite {
-        id: path
-            .with_extension("")
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned(),
-        bytes,
-        format: path.extension().unwrap().to_str().unwrap().to_owned(),
+fn cache_sources() -> SourcesByFixture {
+    let mut src = HashMap::new();
+    for entry in fs::read_dir(get_fixtures_root()).unwrap() {
+        let root = entry.unwrap().path();
+        let fixture = root.file_name().unwrap().to_str().unwrap().to_owned();
+        let images = img::load_all(&root)
+            .into_iter()
+            .map(|(path, image)| create_sprite(&path, image, &root))
+            .collect();
+        src.insert(fixture, images);
+    }
+    src
+}
+
+fn create_sprite(path: &Path, image: RgbaImage, root: &Path) -> SourceSprite {
+    SourceSprite {
+        id: build_id(path, root),
+        texture: img::to_texture(&image),
         pivot: None,
     }
 }
 
-fn cache_bytes() -> HashMap<String, HashMap<PathBuf, Vec<u8>>> {
-    let mut map = HashMap::new();
-    let crate_root = env!("CARGO_MANIFEST_DIR");
-    let fixtures_root = format!("{crate_root}/fixtures");
-    for entry in fs::read_dir(fixtures_root).unwrap() {
-        let dir = entry.unwrap().path();
-        let bytes = load_bytes(&dir);
-        let key = dir.file_name().unwrap().to_str().unwrap().to_owned();
-        map.insert(key, bytes);
-    }
-    map
+fn build_id(path: &Path, root: &Path) -> String {
+    path.strip_prefix(root)
+        .unwrap()
+        .with_extension("")
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_owned()
 }
 
-fn load_bytes(dir: &Path) -> HashMap<PathBuf, Vec<u8>> {
-    let mut map = HashMap::new();
-    for entry in fs::read_dir(dir).unwrap() {
-        let path = entry.unwrap().path();
-        if path.is_dir() {
-            continue;
-        }
-        let bytes = fs::read(&path).unwrap();
-        map.insert(path, bytes);
-    }
-    map
+fn get_fixtures_root() -> PathBuf {
+    Path::new(&format!("{}/fixtures", env!("CARGO_MANIFEST_DIR"))).to_owned()
 }

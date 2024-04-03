@@ -10,37 +10,13 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     /// An issue with [Prefs] and/or input data.
     Spec(&'static str),
-    /// An issue with texture encoding.
-    #[cfg(feature = "fs")]
-    Image(image::ImageError),
-    /// An issue with an I/O operation.
-    #[cfg(feature = "fs")]
-    Io(std::io::Error),
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::Spec(info) => write!(f, "{}", info),
-            #[cfg(feature = "fs")]
-            Error::Image(err) => write!(f, "{}", err),
-            #[cfg(feature = "fs")]
-            Error::Io(err) => write!(f, "{}", err),
         }
-    }
-}
-
-#[cfg(feature = "fs")]
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error::Io(err)
-    }
-}
-
-#[cfg(feature = "fs")]
-impl From<image::ImageError> for Error {
-    fn from(err: image::ImageError) -> Self {
-        Error::Image(err)
     }
 }
 
@@ -110,7 +86,7 @@ pub struct Progress {
 }
 
 impl Progress {
-    pub(crate) fn report(prefs: &Prefs, stage: u8, idx: usize, len: usize, activity: &str) {
+    pub fn report(prefs: &Prefs, stage: u8, idx: usize, len: usize, activity: &str) {
         // Stages:
         // 0 Decoding source textures (raw only)
         // 1 Dicing source textures
@@ -136,10 +112,6 @@ impl Pixel {
     }
     pub const fn from_raw(raw: [u8; 4]) -> Self {
         Pixel(raw)
-    }
-    #[cfg(feature = "fs")]
-    pub fn from_rgba(rgba: &image::Rgba<u8>) -> Self {
-        Pixel(rgba.0)
     }
     pub fn r(&self) -> u8 {
         self.0[0]
@@ -169,37 +141,6 @@ pub struct Texture {
     /// top to bottom; eg, first pixel would be top-left on texture rect, while last
     /// would be the bottom-right one.
     pub pixels: Vec<Pixel>,
-}
-
-impl Texture {
-    #[cfg(feature = "fs")]
-    pub fn from_image(img: &image::RgbaImage) -> Self {
-        Texture {
-            width: img.width(),
-            height: img.height(),
-            pixels: img.pixels().map(Pixel::from_rgba).collect(),
-        }
-    }
-    #[cfg(feature = "fs")]
-    pub fn from_dynamic(img: &image::DynamicImage) -> Result<Self> {
-        let rgba = img.as_rgba8().ok_or(image::error::ImageError::Decoding(
-            image::error::DecodingError::new(
-                image::error::ImageFormatHint::Unknown,
-                "Failed to create texture from dynamic image.",
-            ),
-        ))?;
-        Ok(Texture::from_image(rgba))
-    }
-    #[cfg(feature = "fs")]
-    pub fn to_image(self) -> Result<image::RgbaImage> {
-        let buf = self.pixels.into_iter().flat_map(Pixel::to_raw).collect();
-        image::RgbaImage::from_raw(self.width, self.height, buf).ok_or(Error::Image(
-            image::error::ImageError::Encoding(image::error::EncodingError::new(
-                image::error::ImageFormatHint::Unknown,
-                "Failed to convert texture into RGBA8 image.",
-            )),
-        ))
-    }
 }
 
 /// Original sprite specified as input for a dicing operation.
@@ -432,7 +373,6 @@ impl USize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use image::ColorType;
 
     #[test]
     fn can_create_pixel_from_raw() {
@@ -441,22 +381,5 @@ mod tests {
         assert_eq!(pixel.g(), 2);
         assert_eq!(pixel.b(), 3);
         assert_eq!(pixel.a(), 4);
-    }
-
-    #[test]
-    fn can_create_texture_from_dynamic() {
-        let img = image::DynamicImage::new(2, 2, ColorType::Rgba8);
-        let tex = Texture::from_dynamic(&img).unwrap();
-        assert_eq!(2, tex.width);
-        assert_eq!(2, tex.height);
-        assert!(tex.pixels.iter().all(|p| p.a() == 0));
-    }
-
-    #[test]
-    fn errs_when_dynamic_texture_is_not_rgba8() {
-        let img = image::DynamicImage::new(2, 2, ColorType::Rgb8);
-        assert!(
-            Texture::from_dynamic(&img).is_err_and(|e| e.to_string().contains("error decoding"))
-        );
     }
 }

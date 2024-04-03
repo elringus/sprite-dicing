@@ -1,18 +1,23 @@
 use crate::common::*;
 use image::{ImageBuffer, RgbaImage};
-use sprite_dicing::{DicedSprite, Prefs, RawArtifacts, RawSprite};
+use sprite_dicing::{Artifacts, DicedSprite, Prefs};
 
-/// Asserts specified source sprites can be reproduced using specified diced artifacts.
-pub fn assert_repro(sources: &[RawSprite], arts: RawArtifacts, prefs: &Prefs) {
-    for source in sources.iter() {
-        let source_img = &bytes_to_img(source.bytes);
-        if is_clear(source_img) {
-            continue; // All-transparent (clear) sprites are ignored.
+/// Asserts source sprites under specified fixture can be reproduced using specified artifacts.
+pub fn assert_repro(fixture: &str, arts: Artifacts, prefs: &Prefs) {
+    assert_eq!(
+        arts.sprites.len(), // All-transparent (clear) sources are ignored.
+        RAW[fixture].iter().filter(|(_, i)| !is_clear(i)).count()
+    );
+    let atlases: Vec<_> = arts.atlases.iter().map(from_texture).collect();
+    for source in SRC[fixture].iter() {
+        let source_raw = &RAW[fixture][&source.id];
+        if is_clear(source_raw) {
+            continue;
         }
         let diced = arts.sprites.iter().find(|&d| d.id == source.id).unwrap();
-        let atlas = bytes_to_img(&arts.atlases[diced.atlas_index]);
-        let reproduced = &reproduce(diced, &atlas, prefs);
-        assert_eq!(source_img, reproduced);
+        let atlas = &atlases[diced.atlas_index];
+        let reproduced = &reproduce(diced, atlas, prefs);
+        assert_eq!(source_raw, reproduced);
     }
 }
 

@@ -1,7 +1,7 @@
-use crate::fs::common::*;
+use sprite_dicing::DicedSprite;
 
 /// Serializes specified diced sprites to JSON string.
-pub(crate) fn sprites_to_json(sprites: &[DicedSprite]) -> String {
+pub fn sprites_to_json(sprites: &[DicedSprite]) -> String {
     let sprites = sprites
         .iter()
         .map(sprite_to_json)
@@ -53,6 +53,7 @@ fn sprite_to_json(sprite: &DicedSprite) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sprite_dicing::{Pivot, Rect, Uv, Vertex};
 
     #[test]
     fn builds_sprites_json() {

@@ -9,7 +9,7 @@ name = "e2e"
 path = "src/e2e.rs"
 
 [dev-dependencies]
-sprite_dicing = { path = "../lib", features = ["fs"] }
+sprite_dicing = { path = "../lib" }
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
 serde_json = "1.0"
 rand = "0.8"

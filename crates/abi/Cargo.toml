@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-sprite_dicing = { path = "../lib", features = ["fs"] }
+sprite_dicing = { path = "../lib" }
 
 [lib]
 crate-type = ["cdylib"]
