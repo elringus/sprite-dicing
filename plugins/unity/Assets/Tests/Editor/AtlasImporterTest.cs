@@ -4,7 +4,6 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using static NUnit.Framework.Assert;
-using static SpriteDicing.Test.Helpers.Paths;
 
 namespace SpriteDicing.Test
 {
@@ -12,6 +11,11 @@ namespace SpriteDicing.Test
     {
         private const string tempFolder = "Temp";
         private const string tempRoot = Helpers.TextureFolderPath + "/" + tempFolder;
+        private static readonly Native.Texture mockTexture = new() {
+            Width = 1,
+            Height = 1,
+            Pixels = new[] { new Native.Pixel { R = 255, G = 255, B = 255, A = 255 } }
+        };
 
         private string basePath;
         private TextureSettings textureSettings;
@@ -35,7 +39,7 @@ namespace SpriteDicing.Test
         [Test]
         public void SerializedTextureIsSavedAsPng ()
         {
-            var png = Import(B);
+            var png = Import(mockTexture);
             IsTrue(AssetDatabase.IsMainAsset(png));
             IsTrue(AssetDatabase.GetAssetPath(png).EndsWith(".png"));
         }
@@ -43,7 +47,7 @@ namespace SpriteDicing.Test
         [Test]
         public void SerializedEqualsOriginalTexture ()
         {
-            var path = AssetDatabase.GetAssetPath(Import(B));
+            var path = AssetDatabase.GetAssetPath(Import(mockTexture));
             var png = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             CollectionAssert.AreEqual(Helpers.Textures.B.GetRawTextureData(), png.GetRawTextureData());
         }
@@ -51,7 +55,7 @@ namespace SpriteDicing.Test
         [Test]
         public void DefaultImportSettingsAreApplied ()
         {
-            var importer = GetImporter(Import(B));
+            var importer = GetImporter(Import(mockTexture));
             AreEqual(TextureImporterType.Default, importer.textureType);
             IsTrue(importer.alphaIsTransparency);
             IsFalse(importer.mipmapEnabled);
@@ -62,14 +66,14 @@ namespace SpriteDicing.Test
         [Test]
         public void ExistingImportSettingsArePreserved ()
         {
-            var otherTexture = Import(B);
+            var otherTexture = Import(mockTexture);
             var otherImporter = GetImporter(otherTexture);
             otherImporter.alphaIsTransparency = false;
             otherImporter.textureCompression = TextureImporterCompression.Compressed;
             otherImporter.SaveAndReimport();
 
             textureSettings.TryImportExisting(otherTexture);
-            var importer = GetImporter(Import(B));
+            var importer = GetImporter(Import(mockTexture));
             IsFalse(importer.alphaIsTransparency);
             AreEqual(TextureImporterCompression.Compressed, importer.textureCompression);
         }
@@ -78,7 +82,7 @@ namespace SpriteDicing.Test
         public void ExistingPlatformSpecificSettingsArePreserved ()
         {
             var otherPlatform = "Standalone";
-            var otherTexture = Import(B);
+            var otherTexture = Import(mockTexture);
             var otherImporter = GetImporter(otherTexture);
             var otherSettings = new TextureImporterPlatformSettings {
                 name = otherPlatform,
@@ -89,7 +93,7 @@ namespace SpriteDicing.Test
             otherImporter.SaveAndReimport();
 
             textureSettings.TryImportExisting(otherTexture);
-            var importer = GetImporter(Import(B));
+            var importer = GetImporter(Import(mockTexture));
             var settings = importer.GetPlatformTextureSettings(otherPlatform);
             AreEqual(TextureResizeAlgorithm.Bilinear, settings.resizeAlgorithm);
         }
@@ -98,7 +102,7 @@ namespace SpriteDicing.Test
         public void NonOverriddenPlatformSpecificSettingsAreIgnored ()
         {
             var otherPlatform = "Standalone";
-            var otherTexture = Import(B);
+            var otherTexture = Import(mockTexture);
             var otherImporter = GetImporter(otherTexture);
             var otherSettings = new TextureImporterPlatformSettings {
                 name = otherPlatform,
@@ -109,7 +113,7 @@ namespace SpriteDicing.Test
             otherImporter.SaveAndReimport();
 
             textureSettings.TryImportExisting(otherTexture);
-            var importer = GetImporter(Import(B));
+            var importer = GetImporter(Import(mockTexture));
             var settings = importer.GetPlatformTextureSettings(otherPlatform);
             AreEqual(TextureResizeAlgorithm.Mitchell, settings.resizeAlgorithm);
         }
@@ -119,23 +123,21 @@ namespace SpriteDicing.Test
         {
             var obj = new UnityEngine.Object();
             textureSettings.TryImportExisting(obj as Texture);
-            DoesNotThrow(() => Import(B));
+            DoesNotThrow(() => Import(mockTexture));
         }
 
         [Test]
         public void MultipleTexturesNamedCorrectly ()
         {
-            Import(B);
-            Import(B);
+            Import(mockTexture);
+            Import(mockTexture);
             IsTrue(File.Exists($"{basePath} 001.png"));
             IsTrue(File.Exists($"{basePath} 002.png"));
         }
 
-        private Texture2D Import (string texturePath)
+        private Texture2D Import (Native.Texture texture)
         {
-            var bytes = File.ReadAllBytes(texturePath);
-            var path = importer.Write(bytes);
-            AssetDatabase.ImportAsset(path);
+            var path = importer.Save(texture);
             return importer.Import(path);
         }
 

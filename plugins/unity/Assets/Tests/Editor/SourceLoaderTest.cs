@@ -34,9 +34,15 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void LoadsBytesOfTheSourceTexture ()
+        public void LoadsPixelsOfTheSourceTexture ()
         {
-            CollectionAssert.AreEqual(File.ReadAllBytes(BGRT), Load(BGRT).Bytes);
+            var pixels = Load(BGRT).Texture.Pixels;
+            CollectionAssert.AreEqual(new Native.Pixel[] {
+                new() { R = 0, G = 0, B = 255, A = 255 },
+                new() { R = 0, G = 255, B = 0, A = 255 },
+                new() { R = 255, G = 0, B = 0, A = 255 },
+                new() { R = 0, G = 0, B = 0, A = 255 }
+            }, pixels);
         }
 
         [Test]
@@ -72,7 +78,7 @@ namespace SpriteDicing.Test
         private static Native.SourceSprite Load (string texturePath, string root = TextureFolderPath,
             string separator = ".", bool keepPivot = true)
         {
-            return new SourceLoader(root, separator, keepPivot).Load(texturePath);
+            return new SourceLoader(root, separator, keepPivot).Load(texturePath).Native;
         }
     }
 }

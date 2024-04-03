@@ -77,11 +77,12 @@ namespace SpriteDicing.Test
                 Pivot = new Native.Pivot { X = pivot.x, Y = pivot.y },
                 OnProgress = onProgress
             };
-            var diced = Native.Dice(sources, prefs);
-            var atlases = diced.Atlases.Select(bytes => {
-                var tex = new Texture2D(2, 2);
-                ImageConversion.LoadImage(tex, bytes);
-                return tex;
+            var diced = Native.Dice(sources.Select(s => s.Native), prefs);
+            var atlases = diced.Atlases.Select(tex => {
+                var asset = new Texture2D((int)tex.Width, (int)tex.Height);
+                asset.SetPixels32(tex.Pixels.Select(p => new Color32(p.R, p.G, p.B, p.A)).ToArray());
+                asset.Apply(false, true);
+                return asset;
             }).ToArray();
             var builder = new SpriteBuilder(ppu, atlases);
             return diced.Sprites.Select(builder.Build).ToArray();

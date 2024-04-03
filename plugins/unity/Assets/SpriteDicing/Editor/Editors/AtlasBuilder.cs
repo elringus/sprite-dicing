@@ -28,10 +28,10 @@ namespace SpriteDicing.Editors
             try
             {
                 var sources = CollectSourceSprites();
-                using var diced = Native.Dice(sources, BuildPrefs());
+                using var diced = Native.Dice(sources.Select(s => s.Native), BuildPrefs());
                 var atlases = ImportAtlases(diced.Atlases);
                 BuildDicedSprites(diced.Sprites, atlases);
-                UpdateCompressionRatio(sources, diced.Atlases);
+                UpdateCompressionRatio(sources.Select(s => s.Texture), atlases);
             }
             catch (Exception e)
             {
@@ -44,7 +44,7 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private Native.SourceSprite[] CollectSourceSprites ()
+        private SourceSprite[] CollectSourceSprites ()
         {
             DisplayProgressBar("Collecting source textures...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
@@ -61,30 +61,29 @@ namespace SpriteDicing.Editors
             AtlasSizeLimit = (uint)AtlasSizeLimit,
             AtlasSquare = ForceSquare,
             AtlasPOT = ForcePot,
-            AtlasFormat = Native.AtlasFormat.PNG,
             PPU = PPU,
             Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y },
             OnProgress = p => DisplayProgressBar(p.Activity, p.Ratio / 2)
         };
 
-        private Texture2D[] ImportAtlases (IReadOnlyList<byte[]> atlasBytes)
+        private Texture2D[] ImportAtlases (IReadOnlyList<Native.Texture> atlases)
         {
             DisplayProgressBar("Importing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
-            var basePath = atlasPath.Substring(0, atlasPath.LastIndexOf(".", StringComparison.Ordinal));
+            var basePath = atlasPath[..atlasPath.LastIndexOf(".", StringComparison.Ordinal)];
             var importer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
-            var paths = atlasBytes.Select(importer.Write).ToArray();
+            var paths = atlases.Select(importer.Save).ToArray();
             AssetDatabase.Refresh();
-            var atlasTextures = new Texture2D[paths.Length];
+            var imported = new Texture2D[paths.Length];
             for (int i = 0; i < paths.Length; i++)
             {
                 var progress = .5f + .25f * ((i + 1f) / paths.Length);
                 DisplayProgressBar($"Importing atlases... ({i + 1} of {paths.Length})", progress);
-                atlasTextures[i] = importer.Import(paths[i]);
+                imported[i] = importer.Import(paths[i]);
             }
-            SaveAtlasTextures(atlasTextures);
-            return atlasTextures;
+            SaveAtlasTextures(imported);
+            return imported;
 
             TextureSettings GetExistingAtlasTextureSettings ()
             {
@@ -129,11 +128,11 @@ namespace SpriteDicing.Editors
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
 
-        private void UpdateCompressionRatio (IEnumerable<Native.SourceSprite> sources, IEnumerable<byte[]> atlases)
+        private void UpdateCompressionRatio (IEnumerable<Texture2D> sources, IEnumerable<Texture2D> atlases)
         {
             AssetDatabase.SaveAssets();
-            var sourceSize = sources.Sum(b => b.Bytes.Length / 1024);
-            var atlasSize = atlases.Sum(b => b.Length / 1024);
+            var sourceSize = sources.Sum(GetAssetSize);
+            var atlasSize = atlases.Sum(GetAssetSize);
             var dataSize = GetDataSize();
             var ratio = sourceSize / (float)(atlasSize + dataSize);
             var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
