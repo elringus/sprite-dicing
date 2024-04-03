@@ -43,7 +43,7 @@ fn load_sources(
 ) -> Result<Vec<SourceSprite>> {
     let mut sprites = Vec::with_capacity(paths.len());
     for (idx, path) in paths.iter().enumerate() {
-        Progress::report(prefs, 0, idx, paths.len(), "Loading source textures");
+        Progress::report(prefs, 0, idx, paths.len(), "Decoding source textures");
         sprites.push(create_sprite(root, path, fs_prefs)?);
     }
     Ok(sprites)
@@ -68,7 +68,7 @@ fn eval_sprite_id(root: &Path, path: &Path, separator: &str) -> String {
 fn write_atlases(tex: Vec<Texture>, dir: &Path, fmt: &AtlasFormat, prefs: &Prefs) -> Result<()> {
     let total = tex.len();
     tex.into_iter().enumerate().try_for_each(|(idx, tex)| {
-        Progress::report(prefs, 4, idx, total, "Writing atlas textures");
+        Progress::report(prefs, 4, idx, total, "Encoding atlas textures");
         let name = format!("atlas_{idx}.{}", fmt.extension());
         write_atlas(&dir.join(name), tex)
     })

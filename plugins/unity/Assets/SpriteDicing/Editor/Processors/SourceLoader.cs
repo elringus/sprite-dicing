@@ -31,7 +31,7 @@ namespace SpriteDicing
                     Texture = BuildTexture(texturePath),
                     Pivot = GetPivot(texturePath)
                 },
-                Texture = null
+                Texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath)
             };
         }
 

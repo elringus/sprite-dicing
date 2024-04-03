@@ -46,11 +46,18 @@ namespace SpriteDicing.Editors
 
         private SourceSprite[] CollectSourceSprites ()
         {
-            DisplayProgressBar("Collecting source textures...", .0f);
+            DisplayProgressBar("Collecting source sprites...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
-            var texturePaths = SourceFinder.FindAt(inputFolderPath, IncludeSubfolders);
+            var paths = SourceFinder.FindAt(inputFolderPath, IncludeSubfolders);
             var loader = new SourceLoader(inputFolderPath, Separator, KeepOriginalPivot);
-            return texturePaths.Select(loader.Load).ToArray();
+            var sources = new SourceSprite[paths.Count];
+            for (int i = 0; i < paths.Count; i++)
+            {
+                var progress = .25f * ((i + 1f) / paths.Count);
+                DisplayProgressBar($"Loading source sprites... ({i + 1} of {paths.Count})", progress);
+                sources[i] = loader.Load(paths[i]);
+            }
+            return sources;
         }
 
         private Native.Prefs BuildPrefs () => new() {
@@ -63,7 +70,7 @@ namespace SpriteDicing.Editors
             AtlasPOT = ForcePot,
             PPU = PPU,
             Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y },
-            OnProgress = p => DisplayProgressBar(p.Activity, p.Ratio / 2)
+            OnProgress = p => DisplayProgressBar(p.Activity, .25f + p.Ratio / 4)
         };
 
         private Texture2D[] ImportAtlases (IReadOnlyList<Native.Texture> atlases)

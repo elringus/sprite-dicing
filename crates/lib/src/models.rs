@@ -88,11 +88,11 @@ pub struct Progress {
 impl Progress {
     pub fn report(prefs: &Prefs, stage: u8, idx: usize, len: usize, activity: &str) {
         // Stages:
-        // 0 Decoding source textures (raw only)
+        // 0 Decoding source textures (cli only)
         // 1 Dicing source textures
         // 2 Packing diced units
         // 3 Building diced sprites
-        // 4 Encoding atlas textures (raw only)
+        // 4 Encoding atlas textures (cli only)
         if let Some(cb) = &prefs.on_progress {
             let num = idx + 1;
             let ratio = (stage as f32 / 5.0) + 0.2 * (num as f32 / len as f32);

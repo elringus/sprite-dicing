@@ -31,8 +31,8 @@ namespace SpriteDicing
             var texture = atlases[diced.Atlas];
             var rect = new Rect(diced.Rect.X * ppu, diced.Rect.Y * ppu, diced.Rect.Width * ppu, diced.Rect.Height * ppu);
             var pivot = new Vector2(diced.Pivot.X, diced.Pivot.Y);
-            var vertices = diced.Vertices.Select(v => new Vector3(v.X, diced.Rect.Height * (1 - pivot.y * 2) - v.Y)).ToArray();
-            var uvs = diced.UVs.Select(v => new Vector2(v.U, 1 - v.V)).ToArray();
+            var vertices = diced.Vertices.Select(v => new Vector3(v.X, v.Y)).ToArray();
+            var uvs = diced.UVs.Select(v => new Vector2(v.U, v.V)).ToArray();
             var triangles = diced.Indices.Select(i => (ushort)i).ToArray();
 
             var sprite = CreateSprite(texture, pivot, rect);

@@ -25,9 +25,10 @@ namespace SpriteDicing
         {
             var asset = new Texture2D((int)atlas.Width, (int)atlas.Height);
             asset.SetPixels32(BuildColors(atlas.Pixels));
-            asset.Apply(false, true);
+            asset.Apply();
             var path = BuildFilePath();
-            AssetDatabase.CreateAsset(asset, path);
+            var png = asset.EncodeToPNG();
+            File.WriteAllBytes(path, png);
             return path;
         }
 
