@@ -145,15 +145,6 @@ namespace SpriteDicing
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CPixel
-        {
-            public byte r;
-            public byte g;
-            public byte b;
-            public byte a;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
         private struct CPrefs
         {
             public uint unit_size;
