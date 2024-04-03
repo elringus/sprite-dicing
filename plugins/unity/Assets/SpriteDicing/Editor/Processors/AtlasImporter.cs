@@ -23,9 +23,8 @@ namespace SpriteDicing
 
         public string Save (Native.Texture atlas)
         {
-            var asset = new Texture2D((int)atlas.Width, (int)atlas.Height);
+            var asset = new Texture2D((int)atlas.Width, (int)atlas.Height, TextureFormat.RGBA32, false);
             asset.SetPixels32(BuildColors(atlas.Pixels));
-            asset.Apply();
             var path = BuildFilePath();
             var png = asset.EncodeToPNG();
             File.WriteAllBytes(path, png);
@@ -55,7 +54,12 @@ namespace SpriteDicing
             for (int i = 0; i < pixels.Count; i++)
             {
                 var p = pixels[i];
-                colors[i] = new Color32(p.R, p.G, p.B, p.A);
+                colors[i] = new Color32 {
+                    r = p.R,
+                    g = p.G,
+                    b = p.B,
+                    a = p.A
+                };
             }
             return colors;
         }
