@@ -1,5 +1,5 @@
 //! End-to-end tests.
 
-mod common;
 mod cli;
+mod common;
 mod mono;
