@@ -25,12 +25,24 @@ namespace SpriteDicing
             public IReadOnlyList<Pixel> Pixels { get; init; }
         }
 
-        public readonly struct Pixel
+        public readonly struct Pixel : IEquatable<Pixel>
         {
             public byte R { get; init; }
             public byte G { get; init; }
             public byte B { get; init; }
             public byte A { get; init; }
+
+            public Pixel (byte r, byte g, byte b, byte a)
+            {
+                R = r;
+                G = g;
+                B = b;
+                A = a;
+            }
+
+            public bool Equals (Pixel other) => R == other.R && G == other.G && B == other.B && A == other.A;
+            public override bool Equals (object obj) => obj is Pixel other && Equals(other);
+            public override int GetHashCode () => HashCode.Combine(R, G, B, A);
         }
 
         public readonly struct Prefs
@@ -378,20 +390,6 @@ namespace SpriteDicing
             width = p.Width,
             height = p.Height,
             pixels = MarshalSlice(p.Pixels, pins)
-        };
-
-        private static Pixel MarshalPixel (CPixel c) => new() {
-            R = c.r,
-            G = c.g,
-            B = c.b,
-            A = c.a
-        };
-
-        private static CPixel MarshalPixel (Pixel p) => new() {
-            r = p.R,
-            g = p.G,
-            b = p.B,
-            a = p.A
         };
 
         private static Progress MarshalProgress (CProgress p) => new() {

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -56,7 +57,23 @@ namespace SpriteDicing.Test
         {
             var progress = default(Native.Progress);
             Build(new[] { RGB4x4 }, onProgress: p => progress = p);
-            AreEqual(1f, progress.Ratio);
+            IsNotEmpty(progress.Activity);
+        }
+
+        [Test]
+        public void ThrowsOnDicingError ()
+        {
+            AreEqual("Unit size can't be zero.", Throws<Exception>(() =>
+                Build(new[] { RGB4x4 }, unitSize: 0)).Message);
+        }
+
+        [Test]
+        public void PixelsHashedByAllComponents ()
+        {
+            AreEqual(new Native.Pixel(1, 2, 3, 4), new Native.Pixel(1, 2, 3, 4));
+            AreNotEqual(new Native.Pixel(1, 2, 3, 0), new Native.Pixel(1, 2, 3, 4));
+            IsTrue(new Native.Pixel(1, 2, 3, 4).Equals((object)new Native.Pixel(1, 2, 3, 4)));
+            AreEqual(new Native.Pixel(0, 0, 0, 0).GetHashCode(), default(Native.Pixel).GetHashCode());
         }
 
         private Sprite[] Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,

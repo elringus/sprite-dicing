@@ -45,11 +45,14 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void SerializedEqualsOriginalTexture ()
+        public void ContentOfImportedTextureEqualsOriginalContent ()
         {
-            var path = AssetDatabase.GetAssetPath(Import(mockTexture));
-            var png = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            CollectionAssert.AreEqual(Helpers.Textures.B.GetRawTextureData(), png.GetRawTextureData());
+            var imported = Import(mockTexture);
+            var importer = GetImporter(imported);
+            importer.isReadable = true;
+            importer.SaveAndReimport();
+            var importedPixels = imported.GetPixels32();
+            CollectionAssert.AreEqual(new Color32[] { new(255, 255, 255, 255) }, importedPixels);
         }
 
         [Test]
@@ -138,6 +141,7 @@ namespace SpriteDicing.Test
         private Texture2D Import (Native.Texture texture)
         {
             var path = importer.Save(texture);
+            AssetDatabase.Refresh();
             return importer.Import(path);
         }
 

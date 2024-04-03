@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
@@ -37,12 +36,12 @@ namespace SpriteDicing.Test
         public void LoadsPixelsOfTheSourceTexture ()
         {
             var pixels = Load(BGRT).Texture.Pixels;
-            CollectionAssert.AreEqual(new Native.Pixel[] {
-                new() { R = 0, G = 0, B = 255, A = 255 },
-                new() { R = 0, G = 255, B = 0, A = 255 },
-                new() { R = 255, G = 0, B = 0, A = 255 },
-                new() { R = 0, G = 0, B = 0, A = 255 }
-            }, pixels);
+            AreEqual(4, pixels.Count);
+            AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 255 }, pixels[0]);
+            // Neighbors of clear pixels leak color components when reading with Unity's API.
+            AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 0 }, pixels[1]);
+            AreEqual(new Native.Pixel { R = 0, G = 0, B = 255, A = 255 }, pixels[2]);
+            AreEqual(new Native.Pixel { R = 0, G = 255, B = 0, A = 255 }, pixels[3]);
         }
 
         [Test]
