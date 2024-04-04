@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/elringus/sprite-dicing" target="_blank" rel="noopener noreferrer">
-    <img width="200" src="https://raw.githubusercontent.com/elringus/sprite-dicing/main/.github/favicon.svg" alt="SpriteDicing">
+    <img width="200" src="https://raw.githubusercontent.com/elringus/sprite-dicing/main/docs/public/favicon.svg" alt="SpriteDicing">
   </a>
 </p>
 <br/>
