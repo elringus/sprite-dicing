@@ -1,3 +1,5 @@
+//! End-to-end tests of the command line utility.
+
 // use crate::common::*;
 // use rand::{distributions::Alphanumeric, Rng};
 // use serde_json::Value;

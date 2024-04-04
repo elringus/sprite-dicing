@@ -18,7 +18,9 @@ where
         }
 
         if let Ok(image) = image::open(&path) {
-            results.insert(path.to_owned(), image.into_rgba8());
+            let mut image = image.into_rgba8();
+            normalize_clear(&mut image);
+            results.insert(path.to_owned(), image);
         }
     }
 
@@ -44,4 +46,17 @@ pub fn is_clear(img: &RgbaImage) -> bool {
 
 fn rgba_to_pixel(rgba: &image::Rgba<u8>) -> Pixel {
     Pixel::from_raw(rgba.0)
+}
+
+fn normalize_clear(img: &mut RgbaImage) -> &RgbaImage {
+    // Transparent (a=0) pixels may have random rgb readings,
+    // so normalize them to rgb=0 for consistency in repro asserts.
+    for pixel in img.pixels_mut() {
+        if pixel.0[3] == 0 {
+            pixel.0[0] = 0;
+            pixel.0[1] = 0;
+            pixel.0[2] = 0;
+        }
+    }
+    img
 }
