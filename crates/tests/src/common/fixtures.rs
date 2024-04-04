@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 pub const MONO: &str = "mono";
 pub const ICONS: &str = "icons";
 pub const SIZED: &str = "sized";
+pub const TRIM: &str = "trim";
 // pub const NESTED: &str = "nested";
 // pub const EXOTIC: &str = "exotic";
 // pub const INVALID: &str = "invalid";

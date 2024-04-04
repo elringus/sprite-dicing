@@ -1,7 +1,7 @@
 //! End-to-end tests of the core library.
 
 use crate::common::*;
-use sprite_dicing::{Pivot, Prefs};
+use sprite_dicing::Prefs;
 
 #[test]
 fn mono_1x_reproduced() {
@@ -47,25 +47,55 @@ fn sized_reproduced() {
     assert_repro(SIZED, diced, &prefs);
 }
 
+#[test]
+fn trim_1x_reproduced() {
+    let prefs = Prefs {
+        unit_size: 1,
+        padding: 0,
+        trim_transparent: false, // TODO: Make repro assert work with trimming.
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
+    assert_repro(TRIM, diced, &prefs);
+}
+
+#[test]
+fn trim_2x_reproduced() {
+    let prefs = Prefs {
+        unit_size: 2,
+        padding: 0,
+        trim_transparent: false,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
+    assert_repro(TRIM, diced, &prefs);
+}
+
+#[test]
+fn trim_2x_with_padding_reproduced() {
+    let prefs = Prefs {
+        unit_size: 2,
+        padding: 2,
+        trim_transparent: false,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
+    assert_repro(TRIM, diced, &prefs);
+}
+
 // #[test]
-// fn icons_with_trimming_reproduced() {
+// fn icons_reproduced() {
 //     let prefs = Prefs {
-//         trim_transparent: true,
-//         ..Prefs::default()
-//     };
-//     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
-//     assert_repro(ICONS, diced, &prefs);
-// }
-//
-// #[test]
-// fn icons_without_trimming_reproduced() {
-//     let prefs = Prefs {
+//         unit_size: 1,
+//         padding: 0,
+//         ppu: 1.0,
 //         trim_transparent: false,
 //         ..Prefs::default()
 //     };
 //     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
 //     assert_repro(ICONS, diced, &prefs);
 // }
+
 //
 // #[test]
 // fn icons_with_min_pivot_reproduced() {
