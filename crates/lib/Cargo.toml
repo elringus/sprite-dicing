@@ -1,0 +1,18 @@
+[package]
+name = "sprite_dicing"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-engine tool for lossless compression of sprite textures with identical areas."
+license = "MIT"
+authors = ["Artyom Sovetnikov (Elringus)"]
+homepage = "https://dicing.elringus.me"
+documentation = "https://dicing.elringus.me/guide"
+repository = "https://github.com/elringus/sprite-dicing"
+readme = "../../README.md"
+keywords = ["gamedev", "graphics", "sprite", "texture", "atlas"]
+categories = ["game-development", "graphics", "compression"]
+
+[dev-dependencies]
+# TODO: Replace with std::sync::LazyLock when stabilized.
+# https://github.com/rust-lang/rust/issues/109736
+once_cell = "1.19"

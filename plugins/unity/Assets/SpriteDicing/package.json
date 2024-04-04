@@ -1,0 +1,14 @@
+{
+    "name": "com.elringus.spritedicing",
+    "version": "2.0.0",
+    "displayName": "SpriteDicing",
+    "description": "Compress sprite textures by eliminating identical areas.",
+    "unity": "2019.4",
+    "license": "MIT",
+    "documentationUrl": "https://dicing.elringus.me/guide/unity",
+    "changelogUrl": "https://github.com/elringus/sprite-dicing/releases",
+    "author": {
+        "name": "Artyom Sovetnikov (Elringus)",
+        "url": "https://elringus.me"
+    }
+}

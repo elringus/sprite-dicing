@@ -20,7 +20,7 @@ hero:
     alt: SpriteDicing
 ---
 
-<!-- <div class="features">
+<div class="features">
     <div class="container">
         <div class="items" style="margin: -8px">
             <div class="items">
@@ -29,29 +29,29 @@ hero:
                         <article class="box">
                             <div class="box-title">
                                 <div class="icon">✨</div>
-                                <h2 class="title">High-level Interoperation</h2>
+                                <h2 class="title">Discard Identical Areas</h2>
                             </div>
-                            <p class="details">Generates JavaScript bindings and type declarations for your C# APIs facilitating seamless interop between the domain and UI.</p></article>
+                            <p class="details">Keep only the unique textures subset in the final build. Ideal for <abbr title="Visual Novels">VNs</abbr>, where character sprites mostly differ in face expressions.</p></article>
                     </div>
                 </div>
                 <div class="grid-3 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">📦</div>
-                                <h2 class="title">Embed or Sideload</h2>
+                                <div class="icon">🧩️</div>
+                                <h2 class="title">Engine-agnostic</h2>
                             </div>
-                            <p class="details">Choose between embedding all the C# binaries into single-file ES module for portability or sideload for best performance and build size.</p></article>
+                            <p class="details">SpriteDicing is compiled into native library with C ABI making it embeddable to any game engine, framework or programming language.</p></article>
                     </div>
                 </div>
                 <div class="grid-3 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🗺️</div>
-                                <h2 class="title">Runs Everywhere</h2>
+                                <div class="icon">💻</div>
+                                <h2 class="title">Standalone Tool</h2>
                             </div>
-                            <p class="details">Node, Deno, Bun, web browsers and even constrained environments, such as VS Code extensions — your app will work everywhere.</p></article>
+                            <p class="details">Alternatively, standalone CLI tool is available for Windows, macOS and Linux; it'll produce atlases and JSON with the diced sprites specs.</p></article>
                     </div>
                 </div>
             </div>
@@ -60,20 +60,20 @@ hero:
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">⚡</div>
-                                <h2 class="title">Interop Interfaces</h2>
+                                <div class="icon">🦀</div>
+                                <h2 class="title">Written in Rust</h2>
                             </div>
-                            <p class="details">Manually author interop APIs via static C# methods or simply feed Bootsharp your domain-specific interfaces — it'll figure the rest.</p></article>
+                            <p class="details">SpriteDicing is authored in Rust programming language for best performance and reliability.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🏷️</div>
-                                <h2 class="title">Instance Bindings</h2>
+                                <div class="icon">🌐️</div>
+                                <h2 class="title">Versatile</h2>
                             </div>
-                            <p class="details">When an interface value is specified in interop API, instance binding is generated allowing to interoperate on stateful objects.</p></article>
+                            <p class="details">CLI tool supports input textures in multiple formats: PNG, WEBP, JPEG, BMP, TIFF, TGS and DDS.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
@@ -83,23 +83,23 @@ hero:
                                 <div class="icon">🛠️</div>
                                 <h2 class="title">Customizable</h2>
                             </div>
-                            <p class="details">Configure namespaces for emitted bindings, function and event names, C# -> TypeScript type mappings and more.</p></article>
+                            <p class="details">Has plethora of options: atlas size limit, UV inset, padding, trimming, sprite pivot and more.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
                     <div class="VPLink no-icon VPFeature">
                         <article class="box">
                             <div class="box-title">
-                                <div class="icon">🔥</div>
-                                <h2 class="title">Modern .NET</h2>
+                                <div class="icon">🕹️</div>
+                                <h2 class="title">Unity Integration</h2>
                             </div>
-                            <p class="details">Supports latest runtime features: WASM multi-threading, AOT compilation, assembly trimming, streaming module instantiation.</p></article>
+                            <p class="details">First-party plugin for Unity game engine with a dedicated editor UI; outputs native sprite assets.</p></article>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div> -->
+</div>
 
 <style>
 :root {
@@ -117,7 +117,7 @@ hero:
 
 @media (min-width: 960px) {
     :root {
-        --vp-home-hero-image-filter: blur(100px) opacity(0.66);
+        --vp-home-hero-image-filter: blur(120px) opacity(0.66);
     }
 
     .VPHome .name .clip {
@@ -129,6 +129,10 @@ hero:
         line-height: 64px;
         font-size: 57px;
     }
+}
+
+.image-bg {
+    border-radius: 13% !important;
 }
 
 .VPHome .tagline a {

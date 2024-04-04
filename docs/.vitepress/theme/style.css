@@ -62,6 +62,10 @@
     opacity: 1;
 }
 
+abbr {
+    cursor: help;
+}
+
 pre {
     font-variant-ligatures: none;
 }

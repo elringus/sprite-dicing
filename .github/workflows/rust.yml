@@ -1,0 +1,46 @@
+name: test rust core
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings" # Fail on Clippy warnings
+
+jobs:
+  test_and_cover:
+    name: test and cover
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check formatting
+        run: |
+          cd crates
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+
+      - name: Lint sources
+        run: |
+          cd crates
+          rustup component add clippy
+          cargo clippy --all-targets --all-features
+
+      - name: Generate code coverage
+        run: |
+          cd crates
+          cargo tarpaulin --all-features --exclude-files abi/*/* cli/*/* --timeout 120 --out xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          fail_ci_if_error: true

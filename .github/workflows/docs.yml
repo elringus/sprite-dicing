@@ -1,0 +1,29 @@
+name: docs
+on:
+  workflow_dispatch: { }
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+      - name: build
+        run: |
+          cd docs
+          npm install
+          npm run docs:build
+      - uses: actions/configure-pages@v3
+      - uses: actions/upload-pages-artifact@v2
+        with:
+          path: docs/.vitepress/dist
+      - uses: actions/deploy-pages@v2

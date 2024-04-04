@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "com.unity.ide.rider": "3.0.28",
+    "com.unity.test-framework": "1.1.33",
+    "com.unity.testtools.codecoverage": "1.2.5",
+    "com.unity.modules.imgui": "1.0.0"
+  }
+}

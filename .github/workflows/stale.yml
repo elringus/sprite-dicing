@@ -6,8 +6,7 @@ on:
     - cron: '45 3 * * *'
 
 jobs:
-  stale:
-    name: close stale issues
+  scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v4
