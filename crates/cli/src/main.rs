@@ -1,13 +1,8 @@
 //! Command line interface of the library.
 
-mod dir;
-mod img;
-mod json;
-mod models;
-
 use clap::Parser;
+use cli::models::*;
 use indicatif::{ProgressBar, ProgressStyle};
-use models::*;
 use sprite_dicing::{Pivot, Prefs};
 use std::path::PathBuf;
 
@@ -84,5 +79,5 @@ fn main() -> Result<()> {
             bar.set_message(p.activity);
         })),
     };
-    dir::dice_dir(&args.dir, &fs_prefs, &prefs)
+    cli::dice_dir(&args.dir, &fs_prefs, &prefs)
 }

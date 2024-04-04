@@ -10,9 +10,9 @@ pub const MONO: &str = "mono";
 pub const ICONS: &str = "icons";
 pub const SIZED: &str = "sized";
 pub const TRIM: &str = "trim";
-// pub const NESTED: &str = "nested";
-// pub const EXOTIC: &str = "exotic";
-// pub const INVALID: &str = "invalid";
+pub const NESTED: &str = "nested";
+pub const EXOTIC: &str = "exotic";
+pub const INVALID: &str = "invalid";
 
 pub static SRC: Lazy<SourcesByFixture> = Lazy::new(cache_sources);
 pub static DIR: Lazy<DirByFixture> = Lazy::new(cache_dirs);
@@ -28,11 +28,11 @@ fn cache_sources() -> SourcesByFixture {
     for entry in fs::read_dir(get_fixtures_root()).unwrap() {
         let root = entry.unwrap().path();
         let fixture = root.file_name().unwrap().to_str().unwrap().to_owned();
-        let images = img::load_all(&root)
+        let sources = img::load_all(&root)
             .into_iter()
             .map(|(path, image)| create_sprite(&path, image, &root))
             .collect();
-        src.insert(fixture, images);
+        src.insert(fixture, sources);
     }
     src
 }
@@ -73,10 +73,9 @@ fn build_id(path: &Path, root: &Path) -> String {
     path.strip_prefix(root)
         .unwrap()
         .with_extension("")
-        .file_name()
-        .unwrap()
         .to_str()
         .unwrap()
+        .replace('\\', "/")
         .to_owned()
 }
 

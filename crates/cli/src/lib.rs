@@ -1,4 +1,7 @@
-use crate::img;
+mod img;
+mod json;
+pub mod models;
+
 use crate::models::*;
 use sprite_dicing::{DicedSprite, Prefs, Progress, SourceSprite, Texture};
 use std::{fs, path::Path, path::PathBuf};
@@ -80,7 +83,7 @@ fn write_atlas(path: &Path, tex: Texture) -> Result<()> {
 }
 
 fn write_sprites(sprites: Vec<DicedSprite>, dir: &Path) -> Result<()> {
-    let json = crate::json::sprites_to_json(&sprites);
+    let json = json::sprites_to_json(&sprites);
     let path = dir.join("sprites.json");
     fs::write(path, json).map_err(Error::Io)
 }

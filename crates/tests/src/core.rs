@@ -83,49 +83,16 @@ fn trim_2x_with_padding_reproduced() {
     assert_repro(TRIM, diced, &prefs);
 }
 
-// #[test]
-// fn icons_reproduced() {
-//     let prefs = Prefs {
-//         unit_size: 1,
-//         padding: 0,
-//         ppu: 1.0,
-//         trim_transparent: false,
-//         ..Prefs::default()
-//     };
-//     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
-//     assert_repro(ICONS, diced, &prefs);
-// }
-
-//
-// #[test]
-// fn icons_with_min_pivot_reproduced() {
-//     let prefs = Prefs {
-//         pivot: Pivot::new(0.0, 0.0),
-//         ..Prefs::default()
-//     };
-//     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
-//     assert_repro(ICONS, diced, &prefs);
-// }
-//
-// #[test]
-// fn icons_with_max_pivot_reproduced() {
-//     let prefs = Prefs {
-//         pivot: Pivot::new(1.0, 1.0),
-//         ..Prefs::default()
-//     };
-//     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
-//     assert_repro(ICONS, diced, &prefs);
-// }
-//
-// #[test]
-// fn icons_with_mixed_pivot_reproduced() {
-//     let prefs = Prefs {
-//         pivot: Pivot::new(0.25, 0.75),
-//         ..Prefs::default()
-//     };
-//     let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
-//     assert_repro(ICONS, diced, &prefs);
-// }
+#[test]
+fn icons_reproduced() {
+    let prefs = Prefs {
+        ppu: 1.0, // TODO: Works up to 8.0; accumulating f32 error in repro assert?
+        trim_transparent: false,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[ICONS], &prefs).unwrap();
+    assert_repro(ICONS, diced, &prefs);
+}
 
 #[test]
 fn atlas_not_square_when_not_forced() {

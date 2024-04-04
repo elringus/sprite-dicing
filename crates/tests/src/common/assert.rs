@@ -9,7 +9,7 @@ pub fn assert_repro(fixture: &str, arts: Artifacts, prefs: &Prefs) {
         RAW[fixture].iter().filter(|(_, i)| !is_clear(i)).count()
     );
     let atlases: Vec<_> = arts.atlases.iter().map(from_texture).collect();
-    atlases[0].save(format!("D:/{fixture}.png",)).unwrap();
+    // atlases[0].save(format!("D:/{fixture}.png",)).unwrap();
     for source in SRC[fixture].iter() {
         let source_raw = &RAW[fixture][&source.id];
         if is_clear(source_raw) {
@@ -49,10 +49,13 @@ fn reproduce(diced: &DicedSprite, atlas: &RgbaImage, prefs: &Prefs) -> RgbaImage
         let uv_max_x = max_uv.u - uv_offset_x;
         let uv_max_y = max_uv.v - uv_offset_y;
 
-        for x in quad_min_x..quad_max_x {
-            for y in quad_min_y..quad_max_y {
-                let atlas_u = lerp(uv_min_x, uv_max_x, x as f32 / quad_max_x as f32);
-                let atlas_v = lerp(uv_min_y, uv_max_y, y as f32 / quad_max_y as f32);
+        let last_ix = quad_max_x - quad_min_x - 1;
+        let last_iy = quad_max_y - quad_min_y - 1;
+
+        for (ix, x) in (quad_min_x..quad_max_x).enumerate() {
+            for (iy, y) in (quad_min_y..quad_max_y).enumerate() {
+                let atlas_u = lerp(uv_min_x, uv_max_x, ix as f32 / last_ix as f32);
+                let atlas_v = lerp(uv_min_y, uv_max_y, iy as f32 / last_iy as f32);
                 let atlas_x = (atlas_u * (atlas.width() - 1) as f32).round() as u32;
                 let atlas_y = (atlas_v * (atlas.height() - 1) as f32).round() as u32;
                 let src_pixel = atlas.get_pixel(atlas_x, atlas_y);
@@ -64,5 +67,9 @@ fn reproduce(diced: &DicedSprite, atlas: &RgbaImage, prefs: &Prefs) -> RgbaImage
 }
 
 fn lerp(a: f32, b: f32, w: f32) -> f32 {
+    let mut w = w;
+    if w.is_nan() {
+        w = 0.0;
+    };
     a + w * (b - a)
 }

@@ -513,6 +513,7 @@ dependencies = [
 name = "tests"
 version = "0.0.0"
 dependencies = [
+ "cli",
  "image",
  "once_cell",
  "rand",
