@@ -11,8 +11,10 @@ Minimum supported Unity version: 2022.3. For previous Unity versions use legacy 
 Use [Unity Package Manager](https://docs.unity3d.com/Manual/upm-ui.html) to install the package as a remote git package with the following URI:
 
 ```
-https://github.com/elringus/sprite-dicing.git#package
+https://github.com/elringus/sprite-dicing.git?path=/plugins/unity/Assets/SpriteDicing
 ```
+
+![](/img/upm.mp4)
 
 Alternatively, clone the repository and install [extension directory](https://github.com/elringus/sprite-dicing/tree/main/plugins/unity/Assets/SpriteDicing) as local package.
 

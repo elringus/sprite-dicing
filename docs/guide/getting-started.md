@@ -13,6 +13,8 @@ To build from source, clone the [repository](https://github.com/elringus/sprite-
 
 SpriteDicing is also available on Rust's package manager: [crates.io/crates/sprite_dicing](https://crates.io/crates/sprite_dicing).
 
+Git URI to install via Unity package manager: `https://github.com/elringus/sprite-dicing.git?path=/plugins/unity/Assets/SpriteDicing`.
+
 For more information on how to use each type of the artifact, refer to the dedicated guide:
 
 - [Rust crate](/guide/api)

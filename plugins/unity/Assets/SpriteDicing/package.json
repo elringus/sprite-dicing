@@ -5,6 +5,7 @@
     "description": "Compress sprite textures by eliminating identical areas.",
     "unity": "2022.3",
     "license": "MIT",
+    "licensesUrl": "https://github.com/elringus/sprite-dicing/blob/main/LICENSE.md",
     "documentationUrl": "https://dicing.elringus.me/guide/unity",
     "changelogUrl": "https://github.com/elringus/sprite-dicing/releases",
     "author": {

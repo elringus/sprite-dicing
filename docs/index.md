@@ -73,7 +73,7 @@ hero:
                                 <div class="icon">🌐️</div>
                                 <h2 class="title">Versatile</h2>
                             </div>
-                            <p class="details">CLI tool supports input textures in multiple formats: PNG, WEBP, JPEG, BMP, TIFF, TGS and DDS.</p></article>
+                            <p class="details">CLI tool supports input textures in multiple formats: PNG, WEBP, JPEG, BMP, TIFF, TGA and DDS.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">

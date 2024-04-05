@@ -30,7 +30,6 @@ export default defineConfig({
         docFooter: { prev: "Previous page", next: "Next page" },
         nav: [
             { text: "Guide", link: "/guide/", activeMatch: "/guide/" },
-            { text: "Reference", link: "/api/", activeMatch: "/api/" },
             {
                 text: proc.execSync("git describe --abbrev=0 --tags").toString(), items: [
                     { text: "Changes", link: "https://github.com/elringus/sprite-dicing/releases/latest" },
