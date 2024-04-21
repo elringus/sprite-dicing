@@ -70,7 +70,7 @@ namespace SpriteDicing.Editors
             AtlasPOT = ForcePot,
             PPU = PPU,
             Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y },
-            OnProgress = p => DisplayProgressBar(p.Activity, .25f + p.Ratio / 4)
+            OnProgress = p => DisplayProgressBar(p.Activity, .25f + (p.Ratio / 4))
         };
 
         private Texture2D[] ImportAtlases (IReadOnlyList<Native.Texture> atlases)
@@ -85,7 +85,7 @@ namespace SpriteDicing.Editors
             var imported = new Texture2D[paths.Length];
             for (int i = 0; i < paths.Length; i++)
             {
-                var progress = .5f + .25f * ((i + 1f) / paths.Length);
+                var progress = .5f + (.25f * ((i + 1f) / paths.Length));
                 DisplayProgressBar($"Importing atlases... ({i + 1} of {paths.Length})", progress);
                 imported[i] = importer.Import(paths[i]);
             }
@@ -128,7 +128,7 @@ namespace SpriteDicing.Editors
             var builder = new SpriteBuilder(PPU, atlases);
             for (int i = 0; i < diced.Count; i++)
             {
-                var progress = .75f + .25f * ((i + 1f) / diced.Count);
+                var progress = .75f + (.25f * ((i + 1f) / diced.Count));
                 DisplayProgressBar($"Building diced sprites... ({i + 1} of {diced.Count})", progress);
                 sprites.Add(builder.Build(diced[i]));
             }
