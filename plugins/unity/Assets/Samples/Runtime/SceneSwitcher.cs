@@ -16,7 +16,7 @@ public class SceneSwitcher : MonoBehaviour
 
     private static Rect GetRectForSceneAt (int index)
     {
-        var yPos = Screen.height - (buttonHeight + buttonHeight * index);
+        var yPos = Screen.height - (buttonHeight + (buttonHeight * index));
         return new Rect(0, yPos, buttonWidth, buttonHeight);
     }
 

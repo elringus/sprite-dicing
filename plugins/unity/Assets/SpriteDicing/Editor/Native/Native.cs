@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine.TestTools;
@@ -9,6 +10,7 @@ namespace SpriteDicing
     /// <summary>
     /// Managed wrapper over native dicing library.
     /// </summary>
+    [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
     public static unsafe class Native
     {
         public readonly struct SourceSprite
@@ -187,7 +189,7 @@ namespace SpriteDicing
             public CSlice uvs;
             public CSlice indices;
             public CRect rect;
-            public CPivot Pivot;
+            public CPivot pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -280,7 +282,7 @@ namespace SpriteDicing
 
             for (long i = 0; i < (int)c.len; i++)
             {
-                var ins = new IntPtr(c.ptr.ToInt64() + i * size);
+                var ins = new IntPtr(c.ptr.ToInt64() + (i * size));
                 structs[i] = Marshal.PtrToStructure<T>(ins);
             }
 
@@ -326,7 +328,7 @@ namespace SpriteDicing
             UVs = MarshalSlice<CUv>(c.uvs, pts).Select(MarshalUV).ToArray(),
             Indices = MarshalIndices(c.indices),
             Rect = MarshalRect(c.rect),
-            Pivot = MarshalPivot(c.Pivot)
+            Pivot = MarshalPivot(c.pivot)
         };
 
         private static DicedSprite[] MarshalDicedSprites (CSlice c, List<IntPtr> pts)
