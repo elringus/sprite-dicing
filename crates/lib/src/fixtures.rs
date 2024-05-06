@@ -103,7 +103,7 @@ pub trait AnySource {
 
 impl AnySource for Lazy<Texture> {
     fn texture(&self) -> Texture {
-        (&self as &Texture).to_owned()
+        (self as &Texture).to_owned()
     }
     fn pivot(&self) -> Option<Pivot> {
         None
@@ -112,7 +112,7 @@ impl AnySource for Lazy<Texture> {
 
 impl AnySource for (&Lazy<Texture>, (f32, f32)) {
     fn texture(&self) -> Texture {
-        (&self.0 as &Texture).to_owned()
+        (self.0 as &Texture).to_owned()
     }
     fn pivot(&self) -> Option<Pivot> {
         Some(Pivot {
