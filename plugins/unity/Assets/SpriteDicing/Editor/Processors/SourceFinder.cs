@@ -27,7 +27,7 @@ namespace SpriteDicing
 
         private static bool IsInSubfolder (string folderPath, string assetPath)
         {
-            return assetPath[(folderPath.Length + 1)..].Contains("/");
+            return assetPath[(folderPath.Length + 1)..].Contains('/');
         }
 
         private static IEnumerable<string> FindAllTexturesAt (string folderPath)
