@@ -51,7 +51,7 @@ namespace SpriteDicing.Editors
             {
                 var existingPath = AssetDatabase.GUIDToAssetPath(GeneratedSpritesFolderGuid);
                 if (AssetDatabase.IsValidFolder(existingPath)) return existingPath;
-                var newPath = atlasPath[..atlasPath.LastIndexOf(".", StringComparison.Ordinal)];
+                var newPath = atlasPath[..atlasPath.LastIndexOf('.')];
                 Directory.CreateDirectory(newPath);
                 GeneratedSpritesFolderGuidProperty.stringValue = AssetDatabase.AssetPathToGUID(newPath);
                 serializedObject.ApplyModifiedPropertiesWithoutUndo();
