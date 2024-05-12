@@ -78,7 +78,7 @@ namespace SpriteDicing.Editors
             DisplayProgressBar("Importing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
             DeleteExistingAtlasTextures();
-            var basePath = atlasPath[..atlasPath.LastIndexOf(".", StringComparison.Ordinal)];
+            var basePath = atlasPath[..atlasPath.LastIndexOf('.')];
             var importer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
             var paths = atlases.Select(importer.Save).ToArray();
             AssetDatabase.Refresh();
