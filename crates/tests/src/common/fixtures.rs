@@ -1,10 +1,10 @@
 use crate::common::img;
 use image::RgbaImage;
-use once_cell::sync::Lazy;
 use sprite_dicing::SourceSprite;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 
 pub const MONO: &str = "mono";
 pub const ICONS: &str = "icons";
@@ -14,9 +14,9 @@ pub const NESTED: &str = "nested";
 pub const EXOTIC: &str = "exotic";
 pub const INVALID: &str = "invalid";
 
-pub static SRC: Lazy<SourcesByFixture> = Lazy::new(cache_sources);
-pub static DIR: Lazy<DirByFixture> = Lazy::new(cache_dirs);
-pub static RAW: Lazy<RawsByFixture> = Lazy::new(cache_raws);
+pub static SRC: LazyLock<SourcesByFixture> = LazyLock::new(cache_sources);
+pub static DIR: LazyLock<DirByFixture> = LazyLock::new(cache_dirs);
+pub static RAW: LazyLock<RawsByFixture> = LazyLock::new(cache_raws);
 
 pub type SourcesByFixture = HashMap<String, Vec<SourceSprite>>;
 pub type DirByFixture = HashMap<String, PathBuf>;
