@@ -1,9 +1,9 @@
 #![cfg(test)]
 
 use crate::models::*;
-use once_cell::sync::Lazy;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::LazyLock;
 
 pub const R: Pixel = Pixel::new(255, 0, 0, 255);
 pub const G: Pixel = Pixel::new(0, 255, 0, 255);
@@ -13,70 +13,70 @@ pub const C: Pixel = Pixel::new(0, 255, 255, 255);
 pub const M: Pixel = Pixel::new(255, 0, 255, 255);
 pub const Y: Pixel = Pixel::new(255, 255, 0, 255);
 
-pub static R1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![R]));
-pub static G1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![G]));
-pub static B1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![B]));
-pub static C1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![C]));
-pub static M1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![M]));
-pub static Y1X1: Lazy<Texture> = Lazy::new(|| tex(1, 1, vec![Y]));
+pub static R1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![R]));
+pub static G1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![G]));
+pub static B1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![B]));
+pub static C1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![C]));
+pub static M1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![M]));
+pub static Y1X1: LazyLock<Texture> = LazyLock::new(|| tex(1, 1, vec![Y]));
 #[rustfmt::skip]
-pub static RGBY: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static RGBY: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     R, G,
     B, Y
 ]));
 #[rustfmt::skip]
-pub static BGRT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static BGRT: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     B, G,
     R, T
 ]));
 #[rustfmt::skip]
-pub static BTGR: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static BTGR: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     B, T,
     G, R
 ]));
 #[rustfmt::skip]
-pub static BTGT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static BTGT: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     B, T,
     G, T
 ]));
 #[rustfmt::skip]
-pub static TTTM: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static TTTM: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     T, T,
     T, M
 ]));
 #[rustfmt::skip]
-pub static MTTT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static MTTT: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     M, T,
     T, T
 ]));
 #[rustfmt::skip]
-pub static TTMT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static TTMT: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     T, T,
     M, T
 ]));
 #[rustfmt::skip]
-pub static TTTT: Lazy<Texture> = Lazy::new(|| tex(2, 2, vec![
+pub static TTTT: LazyLock<Texture> = LazyLock::new(|| tex(2, 2, vec![
     T, T,
     T, T
 ]));
 #[rustfmt::skip]
-pub static RGB1X3: Lazy<Texture> = Lazy::new(|| tex(1, 3, vec![
+pub static RGB1X3: LazyLock<Texture> = LazyLock::new(|| tex(1, 3, vec![
     G,
     R,
     B
 ]));
 #[rustfmt::skip]
-pub static RGB3X1: Lazy<Texture> = Lazy::new(|| tex(3, 1, vec![
+pub static RGB3X1: LazyLock<Texture> = LazyLock::new(|| tex(3, 1, vec![
     G, R, B
 ]));
 #[rustfmt::skip]
-pub static RGB4X4: Lazy<Texture> = Lazy::new(|| tex(4, 4, vec![
+pub static RGB4X4: LazyLock<Texture> = LazyLock::new(|| tex(4, 4, vec![
     B, G, G, G,
     R, R, G, B,
     R, G, B, R,
     B, B, R, G,
 ]));
-pub static PLT4X4: Lazy<Texture> = Lazy::new(|| palette(4, 4));
+pub static PLT4X4: LazyLock<Texture> = LazyLock::new(|| palette(4, 4));
 
 pub fn sample_progress(act: impl Fn(Prefs)) -> Progress {
     let progress = Rc::new(RefCell::new(None));
@@ -101,7 +101,7 @@ pub trait AnySource {
     }
 }
 
-impl AnySource for Lazy<Texture> {
+impl AnySource for LazyLock<Texture> {
     fn texture(&self) -> Texture {
         (self as &Texture).to_owned()
     }
@@ -110,7 +110,7 @@ impl AnySource for Lazy<Texture> {
     }
 }
 
-impl AnySource for (&Lazy<Texture>, (f32, f32)) {
+impl AnySource for (&LazyLock<Texture>, (f32, f32)) {
     fn texture(&self) -> Texture {
         (self.0 as &Texture).to_owned()
     }
