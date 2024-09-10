@@ -3,6 +3,7 @@ mod json;
 pub mod models;
 
 use crate::models::*;
+use rayon::prelude::*;
 use sprite_dicing::{DicedSprite, Prefs, Progress, SourceSprite, Texture};
 use std::{fs, path::Path, path::PathBuf};
 
@@ -69,9 +70,8 @@ fn eval_sprite_id(root: &Path, path: &Path, separator: &str) -> String {
 }
 
 fn write_atlases(tex: Vec<Texture>, dir: &Path, fmt: &AtlasFormat, prefs: &Prefs) -> Result<()> {
-    let total = tex.len();
-    tex.into_iter().enumerate().try_for_each(|(idx, tex)| {
-        Progress::report(prefs, 4, idx, total, "Encoding atlas textures");
+    Progress::report(prefs, 4, 0, tex.len(), "Encoding atlas textures");
+    tex.into_par_iter().enumerate().try_for_each(|(idx, tex)| {
         let name = format!("atlas_{idx}.{}", fmt.extension());
         write_atlas(&dir.join(name), tex)
     })
