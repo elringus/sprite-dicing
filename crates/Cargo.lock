@@ -141,6 +141,7 @@ dependencies = [
  "clap_derive",
  "image",
  "indicatif",
+ "rayon",
  "sprite_dicing",
 ]
 
