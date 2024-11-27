@@ -57,7 +57,7 @@ export default defineConfig({
             ]
         }
     },
-    sitemap: { hostname: "https://dicing.elringus.me" }
+    sitemap: { hostname: "https://dicing.elringus.com" }
 });
 
 function resolveVersion(): string {

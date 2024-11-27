@@ -28,4 +28,4 @@ These original five textures have total size of **17.5MB**. After dicing, the re
 
 ## 🎬 Get Started
 
-https://dicing.elringus.me/guide/getting-started
+https://dicing.elringus.com/guide/getting-started

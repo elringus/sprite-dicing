@@ -1,12 +1,12 @@
 [package]
 name = "sprite_dicing"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Cross-engine tool for lossless compression of sprite textures with identical areas."
 license = "MIT"
 authors = ["Artyom Sovetnikov (Elringus)"]
-homepage = "https://dicing.elringus.me"
-documentation = "https://dicing.elringus.me/guide"
+homepage = "https://dicing.elringus.com"
+documentation = "https://dicing.elringus.com/guide"
 repository = "https://github.com/elringus/sprite-dicing"
 readme = "../../README.md"
 keywords = ["gamedev", "graphics", "sprite", "texture", "atlas"]

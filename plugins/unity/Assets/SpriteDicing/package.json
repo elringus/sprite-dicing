@@ -6,10 +6,10 @@
     "unity": "2022.3",
     "license": "MIT",
     "licensesUrl": "https://github.com/elringus/sprite-dicing/blob/main/LICENSE.md",
-    "documentationUrl": "https://dicing.elringus.me/guide/unity",
+    "documentationUrl": "https://dicing.elringus.com/guide/unity",
     "changelogUrl": "https://github.com/elringus/sprite-dicing/releases",
     "author": {
         "name": "Elringus",
-        "url": "https://elringus.me"
+        "url": "https://elringus.com"
     }
 }
