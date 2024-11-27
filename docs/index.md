@@ -102,7 +102,7 @@ hero:
 </div>
 
 <style>
-:root {
+body {
     --vp-home-hero-name-color: transparent;
     --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #ff5d00 30%, #ffdd3a);
     --vp-home-hero-image-background-image: linear-gradient(140deg, #ff5d00 60%, #5f00bf 40%);
@@ -110,13 +110,13 @@ hero:
 }
 
 @media (min-width: 640px) {
-    :root {
+    body {
         --vp-home-hero-image-filter: blur(80px) opacity(0.66);
     }
 }
 
 @media (min-width: 960px) {
-    :root {
+    body {
         --vp-home-hero-image-filter: blur(120px) opacity(0.66);
     }
 
