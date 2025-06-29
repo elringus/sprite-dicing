@@ -73,7 +73,7 @@ namespace SpriteDicing
             return GetPivot(AssetDatabase.LoadAssetAtPath<Sprite>(texturePath));
         }
 
-        private Native.Pivot? GetPivot(Sprite sprite)
+        private Native.Pivot? GetPivot (Sprite sprite)
         {
             if (!keepPivot || !sprite) return null;
             var pivot = sprite.pivot / sprite.rect.size;
