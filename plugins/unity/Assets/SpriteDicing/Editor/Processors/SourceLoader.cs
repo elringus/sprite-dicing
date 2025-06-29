@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,18 +23,38 @@ namespace SpriteDicing
             this.keepPivot = keepPivot;
         }
 
-        public SourceSprite Load (string texturePath)
+        public IEnumerable<SourceSprite> Load (string texturePath)
         {
             if (string.IsNullOrEmpty(texturePath))
                 throw new ArgumentNullException(nameof(texturePath));
-            return new SourceSprite {
-                Native = new() {
-                    Id = BuildID(texturePath),
-                    Texture = BuildTexture(texturePath),
-                    Pivot = GetPivot(texturePath)
-                },
-                Texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath)
-            };
+            if (AssetImporter.GetAtPath(texturePath) is not TextureImporter importer)
+                yield break;
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            if (importer.spriteImportMode != SpriteImportMode.Multiple)
+            {
+                yield return new SourceSprite {
+                    Native = new() {
+                        Id = BuildID(texturePath),
+                        Texture = BuildTexture(texturePath),
+                        Pivot = GetPivot(texturePath)
+                    },
+                    Texture = texture
+                };
+                yield break;
+            }
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(texturePath)
+                .OfType<Sprite>();
+            foreach (var sprite in sprites)
+            {
+                yield return new SourceSprite {
+                    Native = new() {
+                        Id = $"{BuildID(texturePath)}{separator}{sprite.name}",       //For consistency because since it is a sub-sprite of type Multiple.
+                        Texture = BuildTexture(texturePath, sprite.rect),
+                        Pivot = GetPivot(sprite)
+                    },
+                    Texture = texture
+                };
+            }
         }
 
         private string BuildID (string path)
@@ -48,39 +70,50 @@ namespace SpriteDicing
         private Native.Pivot? GetPivot (string texturePath)
         {
             if (!keepPivot) return null;
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
-            if (!sprite) return null;
+            return GetPivot(AssetDatabase.LoadAssetAtPath<Sprite>(texturePath));
+        }
+
+        private Native.Pivot? GetPivot(Sprite sprite)
+        {
+            if (!keepPivot || !sprite) return null;
             var pivot = sprite.pivot / sprite.rect.size;
             return new Native.Pivot { X = pivot.x, Y = pivot.y };
         }
 
-        private Native.Texture BuildTexture (string texturePath)
+        private Native.Texture BuildTexture (string texturePath, Rect? region = null)
         {
             EnsureReadable(texturePath);
             var asset = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            Rect targetRegion;
+            if (!region.HasValue) targetRegion = Rect.MinMaxRect(0, 0, asset.width, asset.height);
+            else targetRegion = region.Value;
             return new Native.Texture {
-                Width = (uint)asset.width,
-                Height = (uint)asset.height,
-                Pixels = BuildPixels(asset)
+                Width = (uint)targetRegion.width,
+                Height = (uint)targetRegion.height,
+                Pixels = BuildPixels(asset, targetRegion)
             };
         }
 
-        private Native.Pixel[] BuildPixels (Texture2D asset)
+        private Native.Pixel[] BuildPixels (Texture2D asset, Rect region)
         {
+            int fullWidth = asset.width;
             var colors = asset.GetPixels32(); // GetPixelData is actually slower in editor.
-            var pixels = new Native.Pixel[colors.Length];
-
-            for (int i = 0; i < colors.Length; i++)
+            var pixels = new Native.Pixel[(int)(region.width * region.height)];
+            int writeIndex = 0;
+            for (int y = (int)region.yMin; y < region.yMax; y++)
             {
-                var c = colors[i];
-                pixels[i] = new Native.Pixel {
-                    R = c.r,
-                    G = c.g,
-                    B = c.b,
-                    A = c.a
-                };
+                for (int x = (int)region.xMin; x < region.xMax; x++)
+                {
+                    int index = y * fullWidth + x;
+                    var c = colors[index];
+                    pixels[writeIndex++] = new Native.Pixel {
+                        R = c.r,
+                        G = c.g,
+                        B = c.b,
+                        A = c.a
+                    };
+                }
             }
-
             return pixels;
         }
 
