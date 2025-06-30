@@ -2,7 +2,7 @@ name: test unity plugin
 
 on:
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
   push:
     branches:
       - main
@@ -12,8 +12,7 @@ jobs:
   cover:
     name: test and cover
     runs-on: ubuntu-latest
-    environment:
-      name: external-pr
+    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository && 'external-pr' || '' }}
     strategy:
       matrix:
         projectPath:
@@ -23,6 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.ref }}
           fetch-depth: 0
 
       - uses: actions/cache@v4
