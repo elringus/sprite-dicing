@@ -29,6 +29,7 @@ namespace SpriteDicing
                 throw new ArgumentNullException(nameof(texturePath));
             if (AssetImporter.GetAtPath(texturePath) is not TextureImporter importer)
                 yield break;
+            EnsureReadable(texturePath);
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             if (importer.spriteImportMode != SpriteImportMode.Multiple)
             {
@@ -82,7 +83,6 @@ namespace SpriteDicing
 
         private Native.Texture BuildTexture (string texturePath, Rect? region = null)
         {
-            EnsureReadable(texturePath);
             var asset = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
             Rect targetRegion;
             if (!region.HasValue) targetRegion = Rect.MinMaxRect(0, 0, asset.width, asset.height);
