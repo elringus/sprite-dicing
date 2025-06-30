@@ -31,12 +31,13 @@ namespace SpriteDicing
                 yield break;
             EnsureReadable(texturePath);
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            var textureData = texture.GetPixels32(); // GetPixelData is actually slower in editor, also this does preflight for performance.
             if (importer.spriteImportMode != SpriteImportMode.Multiple)
             {
                 yield return new SourceSprite {
                     Native = new() {
                         Id = BuildID(texturePath),
-                        Texture = BuildTexture(texturePath),
+                        Texture = BuildTexture(textureData, texture.width, Rect.MinMaxRect(0, 0, texture.width, texture.height)),
                         Pivot = GetPivot(texturePath)
                     },
                     Texture = texture
@@ -50,7 +51,7 @@ namespace SpriteDicing
                 yield return new SourceSprite {
                     Native = new() {
                         Id = $"{BuildID(texturePath)}{separator}{sprite.name}",       //For consistency because since it is a sub-sprite of type Multiple.
-                        Texture = BuildTexture(texturePath, sprite.rect),
+                        Texture = BuildTexture(textureData, texture.width, sprite.rect),
                         Pivot = GetPivot(sprite)
                     },
                     Texture = texture
@@ -81,23 +82,17 @@ namespace SpriteDicing
             return new Native.Pivot { X = pivot.x, Y = pivot.y };
         }
 
-        private Native.Texture BuildTexture (string texturePath, Rect? region = null)
+        private Native.Texture BuildTexture (Color32[] textureData, int fullWidth, Rect region)
         {
-            var asset = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
-            Rect targetRegion;
-            if (!region.HasValue) targetRegion = Rect.MinMaxRect(0, 0, asset.width, asset.height);
-            else targetRegion = region.Value;
             return new Native.Texture {
-                Width = (uint)targetRegion.width,
-                Height = (uint)targetRegion.height,
-                Pixels = BuildPixels(asset, targetRegion)
+                Width = (uint)region.width,
+                Height = (uint)region.height,
+                Pixels = BuildPixels(textureData, fullWidth, region)
             };
         }
 
-        private Native.Pixel[] BuildPixels (Texture2D asset, Rect region)
+        private Native.Pixel[] BuildPixels (Color32[] textureData, int fullWidth, Rect region)
         {
-            int fullWidth = asset.width;
-            var colors = asset.GetPixels32(); // GetPixelData is actually slower in editor.
             var pixels = new Native.Pixel[(int)(region.width * region.height)];
             int writeIndex = 0;
             for (int y = (int)region.yMin; y < region.yMax; y++)
@@ -105,7 +100,7 @@ namespace SpriteDicing
                 for (int x = (int)region.xMin; x < region.xMax; x++)
                 {
                     int index = y * fullWidth + x;
-                    var c = colors[index];
+                    var c = textureData[index];
                     pixels[writeIndex++] = new Native.Pixel {
                         R = c.r,
                         G = c.g,
