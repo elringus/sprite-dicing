@@ -2,7 +2,7 @@
 
 use crate::common::*;
 use cli::models::*;
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{Rng, distr::Alphanumeric};
 use serde_json::Value;
 use sprite_dicing::{Artifacts, DicedSprite, Pivot, Prefs, Rect, Uv, Vertex};
 use std::path::{Path, PathBuf};
@@ -72,8 +72,10 @@ fn errs_on_invalid_source() {
     let out_dir = create_temp_dir();
     let prefs = Prefs::default();
     let fs_prefs = FsPrefs::default();
-    assert!(cli::dice_dir(&DIR[INVALID], &fs_prefs, &prefs)
-        .is_err_and(|e| e.to_string().contains("error decoding")));
+    assert!(
+        cli::dice_dir(&DIR[INVALID], &fs_prefs, &prefs)
+            .is_err_and(|e| e.to_string().contains("error decoding"))
+    );
     fs::remove_dir_all(out_dir).unwrap();
 }
 
@@ -175,7 +177,7 @@ fn parse_diced_sprite(json: &Value) -> DicedSprite {
 }
 
 fn create_temp_dir() -> PathBuf {
-    let rand: String = rand::thread_rng()
+    let rand: String = rand::rng()
         .sample_iter(&Alphanumeric)
         .take(8)
         .map(char::from)

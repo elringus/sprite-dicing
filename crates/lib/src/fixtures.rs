@@ -116,8 +116,8 @@ impl AnySource for (&LazyLock<Texture>, (f32, f32)) {
     }
     fn pivot(&self) -> Option<Pivot> {
         Some(Pivot {
-            x: self.1 .0,
-            y: self.1 .1,
+            x: self.1.0,
+            y: self.1.1,
         })
     }
 }

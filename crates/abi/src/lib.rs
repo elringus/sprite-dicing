@@ -1,5 +1,7 @@
 //! C/C++ application binary interface of the library.
 
+#![allow(unsafe_op_in_unsafe_fn)]
+
 mod models;
 
 use models::*;
@@ -7,7 +9,7 @@ use sprite_dicing::{
     Artifacts, DicedSprite, Error, Pivot, Pixel, Prefs, Progress, Rect, SourceSprite, Texture, Uv,
     Vertex,
 };
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 use std::mem;
 
 /// C ABI wrapper over [sprite_dicing::dice].
@@ -15,7 +17,7 @@ use std::mem;
 /// # Safety
 ///
 /// Returned [CSlice]-governed memory is expected to be de-allocated by the caller.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn dice(sprites: CSlice<CSourceSprite>, prefs: CPrefs) -> CResult {
     let prefs = to_prefs(prefs);
     let sprites: Vec<_> = to_slice(sprites).iter().map(|s| to_sprite(s)).collect();

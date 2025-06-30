@@ -153,14 +153,18 @@ mod tests {
 
     #[test]
     fn errs_when_unit_size_zero() {
-        assert!(dice(&[src(&R1X1)], &pref(0, 0))
-            .is_err_and(|e| e.to_string() == "Unit size can't be zero."));
+        assert!(
+            dice(&[src(&R1X1)], &pref(0, 0))
+                .is_err_and(|e| e.to_string() == "Unit size can't be zero.")
+        );
     }
 
     #[test]
     fn errs_when_padding_is_above_unit_size() {
-        assert!(dice(&[src(&R1X1)], &pref(1, 2))
-            .is_err_and(|e| e.to_string() == "Padding can't be above unit size."));
+        assert!(
+            dice(&[src(&R1X1)], &pref(1, 2))
+                .is_err_and(|e| e.to_string() == "Padding can't be above unit size.")
+        );
     }
 
     #[test]

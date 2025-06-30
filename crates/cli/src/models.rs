@@ -18,9 +18,9 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::Dicing(info) => write!(f, "{}", info),
-            Error::Image(err) => write!(f, "{}", err),
-            Error::Io(err) => write!(f, "{}", err),
+            Error::Dicing(info) => write!(f, "{info}"),
+            Error::Image(err) => write!(f, "{err}"),
+            Error::Io(err) => write!(f, "{err}"),
         }
     }
 }
