@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using static SpriteDicing.Editors.EditorProperties;
@@ -44,19 +44,21 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private IEnumerable<SourceSprite> CollectSourceSprites ()
+        private IReadOnlyList<SourceSprite> CollectSourceSprites ()
         {
             DisplayProgressBar("Collecting source sprites...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
             var paths = SourceFinder.FindAt(inputFolderPath, IncludeSubfolders);
             var loader = new SourceLoader(inputFolderPath, Separator, KeepOriginalPivot);
+            var results = new List<SourceSprite>();
+            int resultIndex = 0;
             for (int i = 0; i < paths.Count; i++)
             {
                 var progress = .25f * ((i + 1f) / paths.Count);
                 DisplayProgressBar($"Loading source sprites... ({i + 1} of {paths.Count})", progress);
-                foreach (var sourceSprite in loader.Load(paths[i]))
-                    yield return sourceSprite;
+                results.AddRange(loader.Load(paths[i]));
             }
+            return results;
         }
 
         private Native.Prefs BuildPrefs () => new() {
