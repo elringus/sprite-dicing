@@ -12,6 +12,8 @@ jobs:
   cover:
     name: test and cover
     runs-on: ubuntu-latest
+    environment:
+      name: external-pr
     strategy:
       matrix:
         projectPath:
