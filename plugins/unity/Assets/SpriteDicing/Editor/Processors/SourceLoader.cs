@@ -15,6 +15,7 @@ namespace SpriteDicing
         private readonly string root;
         private readonly string separator;
         private readonly bool keepPivot;
+        private readonly char[] invalidFileNameChars = Path.GetInvalidFileNameChars();
 
         public SourceLoader (string root, string separator, bool keepPivot)
         {
@@ -50,7 +51,7 @@ namespace SpriteDicing
             {
                 yield return new SourceSprite {
                     Native = new() {
-                        Id = $"{BuildID(texturePath)}{separator}{sprite.name}",       //For consistency because since it is a sub-sprite of type Multiple.
+                        Id = $"{BuildID(texturePath)}{separator}{BuildFileName(sprite.name)}",       //For consistency because since it is a sub-sprite of type Multiple.
                         Texture = BuildTexture(textureData, texture.width, sprite.rect),
                         Pivot = GetPivot(sprite)
                     },
@@ -68,6 +69,9 @@ namespace SpriteDicing
             var local = path[(root.Length + 1)..];
             return Path.GetFileNameWithoutExtension(local.Replace("/", separator));
         }
+        
+        private string BuildFileName (string name)
+            => string.Join('_', name.Split(invalidFileNameChars));
 
         private Native.Pivot? GetPivot (string texturePath)
         {
