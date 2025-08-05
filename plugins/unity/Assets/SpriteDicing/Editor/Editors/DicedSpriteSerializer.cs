@@ -26,8 +26,16 @@ namespace SpriteDicing.Editors
         {
             var newSprites = sprites.OrderBy(s => s.name).ToList();
             newSprites.ForEach(ResetSpriteEditorData);
-            if (DecoupleSpriteData) SerializeDecoupled(newSprites);
-            else SerializeEmbedded(newSprites);
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                if (DecoupleSpriteData) SerializeDecoupled(newSprites);
+                else SerializeEmbedded(newSprites);
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
             SetSpritesProperty(newSprites);
         }
 
