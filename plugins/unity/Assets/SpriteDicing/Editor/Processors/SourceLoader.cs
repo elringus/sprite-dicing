@@ -69,7 +69,7 @@ namespace SpriteDicing
             var local = path[(root.Length + 1)..];
             return Path.GetFileNameWithoutExtension(local.Replace("/", separator));
         }
-        
+
         private string BuildFileName (string name)
             => string.Join('_', name.Split(invalidFileNameChars));
 
