@@ -75,7 +75,7 @@ namespace SpriteDicing.Test
             IsTrue(new Native.Pixel(1, 2, 3, 4).Equals((object)new Native.Pixel(1, 2, 3, 4)));
             AreEqual(new Native.Pixel(0, 0, 0, 0).GetHashCode(), default(Native.Pixel).GetHashCode());
         }
-        
+
         //TODO: Should take test about multiple type of sprite asset's build result.
 
         private Sprite[] Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
