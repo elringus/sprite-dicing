@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
@@ -23,19 +25,21 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoAssetExceptionIsThrown ()
         {
+            //TODO: May SourceLoader should throw it when AssetDatabase cannot find or incorrect type of assets.
             Throws<ArgumentException>(() => Load("N/A"));
         }
 
         [Test]
         public void WhenInvalidAssetExceptionIsThrown ()
         {
+            //TODO: May SourceLoader should throw it when AssetDatabase cannot find or incorrect type of assets.
             Throws<ArgumentException>(() => Load(TextureFolderPath));
         }
 
         [Test]
         public void LoadsPixelsOfTheSourceTexture ()
         {
-            var pixels = Load(BGRT).Texture.Pixels;
+            var pixels = Load(BGRT).FirstOrDefault().Texture.Pixels;
             AreEqual(4, pixels.Count);
             AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 255 }, pixels[0]);
             // Neighbors of clear pixels leak color components when reading with Unity's API.
@@ -47,19 +51,19 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenNoAssociatedSpritePivotHasNoValue ()
         {
-            IsFalse(Load(RGB1x3).Pivot.HasValue);
+            IsFalse(Load(RGB1x3).FirstOrDefault().Pivot.HasValue);
         }
 
         [Test]
         public void WhenAssociatedSpriteExistPivotHasValue ()
         {
-            IsTrue(Load(RGB4x4).Pivot.HasValue);
+            IsTrue(Load(RGB4x4).FirstOrDefault().Pivot.HasValue);
         }
 
         [Test]
         public void WhenAssociatedSpriteExistButKeepPivotDisabledPivotHasNoValue ()
         {
-            IsFalse(Load(RGB4x4, keepPivot: false).Pivot.HasValue);
+            IsFalse(Load(RGB4x4, keepPivot: false).FirstOrDefault().Pivot.HasValue);
         }
 
         [Test]
@@ -71,7 +75,7 @@ namespace SpriteDicing.Test
         [Test]
         public void SubFoldersAreJoinedWithSpecifiedSeparator ()
         {
-            AreEqual("2x2.BTGR", Load(BTGR, separator: ".").Id);
+            AreEqual("2x2.BTGR", Load(BTGR, separator: ".").FirstOrDefault().Id);
         }
 
         [Test]
@@ -90,10 +94,15 @@ namespace SpriteDicing.Test
             IsFalse(GetImporter(RGB4x4).crunchedCompression);
         }
 
-        private static Native.SourceSprite Load (string texturePath, string root = TextureFolderPath,
+        //TODO: Should take test about multiple type of sprite asset, mostly these are belong to sub-asset to owner texture.
+
+        private static IEnumerable<Native.SourceSprite> Load (string texturePath, string root = TextureFolderPath,
             string separator = ".", bool keepPivot = true)
         {
-            return new SourceLoader(root, separator, keepPivot).Load(texturePath).Native;
+            return new SourceLoader(root, separator, keepPivot)
+                .Load(texturePath)
+                .Select(static sourceSprite => sourceSprite.Native)
+                .ToArray(); //Forcing evaluate queries for test, because these are not raise exceptions or give results until evaluation.
         }
     }
 }

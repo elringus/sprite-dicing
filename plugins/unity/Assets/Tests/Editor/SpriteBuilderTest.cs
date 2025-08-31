@@ -75,6 +75,8 @@ namespace SpriteDicing.Test
             IsTrue(new Native.Pixel(1, 2, 3, 4).Equals((object)new Native.Pixel(1, 2, 3, 4)));
             AreEqual(new Native.Pixel(0, 0, 0, 0).GetHashCode(), default(Native.Pixel).GetHashCode());
         }
+        
+        //TODO: Should take test about multiple type of sprite asset's build result.
 
         private Sprite[] Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false, bool trim = true,
@@ -94,7 +96,7 @@ namespace SpriteDicing.Test
                 Pivot = new Native.Pivot { X = pivot.x, Y = pivot.y },
                 OnProgress = onProgress
             };
-            var diced = Native.Dice(sources.Select(s => s.Native), prefs);
+            var diced = Native.Dice(sources.SelectMany(static sourceSprites => sourceSprites.Select(static sourceSprite => sourceSprite.Native)), prefs);
             var atlases = diced.Atlases.Select(tex => {
                 var asset = new Texture2D((int)tex.Width, (int)tex.Height);
                 asset.SetPixels32(tex.Pixels.Select(p => new Color32(p.R, p.G, p.B, p.A)).ToArray());
