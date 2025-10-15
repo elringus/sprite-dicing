@@ -21,11 +21,13 @@ The solution significantly reduces build size when multiple textures with identi
 
 These original five textures have total size of **17.5MB**. After dicing, the resulting atlas texture will contain only the unique areas of the original textures and consume just **2.4MB**, effectively compressing the textures by **86.3%**.
 
-<a href="https://naninovel.com">
-  <p align="center">Sprite Dicing is used in <strong>Naninovel</strong> — visual novel engine. Check it out!</p>
-  <p align="center"><img alt="naninovel banner" src="https://raw.githubusercontent.com/elringus/cdn/main/naninovel-banner-wide.png"></p>
-</a>
-
 ## 🎬 Get Started
 
 https://dicing.elringus.com/guide/getting-started
+
+---
+
+<a href="https://naninovel.com">
+  <p align="center">Sprite Dicing is used in <strong>Naninovel: Visual Novel, Dialogue & Cutscene Storytelling Engine</strong>. Check it out!</p>
+  <p align="center"><img alt="naninovel banner" src="https://raw.githubusercontent.com/elringus/cdn/main/naninovel-banner-wide.png"></p>
+</a>
