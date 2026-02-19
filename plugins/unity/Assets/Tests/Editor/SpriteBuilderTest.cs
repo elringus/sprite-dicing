@@ -80,8 +80,10 @@ namespace SpriteDicing.Test
             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false, bool trim = true,
             Native.ProgressCallback onProgress = null)
         {
+            var sources = new System.Collections.Generic.List<SourceSprite>();
             var loader = new SourceLoader(TextureFolderPath, ".", keepOriginalPivot);
-            var sources = texturePaths.Select(loader.Load);
+            foreach (var path in texturePaths)
+                loader.Load(path, sources);
             var prefs = new Native.Prefs {
                 UnitSize = (uint)unitSize,
                 Padding = (uint)padding,

@@ -93,7 +93,9 @@ namespace SpriteDicing.Test
         private static Native.SourceSprite Load (string texturePath, string root = TextureFolderPath,
             string separator = ".", bool keepPivot = true)
         {
-            return new SourceLoader(root, separator, keepPivot).Load(texturePath).Native;
+            var sources = new System.Collections.Generic.List<SourceSprite>();
+            new SourceLoader(root, separator, keepPivot).Load(texturePath, sources);
+            return sources[0].Native;
         }
     }
 }

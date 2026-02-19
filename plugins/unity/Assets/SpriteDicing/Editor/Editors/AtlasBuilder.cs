@@ -44,18 +44,18 @@ namespace SpriteDicing.Editors
             }
         }
 
-        private SourceSprite[] CollectSourceSprites ()
+        private List<SourceSprite> CollectSourceSprites ()
         {
             DisplayProgressBar("Collecting source sprites...", .0f);
             var inputFolderPath = AssetDatabase.GetAssetPath(InputFolder);
             var paths = SourceFinder.FindAt(inputFolderPath, IncludeSubfolders);
             var loader = new SourceLoader(inputFolderPath, Separator, KeepOriginalPivot);
-            var sources = new SourceSprite[paths.Count];
+            var sources = new List<SourceSprite>();
             for (int i = 0; i < paths.Count; i++)
             {
                 var progress = .25f * ((i + 1f) / paths.Count);
                 DisplayProgressBar($"Loading source sprites... ({i + 1} of {paths.Count})", progress);
-                sources[i] = loader.Load(paths[i]);
+                loader.Load(paths[i], sources);
             }
             return sources;
         }
