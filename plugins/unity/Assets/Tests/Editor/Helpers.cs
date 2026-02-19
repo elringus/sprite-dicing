@@ -11,34 +11,36 @@ namespace SpriteDicing.Test
     {
         public static class Paths
         {
-            public static readonly string B = BuildTexturePath("1x1/B");
-            public static readonly string R = BuildTexturePath("1x1/R");
-            public static readonly string BGRT = BuildTexturePath("2x2/BGRT");
-            public static readonly string BTGR = BuildTexturePath("2x2/BTGR");
-            public static readonly string BTGT = BuildTexturePath("2x2/BTGT");
-            public static readonly string TTTT = BuildTexturePath("2x2/TTTT");
-            public static readonly string RGB1x3 = BuildTexturePath("RGB1x3");
-            public static readonly string RGB3x1 = BuildTexturePath("RGB3x1");
-            public static readonly string RGB4x4 = BuildTexturePath("RGB4x4");
-            public static readonly string UIC4x4 = BuildTexturePath("UIC4x4");
+            public static readonly string B = BuildSourcePath("1x1/B");
+            public static readonly string R = BuildSourcePath("1x1/R");
+            public static readonly string BGRT = BuildSourcePath("2x2/BGRT");
+            public static readonly string BTGR = BuildSourcePath("2x2/BTGR");
+            public static readonly string BTGT = BuildSourcePath("2x2/BTGT");
+            public static readonly string TTTT = BuildSourcePath("2x2/TTTT");
+            public static readonly string RGB1x3 = BuildSourcePath("RGB1x3");
+            public static readonly string RGB3x1 = BuildSourcePath("RGB3x1");
+            public static readonly string RGB4x4 = BuildSourcePath("RGB4x4");
+            public static readonly string UIC4x4 = BuildSourcePath("UIC4x4");
+            public static readonly string Multiple = BuildSourcePath("Multiple");
             public static readonly IReadOnlyList<string> OneByOne = new[] { B, R };
             public static readonly IReadOnlyList<string> TwoByTwo = new[] { BGRT, BTGR, BTGT, TTTT };
-            public static readonly IReadOnlyList<string> TopLevel = new[] { RGB1x3, RGB3x1, RGB4x4, UIC4x4 };
+            public static readonly IReadOnlyList<string> TopLevel = new[] { RGB1x3, RGB3x1, RGB4x4, UIC4x4, Multiple };
             public static readonly IReadOnlyList<string> All = TopLevel.Concat(TwoByTwo).Concat(OneByOne).ToArray();
         }
 
         public static class Textures
         {
-            public static Texture2D B => LoadTexture(Paths.B);
-            public static Texture2D R => LoadTexture(Paths.R);
-            public static Texture2D BGRT => LoadTexture(Paths.BGRT);
-            public static Texture2D BTGR => LoadTexture(Paths.BTGR);
-            public static Texture2D BTGT => LoadTexture(Paths.BTGT);
-            public static Texture2D TTTT => LoadTexture(Paths.TTTT);
-            public static Texture2D RGB1x3 => LoadTexture(Paths.RGB1x3);
-            public static Texture2D RGB3x1 => LoadTexture(Paths.RGB3x1);
-            public static Texture2D RGB4x4 => LoadTexture(Paths.RGB4x4);
-            public static Texture2D UIC4x4 => LoadTexture(Paths.UIC4x4);
+            public static Sprite B => LoadSource(Paths.B);
+            public static Sprite R => LoadSource(Paths.R);
+            public static Sprite BGRT => LoadSource(Paths.BGRT);
+            public static Sprite BTGR => LoadSource(Paths.BTGR);
+            public static Sprite BTGT => LoadSource(Paths.BTGT);
+            public static Sprite TTTT => LoadSource(Paths.TTTT);
+            public static Sprite RGB1x3 => LoadSource(Paths.RGB1x3);
+            public static Sprite RGB3x1 => LoadSource(Paths.RGB3x1);
+            public static Sprite RGB4x4 => LoadSource(Paths.RGB4x4);
+            public static Sprite UIC4x4 => LoadSource(Paths.UIC4x4);
+            public static Sprite Multiple => LoadSource(Paths.Multiple);
         }
 
         public static class Colors
@@ -49,21 +51,21 @@ namespace SpriteDicing.Test
             public static readonly Color32 Black = new(0, 0, 0, 255);
         }
 
-        public const string TextureFolderPath = "Assets/Tests/Textures";
+        public const string SourceFolderPath = "Assets/Tests/Sources";
 
-        public static string BuildTexturePath (string textureName)
+        public static string BuildSourcePath (string sourceName)
         {
-            return $"{TextureFolderPath}/{textureName}.png";
+            return $"{SourceFolderPath}/{sourceName}.png";
         }
 
-        public static Texture2D LoadTexture (string texturePath)
+        public static Sprite LoadSource (string sourcePath)
         {
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(sourcePath);
         }
 
-        public static TextureImporter GetImporter (string texturePath)
+        public static TextureImporter GetImporter (string sourcePath)
         {
-            return (TextureImporter)AssetImporter.GetAtPath(texturePath);
+            return (TextureImporter)AssetImporter.GetAtPath(sourcePath);
         }
 
         public static TextureImporter GetImporter (Texture2D texture)

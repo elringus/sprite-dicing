@@ -13,8 +13,8 @@ namespace SpriteDicing.Test
         [Test]
         public void SpritesAreReturned ()
         {
-            var r = Sprite.Create(R, Rect.zero, Vector2.zero);
-            var b = Sprite.Create(B, Rect.zero, Vector2.zero);
+            var r = Sprite.Create(R.texture, Rect.zero, Vector2.zero);
+            var b = Sprite.Create(B.texture, Rect.zero, Vector2.zero);
             var atlas = CreateWith(new[] { r, b });
             IsTrue(atlas.Sprites.Contains(r));
             IsTrue(atlas.Sprites.Contains(b));
@@ -23,9 +23,9 @@ namespace SpriteDicing.Test
         [Test]
         public void TexturesAreReturned ()
         {
-            var atlas = CreateWith(null, new[] { R, B });
-            IsTrue(atlas.Textures.Contains(R));
-            IsTrue(atlas.Textures.Contains(B));
+            var atlas = CreateWith(null, new[] { R.texture, B.texture });
+            IsTrue(atlas.Textures.Contains(R.texture));
+            IsTrue(atlas.Textures.Contains(B.texture));
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace SpriteDicing.Test
         [Test]
         public void CanGetSpriteByName ()
         {
-            var sprite = Sprite.Create(B, Rect.zero, Vector2.zero);
+            var sprite = Sprite.Create(B.texture, Rect.zero, Vector2.zero);
             sprite.name = nameof(CanGetSpriteByName);
             var atlas = CreateWith(new[] { sprite });
             AreEqual(sprite, atlas.GetSprite(nameof(CanGetSpriteByName)));

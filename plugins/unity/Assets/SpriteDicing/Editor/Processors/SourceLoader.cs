@@ -12,7 +12,6 @@ namespace SpriteDicing
     /// </summary>
     public class SourceLoader
     {
-        private static readonly char[] invalidNameChars = Path.GetInvalidFileNameChars();
         private readonly string root;
         private readonly string separator;
         private readonly bool keepPivot;
@@ -28,7 +27,9 @@ namespace SpriteDicing
         {
             if (string.IsNullOrEmpty(sourcePath))
                 throw new ArgumentNullException(nameof(sourcePath));
-            EnsureReadable(sourcePath);
+            if (AssetImporter.GetAtPath(sourcePath) is not TextureImporter importer)
+                throw new ArgumentException($"Invalid source path: '{sourcePath}' is not a sprite.");
+            EnsureReadable(importer);
             foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<Sprite>())
                 sources.Add(BuildSource(sourcePath, sprite));
         }
@@ -50,8 +51,7 @@ namespace SpriteDicing
                 throw new ArgumentException($"Name root '{root}' is not valid for '{path}' path.", nameof(path));
             var local = path[(root.Length + 1)..];
             var id = Path.GetFileNameWithoutExtension(local.Replace("/", separator));
-            if (sprite.name == sprite.texture.name) return id; // single sprite mode
-            return $"{id}{separator}{SanitizeName(sprite.name)}";
+            return IsSingleMode(sprite) ? id : $"{id}{separator}{sprite.name}";
         }
 
         private Native.Pivot? GetPivot (Sprite sprite)
@@ -70,6 +70,7 @@ namespace SpriteDicing
         private static Native.Pixel[] BuildPixels (Sprite sprite)
         {
             var colors = sprite.texture.GetPixels32(); // GetPixelData is actually slower in the editor.
+            if (IsSingleMode(sprite)) return BuildPixelsSingle(colors); // This is much faster for large sprites.
             var pixels = new Native.Pixel[(int)(sprite.rect.width * sprite.rect.height)];
             int idx = 0;
             for (int y = (int)sprite.rect.yMin; y < sprite.rect.yMax; y++)
@@ -81,18 +82,27 @@ namespace SpriteDicing
             return pixels;
         }
 
-        private static void EnsureReadable (string texturePath)
+        private static Native.Pixel[] BuildPixelsSingle (Color32[] colors)
         {
-            var importer = (TextureImporter)AssetImporter.GetAtPath(texturePath);
+            var pixels = new Native.Pixel[colors.Length];
+            for (int i = 0; i < colors.Length; i++)
+            {
+                var c = colors[i];
+                pixels[i] = new() { R = c.r, G = c.g, B = c.b, A = c.a };
+            }
+            return pixels;
+        }
+
+        private static void EnsureReadable (TextureImporter importer)
+        {
             importer.isReadable = true;
             importer.crunchedCompression = false;
             importer.SaveAndReimport();
         }
 
-        private static string SanitizeName (string name)
+        private static bool IsSingleMode (Sprite sprite)
         {
-            if (!name.Any(c => invalidNameChars.Contains(c))) return name;
-            return string.Join('_', name.Split(invalidNameChars));
+            return sprite.texture.name == sprite.name;
         }
     }
 }

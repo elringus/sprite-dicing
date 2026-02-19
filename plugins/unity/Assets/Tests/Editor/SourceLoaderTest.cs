@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
@@ -29,13 +30,13 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenInvalidAssetExceptionIsThrown ()
         {
-            Throws<ArgumentException>(() => Load(TextureFolderPath));
+            Throws<ArgumentException>(() => Load(SourceFolderPath));
         }
 
         [Test]
         public void LoadsPixelsOfTheSourceTexture ()
         {
-            var pixels = Load(BGRT).Texture.Pixels;
+            var pixels = Load(BGRT)[0].Texture.Pixels;
             AreEqual(4, pixels.Count);
             AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 255 }, pixels[0]);
             // Neighbors of clear pixels leak color components when reading with Unity's API.
@@ -45,21 +46,15 @@ namespace SpriteDicing.Test
         }
 
         [Test]
-        public void WhenNoAssociatedSpritePivotHasNoValue ()
+        public void CanResolvePivot ()
         {
-            IsFalse(Load(RGB1x3).Pivot.HasValue);
-        }
-
-        [Test]
-        public void WhenAssociatedSpriteExistPivotHasValue ()
-        {
-            IsTrue(Load(RGB4x4).Pivot.HasValue);
+            IsTrue(Load(RGB4x4)[0].Pivot.HasValue);
         }
 
         [Test]
         public void WhenAssociatedSpriteExistButKeepPivotDisabledPivotHasNoValue ()
         {
-            IsFalse(Load(RGB4x4, keepPivot: false).Pivot.HasValue);
+            IsFalse(Load(RGB4x4, keepPivot: false)[0].Pivot.HasValue);
         }
 
         [Test]
@@ -71,7 +66,17 @@ namespace SpriteDicing.Test
         [Test]
         public void SubFoldersAreJoinedWithSpecifiedSeparator ()
         {
-            AreEqual("2x2.BTGR", Load(BTGR, separator: ".").Id);
+            AreEqual("2x2.BTGR", Load(BTGR, separator: ".")[0].Id);
+        }
+
+        [Test]
+        public void MultipleSpritesAreJoinedWithSpecifiedSeparator ()
+        {
+            var sources = Load(Multiple, separator: ".");
+            AreEqual("Multiple.0", sources[0].Id);
+            AreEqual("Multiple.1", sources[1].Id);
+            AreEqual("Multiple.2", sources[2].Id);
+            AreEqual("Multiple.3", sources[3].Id);
         }
 
         [Test]
@@ -90,12 +95,12 @@ namespace SpriteDicing.Test
             IsFalse(GetImporter(RGB4x4).crunchedCompression);
         }
 
-        private static Native.SourceSprite Load (string texturePath, string root = TextureFolderPath,
+        private static Native.SourceSprite[] Load (string sourcePath, string root = SourceFolderPath,
             string separator = ".", bool keepPivot = true)
         {
             var sources = new System.Collections.Generic.List<SourceSprite>();
-            new SourceLoader(root, separator, keepPivot).Load(texturePath, sources);
-            return sources[0].Native;
+            new SourceLoader(root, separator, keepPivot).Load(sourcePath, sources);
+            return sources.Select(s => s.Native).ToArray();
         }
     }
 }
