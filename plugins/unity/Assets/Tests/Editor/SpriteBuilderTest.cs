@@ -76,12 +76,14 @@ namespace SpriteDicing.Test
             AreEqual(new Native.Pixel(0, 0, 0, 0).GetHashCode(), default(Native.Pixel).GetHashCode());
         }
 
-        private Sprite[] Build (string[] texturePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
+        private Sprite[] Build (string[] sourcePaths, float uvInset = 0, bool square = false, bool pot = false, int sizeLimit = 8,
             int unitSize = 1, int padding = 0, float ppu = 1, Vector2 pivot = default, bool keepOriginalPivot = false, bool trim = true,
             Native.ProgressCallback onProgress = null)
         {
-            var loader = new SourceLoader(TextureFolderPath, ".", keepOriginalPivot);
-            var sources = texturePaths.Select(loader.Load);
+            var sources = new System.Collections.Generic.List<SourceSprite>();
+            var loader = new SourceLoader(SourceFolderPath, ".", keepOriginalPivot);
+            foreach (var path in sourcePaths)
+                loader.Load(path, sources);
             var prefs = new Native.Prefs {
                 UnitSize = (uint)unitSize,
                 Padding = (uint)padding,

@@ -11,7 +11,7 @@ namespace SpriteDicing.Test
     public class AtlasImporterTest
     {
         private const string tempFolder = "Temp";
-        private const string tempRoot = TextureFolderPath + "/" + tempFolder;
+        private const string tempRoot = SourceFolderPath + "/" + tempFolder;
         private static readonly Native.Texture mockTexture = new() {
             Width = 1,
             Height = 1,
@@ -25,7 +25,7 @@ namespace SpriteDicing.Test
         [SetUp]
         public void SetUp ()
         {
-            AssetDatabase.CreateFolder(TextureFolderPath, tempFolder);
+            AssetDatabase.CreateFolder(SourceFolderPath, tempFolder);
             basePath = $"{tempRoot}/{Guid.NewGuid():N}";
             textureSettings = new TextureSettings();
             importer = new AtlasImporter(basePath, textureSettings, 1);

@@ -35,22 +35,22 @@ namespace SpriteDicing.Test
         [Test]
         public void WhenSubfoldersNotIncludedOnlyTopLevelTexturesAreReturned ()
         {
-            AreEqual(Paths.TopLevel.Count, FindAt(TextureFolderPath, false).Count);
+            AreEqual(Paths.TopLevel.Count, FindAt(SourceFolderPath, false).Count);
         }
 
         [Test]
         public void WhenSubfoldersIncludedAllTexturesAreReturned ()
         {
-            AreEqual(Paths.All.Count, FindAt(TextureFolderPath, true).Count);
+            AreEqual(Paths.All.Count, FindAt(SourceFolderPath, true).Count);
         }
 
         [Test]
         public void PathsAreOrderedAlphanumerically ()
         {
-            var paths = FindAt(TextureFolderPath, false);
-            AreEqual(Paths.RGB1x3, paths[0]);
-            AreEqual(Paths.RGB3x1, paths[1]);
-            AreEqual(Paths.RGB4x4, paths[2]);
+            var paths = FindAt(SourceFolderPath, false);
+            AreEqual(Paths.RGB1x3, paths[1]);
+            AreEqual(Paths.RGB3x1, paths[2]);
+            AreEqual(Paths.RGB4x4, paths[3]);
         }
     }
 }
