@@ -45,8 +45,6 @@ namespace SpriteDicing
 
         private string BuildID (string path, Sprite sprite)
         {
-            if (!Path.HasExtension(path))
-                throw new ArgumentException($"Invalid source path: {path}", nameof(path));
             if (!path.Contains(root))
                 throw new ArgumentException($"Name root '{root}' is not valid for '{path}' path.", nameof(path));
             var local = path[(root.Length + 1)..];
