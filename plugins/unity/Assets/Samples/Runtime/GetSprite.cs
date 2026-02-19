@@ -1,4 +1,4 @@
-﻿using SpriteDicing;
+using SpriteDicing;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]

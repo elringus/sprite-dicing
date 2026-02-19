@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using static NUnit.Framework.Assert;
 using static SpriteDicing.Test.Helpers;
