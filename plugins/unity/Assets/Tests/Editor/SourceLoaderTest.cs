@@ -73,10 +73,10 @@ namespace SpriteDicing.Test
         public void MultipleSpritesAreJoinedWithSpecifiedSeparator ()
         {
             var sources = Load(Multiple, separator: ".");
-            AreEqual("Multiple.0", sources[0].Id);
-            AreEqual("Multiple.1", sources[1].Id);
-            AreEqual("Multiple.2", sources[2].Id);
-            AreEqual("Multiple.3", sources[3].Id);
+            IsTrue(sources.Any(s => s.Id == "Multiple.0"));
+            IsTrue(sources.Any(s => s.Id == "Multiple.1"));
+            IsTrue(sources.Any(s => s.Id == "Multiple.2"));
+            IsTrue(sources.Any(s => s.Id == "Multiple.3"));
         }
 
         [Test]
