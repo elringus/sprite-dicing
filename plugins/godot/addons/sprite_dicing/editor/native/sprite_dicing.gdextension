@@ -1,0 +1,10 @@
+[configuration]
+
+entry_symbol = "sprite_dicing_library_init"
+compatibility_minimum = "4.2"
+
+[libraries]
+
+windows = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.dll"
+linux = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.so"
+macos = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.dylib"
