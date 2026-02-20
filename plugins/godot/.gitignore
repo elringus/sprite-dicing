@@ -1,0 +1,7 @@
+.godot
+.import
+.nomedia
+export.cfg
+export_presets.cfg
+export_credentials.cfg
+*.tmp

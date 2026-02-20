@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://2u30jdppnce8"]
+
+[ext_resource type="Texture2D" uid="uid://dlwo7ixed7o8s" path="res://samples/textures/flat/man.png" id="1_iyq8i"]
+
+[node name="Node2D" type="Node2D" unique_id=1117087934]
+
+[node name="camera" type="Camera2D" parent="." unique_id=252669258]
+
+[node name="test" type="Sprite2D" parent="." unique_id=53741753]
+texture = ExtResource("1_iyq8i")

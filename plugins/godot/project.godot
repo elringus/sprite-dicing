@@ -1,0 +1,25 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="SpriteDicing"
+run/main_scene="uid://2u30jdppnce8"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/sprite_dicing/plugin.cfg")
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
