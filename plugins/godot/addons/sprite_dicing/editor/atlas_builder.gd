@@ -168,4 +168,4 @@ func _create_diced_sprites(sprite_data: Array) -> void:
         sprite.sprite_pivot = data.pivot
         sprites.append(sprite)
     
-    _atlas.sprites = sprites
+    _atlas.diced_sprites = sprites

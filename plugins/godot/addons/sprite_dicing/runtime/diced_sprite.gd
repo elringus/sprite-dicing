@@ -1,5 +1,7 @@
-class_name DicedSprite
-extends Resource
+@icon("res://addons/sprite_dicing/icon.svg")
+
+## Stores diced sprite data.
+class_name DicedSprite extends Resource
 
 @export var sprite_id: String
 @export var atlas_index: int = 0
