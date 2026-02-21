@@ -7,6 +7,9 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include <vector>
+#include <cstring>
+
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
@@ -34,6 +37,7 @@ struct CSlice { void* ptr; uint64_t len; };
 struct CPivot { float x, y; };
 struct CRect { float x, y, width, height; };
 struct CVertex { float x, y; };
+struct CUv { float u, v; };
 struct CTexture { uint32_t width; uint32_t height; CSlice pixels; };
 struct CSourceSprite { const char* id; CTexture texture; bool has_pivot; CPivot pivot; };
 struct CPrefs { uint32_t unit_size; uint32_t padding; float uv_inset; bool trim_transparent; uint32_t atlas_size_limit; bool atlas_square; bool atlas_pot; float ppu; CPivot pivot; bool has_progress_callback; void* progress_callback; };
@@ -186,10 +190,10 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         sprite["vertices"] = vertices;
         
         PackedVector2Array uvs;
-        CVertex* uv_data = static_cast<CVertex*>(diced_sprites[i].uvs.ptr);
+        CUv* uv_data = static_cast<CUv*>(diced_sprites[i].uvs.ptr);
         uvs.resize(diced_sprites[i].uvs.len);
         for (uint64_t j = 0; j < diced_sprites[i].uvs.len; j++) {
-            uvs.set(j, Vector2(uv_data[j].x, uv_data[j].y));
+            uvs.set(j, Vector2(uv_data[j].u, uv_data[j].v));
         }
         sprite["uvs"] = uvs;
         

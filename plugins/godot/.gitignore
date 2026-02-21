@@ -1,3 +1,4 @@
+# godot artifacts
 .godot
 .import
 .nomedia
@@ -5,3 +6,12 @@ export.cfg
 export_presets.cfg
 export_credentials.cfg
 *.tmp
+
+# native artifacts
+addons/sprite_dicing/editor/native/godot-cpp
+*.obj
+*.os
+*.o
+*.dblite
+*.exp
+*.lib

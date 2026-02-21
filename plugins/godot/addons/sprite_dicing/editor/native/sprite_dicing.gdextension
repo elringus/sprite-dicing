@@ -5,6 +5,6 @@ compatibility_minimum = "4.2"
 
 [libraries]
 
-windows = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.dll"
-linux = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.so"
-macos = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing.gd.dylib"
+windows = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing_gd.dll"
+linux = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing_gd.so"
+macos = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing_gd.dylib"

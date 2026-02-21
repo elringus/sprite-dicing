@@ -4,6 +4,6 @@ env = SConscript("godot-cpp/SConstruct")
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
-library = env.SharedLibrary("bin/sprite_dicing.gd", source=sources)
+library = env.SharedLibrary("bin/sprite_dicing_gd", source=sources)
 
 Default(library)
