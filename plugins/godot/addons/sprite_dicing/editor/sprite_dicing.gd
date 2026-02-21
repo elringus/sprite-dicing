@@ -42,8 +42,6 @@ class DicedSpriteAtlasInspectorPlugin extends EditorInspectorPlugin:
         button.disabled = true
         button.text = "Building..."
         
-        await get_tree().process_frame
-        
         var builder := AtlasBuilder.new(atlas)
         builder.build()
         
