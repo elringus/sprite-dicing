@@ -113,7 +113,11 @@ func _find_source_files(folder: String, recursive: bool) -> PackedStringArray:
 
 
 func _load_image(path: String) -> Image:
-    var image := Image.load_from_file(path)
+    var texture := ResourceLoader.load(path) as Texture2D
+    if not texture:
+        return null
+    
+    var image := texture.get_image()
     if not image:
         return null
     
