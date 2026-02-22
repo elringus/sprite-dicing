@@ -1,3 +1,4 @@
+@tool
 @icon("res://addons/sprite_dicing/icon.svg")
 
 ## Settings and generated data of the diced sprites over the specified input.
@@ -37,7 +38,7 @@ var compression_ratio: String = "N/A (never built)"
 ## Whether to trim transparent areas on the built meshes. Disable to preserve aspect ratio of the source sprites.
 @export var trim_transparent: bool = true
 ## How many pixels in the sprite correspond to the unit in the world.
-@export_range(0.001, 1000, 0.001) var pixels_per_unit: float = 100.0
+@export_range(0.001, 1000, 0.001) var pixels_per_unit: float = 1.0
 ## Origin of the generated diced meshes relative to the bottom-left corner of the sprite rectangle.
 @export var default_pivot: Vector2 = Vector2(0.5, 0.5)
 ## Whether to use pivot set in each individual source sprite (if any), before falling back to the default.

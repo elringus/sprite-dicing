@@ -1,3 +1,4 @@
+@tool
 @icon("res://addons/sprite_dicing/icon.svg")
 
 ## Stores diced sprite data.

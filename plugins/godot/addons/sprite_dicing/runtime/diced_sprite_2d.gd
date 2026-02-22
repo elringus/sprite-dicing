@@ -25,6 +25,7 @@ var _cached_texture: Texture2D = null
 
 func _ready() -> void:
     _update_sprite()
+    queue_redraw()
 
 
 func _draw() -> void:
@@ -34,14 +35,26 @@ func _draw() -> void:
     var triangles := _cached_sprite.get_expanded_triangles()
     var uvs := _cached_sprite.get_expanded_uvs()
     
-    if triangles.is_empty():
+    if triangles.size() < 3:
         return
     
-    var colors := PackedColorArray()
-    colors.resize(triangles.size())
-    colors.fill(modulate_color)
-    
-    draw_primitive(triangles, colors, uvs, _cached_texture)
+    var tri_count := triangles.size() / 3
+    for i in range(tri_count):
+        var verts := PackedVector2Array()
+        var uv_arr := PackedVector2Array()
+        var colors := PackedColorArray()
+        
+        verts.resize(3)
+        uv_arr.resize(3)
+        colors.resize(3)
+        
+        for j in range(3):
+            var idx := i * 3 + j
+            verts[j] = triangles[idx]
+            uv_arr[j] = uvs[idx]
+            colors[j] = modulate_color
+        
+        draw_primitive(verts, colors, uv_arr, _cached_texture)
 
 
 func _update_sprite() -> void:
