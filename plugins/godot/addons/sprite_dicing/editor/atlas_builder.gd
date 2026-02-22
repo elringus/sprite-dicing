@@ -149,7 +149,8 @@ func _save_atlas_textures(atlas_data: Array) -> void:
         
         var image := Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, pixels)
         
-        var texture_path := base_path.path_join(base_name + "_{0:03d}.png".format([i + 1]))
+        var num := "%03d" % (i + 1)
+        var texture_path := base_path.path_join(base_name + "_" + num + ".png")
         image.save_png(texture_path)
         
         var texture := ImageTexture.create_from_image(image)
