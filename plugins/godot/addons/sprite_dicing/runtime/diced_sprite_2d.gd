@@ -1,5 +1,5 @@
 @tool
-class_name DicedSprite2DType
+class_name DicedSprite2D
 extends Node2D
 
 @export var atlas: DicedSpriteAtlas:

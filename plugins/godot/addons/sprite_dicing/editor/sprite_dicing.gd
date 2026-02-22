@@ -8,7 +8,7 @@ func _enter_tree() -> void:
     inspector_plugin = DicedSpriteAtlasInspectorPlugin.new()
     add_inspector_plugin(inspector_plugin)
     add_custom_type("DicedSprite2D", "Node2D",
-        preload("res://addons/sprite_dicing/runtime/diced_sprite_2d_type.gd"),
+        preload("res://addons/sprite_dicing/runtime/diced_sprite_2d.gd"),
         preload("res://addons/sprite_dicing/icon.svg"))
 
 
