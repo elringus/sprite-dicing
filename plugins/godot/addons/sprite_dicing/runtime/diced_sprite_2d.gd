@@ -19,63 +19,50 @@ extends Node2D
         modulate_color = value
         queue_redraw()
 
-var _cached_sprite: DicedSprite = null
-var _cached_texture: Texture2D = null
+var _triangles: Array
+var _uvs: Array
+var _colors: PackedColorArray
+var _texture: Texture2D
 
 
-func _ready() -> void:
-    _update_sprite()
-    queue_redraw()
+func _init() -> void:
+    _colors = PackedColorArray()
+    _colors.resize(3)
 
 
 func _draw() -> void:
-    if _cached_sprite == null or _cached_texture == null:
-        return
+    if _texture == null or _triangles.is_empty(): return
     
-    var triangles := _cached_sprite.get_expanded_triangles()
-    var uvs := _cached_sprite.get_expanded_uvs()
+    _colors.fill(modulate_color)
     
-    if triangles.size() < 3:
-        return
-    
-    var tri_count := triangles.size() / 3
-    for i in range(tri_count):
-        var verts := PackedVector2Array()
-        var uv_arr := PackedVector2Array()
-        var colors := PackedColorArray()
-        
-        verts.resize(3)
-        uv_arr.resize(3)
-        colors.resize(3)
-        
-        for j in range(3):
-            var idx := i * 3 + j
-            verts[j] = triangles[idx]
-            uv_arr[j] = uvs[idx]
-            colors[j] = modulate_color
-        
-        draw_primitive(verts, colors, uv_arr, _cached_texture)
+    for i in range(_triangles.size()):
+        draw_primitive(_triangles[i], _colors, _uvs[i], _texture)
 
 
 func _update_sprite() -> void:
-    _cached_sprite = null
-    _cached_texture = null
+    _triangles = []
+    _uvs = []
+    _texture = null
     
     if atlas == null or sprite_name.is_empty():
         return
     
-    _cached_sprite = atlas.get_sprite(sprite_name)
-    if _cached_sprite == null:
+    var sprite := atlas.get_sprite(sprite_name)
+    if sprite == null:
         return
     
     if atlas.atlas_textures.is_empty():
         return
     
-    var atlas_idx: int = _cached_sprite.atlas_index
+    var atlas_idx: int = sprite.atlas_index
     if atlas_idx < 0 or atlas_idx >= atlas.atlas_textures.size():
         return
     
-    _cached_texture = atlas.atlas_textures[atlas_idx]
+    _triangles = sprite.get_triangles()
+    _uvs = sprite.get_triangle_uvs()
+    _texture = atlas.atlas_textures[atlas_idx]
+    
+    queue_redraw()
 
 
 func _get_configuration_warnings() -> PackedStringArray:
@@ -89,9 +76,3 @@ func _get_configuration_warnings() -> PackedStringArray:
         warnings.append("Sprite \"%s\" not found in atlas." % sprite_name)
     
     return warnings
-
-
-func get_rect() -> Rect2:
-    if _cached_sprite != null:
-        return _cached_sprite.sprite_rect
-    return Rect2()

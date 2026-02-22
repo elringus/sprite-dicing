@@ -5,9 +5,8 @@
 
 [node name="Node2D" type="Node2D" unique_id=1117087934]
 
-[node name="camera" type="Camera2D" parent="." unique_id=252669258]
-
 [node name="man" type="Node2D" parent="." unique_id=2035033767]
+position = Vector2(658, 373)
 script = ExtResource("1_c7m1v")
 atlas = ExtResource("2_fdrd7")
 sprite_name = "man"

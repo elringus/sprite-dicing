@@ -12,38 +12,37 @@ class_name DicedSprite extends Resource
 @export var sprite_rect: Rect2
 @export var sprite_pivot: Vector2
 
-var _expanded_triangles: PackedVector2Array
-var _expanded_uvs: PackedVector2Array
-var _is_expanded: bool = false
+var _triangles: Array
+var _triangle_uvs: Array
+var _prepared: bool = false
 
 
-func get_expanded_triangles() -> PackedVector2Array:
-    if not _is_expanded:
-        _expand_mesh()
-    return _expanded_triangles
+func get_triangles() -> Array:
+    if not _prepared: _prepare_draw_data()
+    return _triangles
 
 
-func get_expanded_uvs() -> PackedVector2Array:
-    if not _is_expanded:
-        _expand_mesh()
-    return _expanded_uvs
+func get_triangle_uvs() -> Array:
+    if not _prepared: _prepare_draw_data()
+    return _triangle_uvs
 
 
-func _expand_mesh() -> void:
-    _is_expanded = true
+func _prepare_draw_data() -> void:
+    _prepared = true
+    _triangles.clear()
+    _triangle_uvs.clear()
     
-    if vertices.is_empty() or uvs.is_empty() or indices.size() < 3:
-        return
-    
-    var tri_count := indices.size() / 3
-    _expanded_triangles = PackedVector2Array()
-    _expanded_triangles.resize(tri_count * 3)
-    _expanded_uvs = PackedVector2Array()
-    _expanded_uvs.resize(tri_count * 3)
-    
-    for i in range(tri_count):
-        for j in range(3):
-            var idx := indices[i * 3 + j]
-            var dst_idx := i * 3 + j
-            _expanded_triangles[dst_idx] = vertices[idx]
-            _expanded_uvs[dst_idx] = uvs[idx]
+    for i in range(indices.size() / 3):
+        var idx := i * 3
+        var tri := PackedVector2Array()
+        var uv := PackedVector2Array()
+        tri.resize(3)
+        uv.resize(3)
+        tri[0] = vertices[indices[idx]]
+        tri[1] = vertices[indices[idx + 1]]
+        tri[2] = vertices[indices[idx + 2]]
+        uv[0] = uvs[indices[idx]]
+        uv[1] = uvs[indices[idx + 1]]
+        uv[2] = uvs[indices[idx + 2]]
+        _triangles.append(tri)
+        _triangle_uvs.append(uv)

@@ -153,7 +153,6 @@ func _save_atlas_textures(atlas_data: Array) -> void:
         var texture_path := base_path.path_join(base_name + "_" + num + ".png")
         image.save_png(texture_path)
         
-        # Reimport and load the saved texture so it persists in editor
         EditorInterface.get_resource_filesystem().reimport_files([texture_path])
         var texture := ResourceLoader.load(texture_path)
         textures.append(texture)
