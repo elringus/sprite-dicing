@@ -1,5 +1,6 @@
 #include "sprite_dicing.h"
 
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
@@ -33,7 +34,7 @@ namespace godot {
 void* SpriteDicing::lib_handle = nullptr;
 bool SpriteDicing::lib_loaded = false;
 
-struct CSlice { void* ptr; uint64_t len; };
+struct CSlice { const void* ptr; uint64_t len; };
 struct CPivot { float x, y; };
 struct CRect { float x, y, width, height; };
 struct CVertex { float x, y; };
@@ -60,17 +61,19 @@ bool SpriteDicing::is_available() const { return lib_loaded; }
 bool SpriteDicing::load_library() {
     if (lib_loaded) return true;
     
-    String base_path = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing";
-    CharString path_utf8;
+    String res_path = "res://addons/sprite_dicing/editor/native/bin/sprite_dicing";
+    String base_path = ProjectSettings::get_singleton()->globalize_path(res_path);
     
+    String lib_path;
 #ifdef _WIN32
-    path_utf8 = (base_path + ".dll").utf8();
+    lib_path = base_path + ".dll";
 #elif defined(__APPLE__)
-    path_utf8 = (base_path + ".dylib").utf8();
+    lib_path = base_path + ".dylib";
 #else
-    path_utf8 = (base_path + ".so").utf8();
+    lib_path = base_path + ".so";
 #endif
     
+    CharString path_utf8 = lib_path.utf8();
     lib_handle = LOAD_LIB(path_utf8.get_data());
     if (!lib_handle) return false;
     
@@ -123,7 +126,7 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         c_sprite.texture.width = (uint32_t)(int)src["width"];
         c_sprite.texture.height = (uint32_t)(int)src["height"];
         c_sprite.texture.pixels.ptr = pixel_buf.data();
-        c_sprite.texture.pixels.len = pixel_buf.size();
+        c_sprite.texture.pixels.len = pixel_buf.size() / 4;
         c_sprite.has_pivot = src["has_pivot"];
         Vector2 pivot = src["pivot"];
         c_sprite.pivot.x = pivot.x;
@@ -159,15 +162,18 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
     }
     
     Array atlases;
-    CTexture* atlas_textures = static_cast<CTexture*>(c_result.ok.atlases.ptr);
+    const CTexture* atlas_textures = static_cast<const CTexture*>(c_result.ok.atlases.ptr);
     for (uint64_t i = 0; i < c_result.ok.atlases.len; i++) {
         Dictionary atlas;
         atlas["width"] = (int)atlas_textures[i].width;
         atlas["height"] = (int)atlas_textures[i].height;
         
+        uint64_t pixel_count = atlas_textures[i].pixels.len;
+        uint64_t byte_count = pixel_count * 4;
+        
         PackedByteArray pixels;
-        pixels.resize(atlas_textures[i].pixels.len);
-        memcpy(pixels.ptrw(), atlas_textures[i].pixels.ptr, atlas_textures[i].pixels.len);
+        pixels.resize(byte_count);
+        memcpy(pixels.ptrw(), atlas_textures[i].pixels.ptr, byte_count);
         atlas["pixels"] = pixels;
         
         atlases.push_back(atlas);
@@ -175,14 +181,14 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
     result["atlases"] = atlases;
     
     Array sprites;
-    CDicedSprite* diced_sprites = static_cast<CDicedSprite*>(c_result.ok.sprites.ptr);
+    const CDicedSprite* diced_sprites = static_cast<const CDicedSprite*>(c_result.ok.sprites.ptr);
     for (uint64_t i = 0; i < c_result.ok.sprites.len; i++) {
         Dictionary sprite;
         sprite["id"] = String(diced_sprites[i].id);
         sprite["atlas_index"] = (int)diced_sprites[i].atlas;
         
         PackedVector2Array vertices;
-        CVertex* verts = static_cast<CVertex*>(diced_sprites[i].vertices.ptr);
+        const CVertex* verts = static_cast<const CVertex*>(diced_sprites[i].vertices.ptr);
         vertices.resize(diced_sprites[i].vertices.len);
         for (uint64_t j = 0; j < diced_sprites[i].vertices.len; j++) {
             vertices.set(j, Vector2(verts[j].x, verts[j].y));
@@ -190,7 +196,7 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         sprite["vertices"] = vertices;
         
         PackedVector2Array uvs;
-        CUv* uv_data = static_cast<CUv*>(diced_sprites[i].uvs.ptr);
+        const CUv* uv_data = static_cast<const CUv*>(diced_sprites[i].uvs.ptr);
         uvs.resize(diced_sprites[i].uvs.len);
         for (uint64_t j = 0; j < diced_sprites[i].uvs.len; j++) {
             uvs.set(j, Vector2(uv_data[j].u, uv_data[j].v));
@@ -198,7 +204,7 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         sprite["uvs"] = uvs;
         
         PackedInt32Array indices;
-        uint64_t* idx_data = static_cast<uint64_t*>(diced_sprites[i].indices.ptr);
+        const uint64_t* idx_data = static_cast<const uint64_t*>(diced_sprites[i].indices.ptr);
         indices.resize(diced_sprites[i].indices.len);
         for (uint64_t j = 0; j < diced_sprites[i].indices.len; j++) {
             indices.set(j, (int32_t)idx_data[j]);
