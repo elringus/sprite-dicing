@@ -31,7 +31,7 @@ export default defineConfig({
         nav: [
             { text: "Guide", link: "/guide/", activeMatch: "/guide/" },
             {
-                text: resolveVersion(), items: [
+                text: proc.execSync("git describe --abbrev=0 --tags").toString(), items: [
                     { text: "Changes", link: "https://github.com/elringus/sprite-dicing/releases/latest" },
                     { text: "Contribute", link: "https://github.com/elringus/sprite-dicing/labels/help%20wanted" }
                 ]
@@ -60,9 +60,3 @@ export default defineConfig({
     },
     sitemap: { hostname: "https://dicing.elringus.com" }
 });
-
-function resolveVersion(): string {
-    const tag = proc.execSync("git describe --tags").toString();
-    const dashIdx = tag.indexOf("-");
-    return tag.substring(0, dashIdx);
-}

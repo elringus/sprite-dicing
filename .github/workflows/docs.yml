@@ -1,4 +1,5 @@
 name: docs
+
 on:
   workflow_dispatch: { }
   push:
@@ -16,8 +17,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: fetch tags
         run: git fetch --prune --unshallow --tags
-      - name: log current tag
-        run: git describe --tags
       - uses: actions/setup-node@v4
       - name: build
         run: |
