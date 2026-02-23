@@ -10,16 +10,33 @@ Minimum supported Godot version: 4.6.
 
 ## Installation
 
-...
+Download the plugin from the [latest release on GitHub](https://github.com/elringus/sprite-dicing/releases/latest/download/sprite-dicing-godot.zip).
 
-Alternatively, clone the repository and install the [plugin](https://github.com/elringus/sprite-dicing/tree/main/plugins/godot/addons/sprite_dicing) by moving it under the project's `addons` folder.
+Unzip it under the project's `addons` folder.
+
+![](https://i.gyazo.com/457436bd5ceedec8688ee38b4a84589f.png)
+
+Enable `SpriteDicing` in the project settings.
+
+![](https://i.gyazo.com/814b7ad9ee4c41afb1319d6088648d5b.png)
 
 ## Usage
 
-1. Create a new **DicedSpriteAtlas** resource ![](https://i.gyazo.com/257dfb9734d26ff55b882eb3a6fd3e3d.png)
-2. Select a folder containing source sprite textures and click **Build Atlas** ![](https://i.gyazo.com/f1ab20f8caff059ec475f73707d350e5.png)
-3. Add a **DicedSprite2D** node to your scene ![](https://i.gyazo.com/82325449a7e9021577f7def108028e29.png)
-4. Set the **Atlas** and **Sprite ID** properties ![](https://i.gyazo.com/fe39ca501b88f4b7e769e6be93b73419.png)
+Create a new **DicedSpriteAtlas** resource.
+
+![](https://i.gyazo.com/257dfb9734d26ff55b882eb3a6fd3e3d.png)
+
+Select a folder containing source sprite textures and click **Build Atlas**.
+
+![](https://i.gyazo.com/f1ab20f8caff059ec475f73707d350e5.png)
+
+Add a **DicedSprite2D** node to your scene.
+
+![](https://i.gyazo.com/82325449a7e9021577f7def108028e29.png)
+
+Set the **Atlas** and **Sprite ID** properties.
+
+![](https://i.gyazo.com/fe39ca501b88f4b7e769e6be93b73419.png)
 
 ## Atlas Generation Options
 
