@@ -36,4 +36,5 @@ script = ExtResource("2_knih5")
 input_folder = "res://samples/textures/godette"
 atlas_textures = Array[Texture2D]([ExtResource("1_knih5")])
 diced_sprites = Array[ExtResource("1_851wy")]([SubResource("Resource_knih5"), SubResource("Resource_ogrr4"), SubResource("Resource_tspph")])
+compression_ratio = "2.99"
 metadata/_custom_type_script = "uid://vgljq6x7y3x1"

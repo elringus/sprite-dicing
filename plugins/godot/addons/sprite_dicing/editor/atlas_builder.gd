@@ -180,8 +180,7 @@ func _update_compression_ratio(sources: Array, atlases: Array, sprites: Array) -
         sprite_size += 16
         sprite_size += 8
     
-    var total_generated := atlas_size + sprite_size
-    var ratio := float(source_size) / float(total_generated)
+    var ratio := float(source_size) / float(atlas_size + sprite_size)
     _atlas.compression_ratio = "%.2f" % ratio
 
 
