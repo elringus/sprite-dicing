@@ -88,8 +88,9 @@ Add a **DicedSprite2D** node to your scene:
 # Get a sprite by ID
 var sprite = atlas.get_sprite("sprite_id")
 
-# Get all sprite identifiers
-var ids = atlas.get_sprite_ids()
+# Collect all sprite identifiers
+var ids := PackedStringArray()
+atlas.collect_sprite_ids(ids)
 ```
 
 ### DicedSprite2D
@@ -100,7 +101,4 @@ sprite_node.sprite_id = "new_sprite"
 
 # Change the atlas
 sprite_node.atlas = new_atlas
-
-# Tint the sprite
-sprite_node.modulate_color = Color.RED
 ```

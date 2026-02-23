@@ -52,9 +52,7 @@ func get_sprite(id: String) -> DicedSprite:
     return null
 
 
-func get_sprite_ids() -> PackedStringArray:
-    var ids := PackedStringArray()
+func collect_sprite_ids(ids: PackedStringArray) -> void:
     for sprite in diced_sprites:
         if sprite:
             ids.push_back(sprite.sprite_id)
-    return ids
