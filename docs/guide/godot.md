@@ -129,7 +129,7 @@ sprite_node.atlas = new_atlas
 2. Build the GDExtension:
    ```bash
    cd ..  # Back to native directory
-   scons
+   scons target=template_release
    ```
 
 3. The compiled library will be in `bin/`.
