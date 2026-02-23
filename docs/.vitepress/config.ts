@@ -51,7 +51,8 @@ export default defineConfig({
                         { text: "API", link: "/guide/api" },
                         { text: "ABI", link: "/guide/abi" },
                         { text: "CLI", link: "/guide/cli" },
-                        { text: "Unity", link: "/guide/unity" }
+                        { text: "Unity", link: "/guide/unity" },
+                        { text: "Godot", link: "/guide/godot" },
                     ]
                 }
             ]

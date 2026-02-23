@@ -41,7 +41,7 @@ hero:
                                 <div class="icon">🧩️</div>
                                 <h2 class="title">Engine-agnostic</h2>
                             </div>
-                            <p class="details">SpriteDicing is compiled into native library with C ABI making it embeddable to any game engine, framework or programming language.</p></article>
+                            <p class="details">SpriteDicing is compiled into a native library with C ABI making it embeddable to any game engine, framework or programming language.</p></article>
                     </div>
                 </div>
                 <div class="grid-3 item">
@@ -51,7 +51,7 @@ hero:
                                 <div class="icon">💻</div>
                                 <h2 class="title">Standalone Tool</h2>
                             </div>
-                            <p class="details">Alternatively, standalone CLI tool is available for Windows, macOS and Linux; it'll produce atlases and JSON with the diced sprites specs.</p></article>
+                            <p class="details">Alternatively, a standalone CLI tool is available for Windows, macOS and Linux; it'll produce atlases and JSON with the diced sprites specs.</p></article>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@ hero:
                                 <div class="icon">🦀</div>
                                 <h2 class="title">Written in Rust</h2>
                             </div>
-                            <p class="details">SpriteDicing is authored in Rust programming language for best performance and reliability.</p></article>
+                            <p class="details">The core is written in the Rust programming language for the best performance and reliability.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
@@ -83,7 +83,7 @@ hero:
                                 <div class="icon">🛠️</div>
                                 <h2 class="title">Customizable</h2>
                             </div>
-                            <p class="details">Has plethora of options: atlas size limit, UV inset, padding, trimming, sprite pivot and more.</p></article>
+                            <p class="details">Has a plethora of options: atlas size limit, UV inset, padding, trimming, sprite pivot and more.</p></article>
                     </div>
                 </div>
                 <div class="grid-4 item">
@@ -91,9 +91,9 @@ hero:
                         <article class="box">
                             <div class="box-title">
                                 <div class="icon">🕹️</div>
-                                <h2 class="title">Unity Integration</h2>
+                                <h2 class="title">Engine Plugins</h2>
                             </div>
-                            <p class="details">First-party plugin for Unity game engine with a dedicated editor UI; outputs native sprite assets.</p></article>
+                            <p class="details">First-party plugins for the Unity and Godot game engines with dedicated editor UIs.</p></article>
                     </div>
                 </div>
             </div>
