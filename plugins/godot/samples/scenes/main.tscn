@@ -5,8 +5,10 @@
 
 [node name="Node2D" type="Node2D" unique_id=1117087934]
 
-[node name="DicedSprite2D" type="Node2D" parent="." unique_id=303156463]
-position = Vector2(550, 500)
+[node name="camera" type="Camera2D" parent="." unique_id=1881247614]
+
+[node name="godette" type="Node2D" parent="." unique_id=303156463]
+position = Vector2(0, 200)
 script = ExtResource("1_mlblr")
 atlas = ExtResource("2_mlblr")
 sprite_id = "star"

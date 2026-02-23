@@ -44,6 +44,7 @@ var compression_ratio: String = "N/A (never built)"
 ## Whether to use pivot set in each individual source sprite (if any), before falling back to the default.
 @export var keep_original_pivot: bool = false
 
+
 func get_sprite(id: String) -> DicedSprite:
     for sprite in diced_sprites:
         if sprite and sprite.sprite_id == id:

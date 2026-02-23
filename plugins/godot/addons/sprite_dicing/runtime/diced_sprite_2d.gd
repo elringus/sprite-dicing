@@ -1,6 +1,5 @@
 @tool
-class_name DicedSprite2D
-extends Node2D
+class_name DicedSprite2D extends Node2D
 
 ## The diced sprite atlas resource from which to render the sprite.
 @export var atlas: DicedSpriteAtlas:

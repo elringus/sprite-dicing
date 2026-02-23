@@ -1,5 +1,4 @@
-class_name AtlasBuilder
-extends RefCounted
+class_name AtlasBuilder extends RefCounted
 
 const _Native = preload("res://addons/sprite_dicing/editor/native.gd")
 
