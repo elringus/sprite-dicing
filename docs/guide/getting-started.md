@@ -1,6 +1,6 @@
 # Getting Started
 
-SpriteDicing comes in 3 forms: native C ABI library for embedding into other applications, such as game engines or frameworks, standalone CLI executable to use the tool directly and Unity game engine package.
+SpriteDicing comes in three forms: native C ABI library for embedding into other applications, such as game engines or frameworks, standalone CLI executable to use the tool directly and first-party plugins for the Unity and Godot game engines.
 
 Download artifacts for the latest release via the links below:
 
@@ -20,4 +20,5 @@ For more information on how to use each type of the artifact, refer to the dedic
 - [Rust crate](/guide/api)
 - [Native C ABI library](/guide/abi)
 - [CLI Tool](/guide/cli)
-- [Unity integration](/guide/unity)
+- [Unity plugin](/guide/unity)
+- [Godot plugin](/guide/godot)
