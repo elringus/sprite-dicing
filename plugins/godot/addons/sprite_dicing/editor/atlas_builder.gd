@@ -19,14 +19,10 @@ func build() -> void:
         push_error("Input folder is not set")
         return
     
-    print("Building diced sprite atlas...")
-    
     var source_files := _find_source_files(input_folder, _atlas.include_subfolders)
     if source_files.is_empty():
         push_error("No source images found in ", input_folder)
         return
-    
-    print("Found ", source_files.size(), " source files")
     
     var sources: Array = []
     for path in source_files:
@@ -71,12 +67,10 @@ func build() -> void:
     var atlases: Array = result.get("atlases", [])
     var sprites: Array = result.get("sprites", [])
     
-    print("Dicing complete. Generated ", atlases.size(), " atlas textures and ", sprites.size(), " sprites")
-    
     await _save_atlas_textures(atlases)
     _create_diced_sprites(sprites)
     
-    print("Atlas build complete!")
+    print("Sprite dicing complete. Generated ", atlases.size(), " atlas textures and ", sprites.size(), " sprites.")
 
 
 func _find_source_files(folder: String, recursive: bool) -> PackedStringArray:
