@@ -77,7 +77,7 @@ addons/sprite_dicing/
 
 Add a **DicedSprite2D** node to your scene:
 - Set the **Atlas** property to your DicedSpriteAtlas resource
-- Set the **Sprite Name** to the name of the sprite you want to display
+- Set the **Sprite ID** to the identifier of the sprite you want to display
 - Optionally set **Modulate Color** to tint the sprite
 
 ## API
@@ -85,18 +85,18 @@ Add a **DicedSprite2D** node to your scene:
 ### DicedSpriteAtlas
 
 ```gdscript
-# Get a sprite by name
-var sprite = atlas.get_sprite("sprite_name")
+# Get a sprite by ID
+var sprite = atlas.get_sprite("sprite_id")
 
-# Get all sprite names
-var names = atlas.get_sprite_names()
+# Get all sprite identifiers
+var ids = atlas.get_sprite_ids()
 ```
 
 ### DicedSprite2D
 
 ```gdscript
 # Change the displayed sprite
-sprite_node.sprite_name = "new_sprite"
+sprite_node.sprite_id = "new_sprite"
 
 # Change the atlas
 sprite_node.atlas = new_atlas

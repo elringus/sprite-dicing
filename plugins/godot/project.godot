@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="SpriteDicing"
-run/main_scene="uid://2u30jdppnce8"
+run/main_scene="uid://80lm2bnvb2ex"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 
 [editor_plugins]

@@ -21,16 +21,16 @@ var compression_ratio: String = "N/A (never built)"
 @export_group("Build Settings")
 ## Whether to recursively search for textures inside the input folder.
 @export var include_subfolders: bool = true
-## The separator to use when building names for the sprites found in the sub-folders.
+## The separator to use when building identifiers for the sprites found in the sub-folders.
 @export var separator: String = "."
 ## Maximum size of a single generated atlas texture; will generate multiple textures when the limit is reached.
-@export_enum("1024", "2048", "4096", "8192") var atlas_size_limit: int = 2048
+@export var atlas_size_limit: int = 2048
 ## The generated atlas textures will always be square. Less efficient, but required for PVRTC compression.
 @export var force_square: bool = false
 ## The generated atlas textures will always have width and height of power of two.
 @export var force_pot: bool = false
 ## The size of a single diced unit, in pixels.
-@export_enum("8", "16", "32", "64", "128", "256") var dice_unit_size: int = 64
+@export var dice_unit_size: int = 64
 ## The size of a pixel border to add between adjacent diced units inside atlas to prevent bleeding artifacts.
 @export_range(0, 128, 2) var padding: int = 2
 ## Relative inset of the diced units UV coordinates to prevent texture bleeding artifacts (in addition to padding).
@@ -46,16 +46,16 @@ var compression_ratio: String = "N/A (never built)"
 ## Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.
 @export var decouple_sprite_data: bool = false
 
-func get_sprite(p_name: String) -> DicedSprite:
+func get_sprite(id: String) -> DicedSprite:
     for sprite in diced_sprites:
-        if sprite and sprite.sprite_id == p_name:
+        if sprite and sprite.sprite_id == id:
             return sprite
     return null
 
 
-func get_sprite_names() -> PackedStringArray:
-    var names := PackedStringArray()
+func get_sprite_ids() -> PackedStringArray:
+    var ids := PackedStringArray()
     for sprite in diced_sprites:
         if sprite:
-            names.push_back(sprite.sprite_id)
-    return names
+            ids.push_back(sprite.sprite_id)
+    return ids
