@@ -134,7 +134,7 @@ func _save_atlas_textures(atlas_data: Array) -> void:
         var image := Image.create_from_data(data.width, data.height, false, Image.FORMAT_RGBA8, data.pixels)
         image.save_png(_build_texture_path(idx))
     EditorInterface.get_resource_filesystem().scan()
-    
+
     var textures: Array[Texture2D] = []
     for idx in range(atlas_data.size()):
         var texture_path := _build_texture_path(idx);
