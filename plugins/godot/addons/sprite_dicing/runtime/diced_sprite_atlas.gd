@@ -13,7 +13,7 @@ var atlas_textures: Array[Texture2D] = []
 @export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_DEFAULT)
 var diced_sprites: Array[DicedSprite] = []
 ## Total size of the source textures divided by the size of the generated diced atlas textures 
-## plus the associated sprite data size (higher values mean better compression efficiency).
+## plus the associated sprite data size. Higher values mean better compression efficiency.
 @export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_DEFAULT)
 var compression_ratio: String = "N/A (never built)"
 @export var build_button_placeholder: bool

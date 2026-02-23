@@ -69,6 +69,7 @@ func build() -> void:
     
     await _save_atlas_textures(atlases)
     _create_diced_sprites(sprites)
+    _update_compression_ratio(sources, atlases, sprites)
     
     print("Sprite dicing complete. Generated ", atlases.size(), " atlas textures and ", sprites.size(), " sprites.")
 
@@ -159,6 +160,30 @@ func _create_diced_sprites(sprite_data: Array) -> void:
         sprites.append(sprite)
     
     _atlas.diced_sprites = sprites
+
+
+func _update_compression_ratio(sources: Array, atlases: Array, sprites: Array) -> void:
+    var source_size := 0
+    for src in sources:
+        source_size += src.width * src.height * 4
+    
+    var atlas_size := 0
+    for atlas in atlases:
+        atlas_size += atlas.width * atlas.height * 4
+    
+    var sprite_size := 0
+    for sprite in sprites:
+        sprite_size += sprite.id.length()
+        sprite_size += sprite.vertices.size() * 8
+        sprite_size += sprite.uvs.size() * 8
+        sprite_size += sprite.indices.size() * 4
+        sprite_size += 16
+        sprite_size += 8
+    
+    var total_generated := atlas_size + sprite_size
+    var ratio := float(source_size) / float(total_generated)
+    _atlas.compression_ratio = "%.2f" % ratio
+
 
 func _build_texture_path(idx: int) -> String:
     var atlas_path := _atlas.resource_path
