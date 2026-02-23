@@ -43,8 +43,6 @@ var compression_ratio: String = "N/A (never built)"
 @export var default_pivot: Vector2 = Vector2(0.5, 0.5)
 ## Whether to use pivot set in each individual source sprite (if any), before falling back to the default.
 @export var keep_original_pivot: bool = false
-## Whether to save sprite assets in a separate folder instead of adding them as children of the atlas asset.
-@export var decouple_sprite_data: bool = false
 
 func get_sprite(id: String) -> DicedSprite:
     for sprite in diced_sprites:

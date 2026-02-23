@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="DicedSpriteAtlas" format=3 uid="uid://cxhjcyjoa0tx7"]
 
 [ext_resource type="Script" uid="uid://coigsn8r10x7k" path="res://addons/sprite_dicing/runtime/diced_sprite.gd" id="1_851wy"]
-[ext_resource type="Texture2D" uid="uid://bm8wclxd3kxkn" path="res://samples/atlases/godette_001.png" id="1_knih5"]
+[ext_resource type="Texture2D" uid="uid://d1g2qc831ey8q" path="res://samples/atlases/godette_000.png" id="1_knih5"]
 [ext_resource type="Script" uid="uid://vgljq6x7y3x1" path="res://addons/sprite_dicing/runtime/diced_sprite_atlas.gd" id="2_knih5"]
 
 [resource]

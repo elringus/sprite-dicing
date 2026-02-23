@@ -50,7 +50,7 @@ class DicedSpriteAtlasInspectorPlugin extends EditorInspectorPlugin:
         button.text = "Building..."
         
         var builder := AtlasBuilder.new(atlas)
-        builder.build()
+        await builder.build()
         
         button.disabled = false
         button.text = "Rebuild Atlas"

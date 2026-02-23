@@ -74,7 +74,7 @@ func build() -> void:
     
     print("Dicing complete. Generated ", atlases.size(), " atlas textures and ", sprites.size(), " sprites")
     
-    _save_atlas_textures(atlases)
+    await _save_atlas_textures(atlases)
     _create_diced_sprites(sprites)
     
     print("Atlas build complete!")
@@ -135,27 +135,18 @@ func _build_sprite_id(path: String, root: String) -> String:
 
 
 func _save_atlas_textures(atlas_data: Array) -> void:
+    for idx in range(atlas_data.size()):
+        var data: Dictionary = atlas_data[idx]
+        var image := Image.create_from_data(data.width, data.height, false, Image.FORMAT_RGBA8, data.pixels)
+        image.save_png(_build_texture_path(idx))
+    EditorInterface.get_resource_filesystem().scan()
+    
     var textures: Array[Texture2D] = []
-    
-    var atlas_path := _atlas.resource_path
-    var base_path := atlas_path.get_base_dir()
-    var base_name := atlas_path.get_file().get_basename()
-    
-    for i in range(atlas_data.size()):
-        var data: Dictionary = atlas_data[i]
-        var width: int = data.width
-        var height: int = data.height
-        var pixels: PackedByteArray = data.pixels
-        
-        var image := Image.create_from_data(width, height, false, Image.FORMAT_RGBA8, pixels)
-        
-        var num := "%03d" % (i + 1)
-        var texture_path := base_path.path_join(base_name + "_" + num + ".png")
-        image.save_png(texture_path)
-        
-        EditorInterface.get_resource_filesystem().scan()
-        var texture := ResourceLoader.load(texture_path)
-        textures.append(texture)
+    for idx in range(atlas_data.size()):
+        var texture_path := _build_texture_path(idx);
+        while not ResourceLoader.exists(texture_path):
+            await Engine.get_main_loop().process_frame
+        textures.append(ResourceLoader.load(texture_path))
     
     _atlas.atlas_textures = textures
 
@@ -175,3 +166,9 @@ func _create_diced_sprites(sprite_data: Array) -> void:
         sprites.append(sprite)
     
     _atlas.diced_sprites = sprites
+
+func _build_texture_path(idx: int) -> String:
+    var atlas_path := _atlas.resource_path
+    var base_path := atlas_path.get_base_dir()
+    var base_name := atlas_path.get_file().get_basename()
+    return base_path.path_join(base_name + "_" + ("%03d" % idx) + ".png")

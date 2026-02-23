@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://80lm2bnvb2ex"]
 
 [ext_resource type="Script" uid="uid://cvfsvwsfml21x" path="res://addons/sprite_dicing/runtime/diced_sprite_2d.gd" id="1_mlblr"]
-[ext_resource type="Resource" uid="uid://cxhjcyjoa0tx7" path="res://samples/atlases/godette.tres" id="2_tnnuc"]
+[ext_resource type="Resource" uid="uid://cxhjcyjoa0tx7" path="res://samples/atlases/godette.tres" id="2_mlblr"]
 
 [node name="Node2D" type="Node2D" unique_id=1117087934]
 
-[node name="DicedSprite2D" type="Node2D" parent="." unique_id=455788441]
-position = Vector2(542, 516)
+[node name="DicedSprite2D" type="Node2D" parent="." unique_id=303156463]
+position = Vector2(550, 500)
 script = ExtResource("1_mlblr")
-atlas = ExtResource("2_tnnuc")
+atlas = ExtResource("2_mlblr")
 sprite_id = "star"
 metadata/_custom_type_script = "uid://cvfsvwsfml21x"

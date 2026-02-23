@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6m5hqxt0mc7"
-path="res://.godot/imported/godette_001.png-77eda54e51024838d904ac0c4d2f8d59.ctex"
+uid="uid://d1g2qc831ey8q"
+path="res://.godot/imported/godette_000.png-c25161867df9088aa9c04c5a6d064f60.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://samples/atlases/godette_001.png"
-dest_files=["res://.godot/imported/godette_001.png-77eda54e51024838d904ac0c4d2f8d59.ctex"]
+source_file="res://samples/atlases/godette_000.png"
+dest_files=["res://.godot/imported/godette_000.png-c25161867df9088aa9c04c5a6d064f60.ctex"]
 
 [params]
 
