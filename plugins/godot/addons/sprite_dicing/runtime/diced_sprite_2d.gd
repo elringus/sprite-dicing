@@ -1,4 +1,5 @@
 @tool
+## Renders a diced sprite on scene.
 class_name DicedSprite2D extends Node2D
 
 ## The diced sprite atlas resource from which to render the sprite.

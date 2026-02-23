@@ -1,7 +1,7 @@
 @tool
 @icon("res://addons/sprite_dicing/icon.svg")
 
-## Settings and generated data of the diced sprites over the specified input.
+## Stores diced sprite build settings and generated resources.
 class_name DicedSpriteAtlas extends Resource
 
 ## A folder with the source sprite textures to dice and bake into this atlas.
