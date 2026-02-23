@@ -31,7 +31,7 @@ func _prepare_draw_data() -> void:
     _prepared = true
     _triangles.clear()
     _triangle_uvs.clear()
-    
+
     for i in range(indices.size() / 3):
         var idx := i * 3
         var tri := PackedVector2Array()

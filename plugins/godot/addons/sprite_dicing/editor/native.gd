@@ -15,5 +15,5 @@ func is_available() -> bool:
 func dice(sources: Array, prefs: Dictionary) -> Dictionary:
     if not _native:
         return {"error": "Native dicer not available. GDExtension not loaded."}
-    
+
     return _native.call("dice", sources, prefs)

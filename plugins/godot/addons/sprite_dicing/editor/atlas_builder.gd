@@ -13,24 +13,24 @@ func build() -> void:
     if not _atlas:
         push_error("Atlas is null")
         return
-    
+
     var input_folder: String = _atlas.input_folder
     if input_folder.is_empty():
         push_error("Input folder is not set")
         return
-    
+
     var source_files := _find_source_files(input_folder, _atlas.include_subfolders)
     if source_files.is_empty():
         push_error("No source images found in ", input_folder)
         return
-    
+
     var sources: Array = []
     for path in source_files:
         var image: Image = _load_image(path)
         if not image:
             push_warning("Failed to load image: ", path)
             continue
-        
+
         var sprite_id := _build_sprite_id(path, input_folder)
         sources.append({
             "id": sprite_id,
@@ -40,11 +40,11 @@ func build() -> void:
             "has_pivot": _atlas.keep_original_pivot,
             "pivot": Vector2(0.5, 0.5) if _atlas.keep_original_pivot else Vector2.ZERO
         })
-    
+
     if sources.is_empty():
         push_error("No valid source images loaded")
         return
-    
+
     var prefs := {
         "unit_size": _atlas.dice_unit_size,
         "padding": _atlas.padding,
@@ -56,21 +56,21 @@ func build() -> void:
         "ppu": _atlas.pixels_per_unit,
         "pivot": _atlas.default_pivot
     }
-    
+
     var native := _Native.new()
     var result: Dictionary = native.dice(sources, prefs)
-    
+
     if result.has("error") and not result.error.is_empty():
         push_error("Dicing failed: ", result.error)
         return
-    
+
     var atlases: Array = result.get("atlases", [])
     var sprites: Array = result.get("sprites", [])
-    
+
     await _save_atlas_textures(atlases)
     _create_diced_sprites(sprites)
     _update_compression_ratio(sources, atlases, sprites)
-    
+
     print("Sprite dicing complete. Generated ", atlases.size(), " atlas textures and ", sprites.size(), " sprites.")
 
 
@@ -79,17 +79,17 @@ func _find_source_files(folder: String, recursive: bool) -> PackedStringArray:
     var dir := DirAccess.open(folder)
     if not dir:
         return files
-    
+
     dir.list_dir_begin()
     var file := dir.get_next()
-    
+
     while not file.is_empty():
         if file == "." or file == "..":
             file = dir.get_next()
             continue
-        
+
         var full_path := folder.path_join(file)
-        
+
         if dir.current_is_dir():
             if recursive:
                 var sub_files := _find_source_files(full_path, true)
@@ -99,9 +99,9 @@ func _find_source_files(folder: String, recursive: bool) -> PackedStringArray:
             var ext := file.get_extension().to_lower()
             if ext in ["png", "jpg", "jpeg", "bmp", "webp"]:
                 files.push_back(full_path)
-        
+
         file = dir.get_next()
-    
+
     dir.list_dir_end()
     return files
 
@@ -110,14 +110,14 @@ func _load_image(path: String) -> Image:
     var texture := ResourceLoader.load(path) as Texture2D
     if not texture:
         return null
-    
+
     var image := texture.get_image()
     if not image:
         return null
-    
+
     if image.get_format() != Image.FORMAT_RGBA8:
         image.convert(Image.FORMAT_RGBA8)
-    
+
     return image
 
 
@@ -141,13 +141,13 @@ func _save_atlas_textures(atlas_data: Array) -> void:
         while not ResourceLoader.exists(texture_path):
             await Engine.get_main_loop().process_frame
         textures.append(ResourceLoader.load(texture_path))
-    
+
     _atlas.atlas_textures = textures
 
 
 func _create_diced_sprites(sprite_data: Array) -> void:
     var sprites: Array[DicedSprite] = []
-    
+
     for data in sprite_data:
         var sprite := DicedSprite.new()
         sprite.sprite_id = data.id
@@ -158,7 +158,7 @@ func _create_diced_sprites(sprite_data: Array) -> void:
         sprite.sprite_rect = data.rect
         sprite.sprite_pivot = data.pivot
         sprites.append(sprite)
-    
+
     _atlas.diced_sprites = sprites
 
 
@@ -166,11 +166,11 @@ func _update_compression_ratio(sources: Array, atlases: Array, sprites: Array) -
     var source_size := 0
     for src in sources:
         source_size += src.width * src.height * 4
-    
+
     var atlas_size := 0
     for atlas in atlases:
         atlas_size += atlas.width * atlas.height * 4
-    
+
     var sprite_size := 0
     for sprite in sprites:
         sprite_size += sprite.id.length()
@@ -179,7 +179,7 @@ func _update_compression_ratio(sources: Array, atlases: Array, sprites: Array) -
         sprite_size += sprite.indices.size() * 4
         sprite_size += 16
         sprite_size += 8
-    
+
     var ratio := float(source_size) / float(atlas_size + sprite_size)
     _atlas.compression_ratio = "%.2f" % ratio
 
