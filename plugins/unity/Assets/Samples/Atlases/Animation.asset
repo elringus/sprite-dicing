@@ -19,7 +19,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -8749743585830802132
@@ -230,7 +229,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -8469454864158163517
@@ -441,7 +439,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -8414585241614255518
@@ -652,7 +649,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -8144334918049399418
@@ -863,7 +859,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -8036170889925774255
@@ -1074,7 +1069,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -7954401575718731345
@@ -1285,7 +1279,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -6999266169099951640
@@ -1496,7 +1489,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -6274130295484345034
@@ -1707,7 +1699,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -6255380734791642663
@@ -1918,7 +1909,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -6243536034475870184
@@ -2129,7 +2119,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -5918770151399948118
@@ -2340,7 +2329,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -5901287079700930307
@@ -2551,7 +2539,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -5776335525720748849
@@ -2762,7 +2749,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -5477508972768589331
@@ -2973,7 +2959,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -5078497179548113019
@@ -3184,7 +3169,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -4805245422632482003
@@ -3395,7 +3379,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -4771858471210549058
@@ -3606,7 +3589,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -4477088226093563625
@@ -3817,7 +3799,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -4037126199155074405
@@ -4028,7 +4009,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -3326229544071075527
@@ -4239,7 +4219,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -1346187325116378709
@@ -4450,7 +4429,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -816042969774979210
@@ -4661,7 +4639,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -801551502714058066
@@ -4872,7 +4849,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -653757305449227773
@@ -5083,7 +5059,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -624846613352956883
@@ -5294,7 +5269,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: -463908683172517634
@@ -5575,7 +5549,7 @@ MonoBehaviour:
   includeSubfolders: 0
   separator: .
   generatedSpritesFolderGuid: 
-  lastRatioValue: 3873 KB / (6308 KB + 704 KB) = <color=red>0.55</color>
+  lastRatioValue: 3873 KB / (6308 KB + 703 KB) = <color=red>0.55</color>
 --- !u!213 &165850116375607491
 Sprite:
   m_ObjectHideFlags: 0
@@ -5595,7 +5569,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 165850116375607491
@@ -5806,7 +5779,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 304245187457326728
@@ -6017,7 +5989,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 342514546485175941
@@ -6228,7 +6199,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 411791003759776706
@@ -6439,7 +6409,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 667683726122926975
@@ -6650,7 +6619,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 898473920102592401
@@ -6861,7 +6829,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 1404859030830396436
@@ -7072,7 +7039,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 1942043507564595781
@@ -7283,7 +7249,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 2367194901526769767
@@ -7494,7 +7459,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 2505047647048463547
@@ -7705,7 +7669,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 3845214808508801873
@@ -7916,7 +7879,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 3854009098633123221
@@ -8127,7 +8089,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 4226583912443773968
@@ -8338,7 +8299,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 4569101989075892313
@@ -8549,7 +8509,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 4581065548789255165
@@ -8760,7 +8719,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 5037613638800252702
@@ -8971,7 +8929,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 5362322882318821780
@@ -9182,7 +9139,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 6604729939922780274
@@ -9393,7 +9349,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 6660934989398597057
@@ -9604,7 +9559,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 6797110667545172314
@@ -9815,7 +9769,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 6821794645383907077
@@ -10026,7 +9979,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 6853322458680904132
@@ -10237,7 +10189,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 7306142045003418127
@@ -10448,7 +10399,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 7469693970061201357
@@ -10659,7 +10609,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 7860408568666291296
@@ -10870,7 +10819,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 7988039405197247069
@@ -11081,7 +11029,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 8126783350546712221
@@ -11292,7 +11239,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 8688016837678967196
@@ -11503,7 +11449,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 8946094138192603902
@@ -11714,7 +11659,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 9008618588157943962
@@ -11925,7 +11869,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     882e2e416ec44434ab6549d7f8d917fe: 9183145550058924769
