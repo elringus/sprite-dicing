@@ -1,6 +1,6 @@
 use crate::models::*;
 use std::cmp;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 /// Chops source sprite textures and collects unique units.
@@ -13,10 +13,10 @@ pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedT
     }
 
     let mut textures = vec![];
+    let mut ctx = new_ctx(prefs);
     for (idx, sprite) in sprites.iter().enumerate() {
         Progress::report(prefs, 1, idx, sprites.len(), "Dicing source textures");
-        let ctx = new_ctx(sprite, prefs);
-        if let Some(texture) = dice_it(&ctx) {
+        if let Some(texture) = dice_it(sprite, &mut ctx) {
             textures.push(texture);
         }
     }
@@ -24,29 +24,30 @@ pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedT
     Ok(textures)
 }
 
-struct Context<'a> {
+struct Context {
     size: u32,
     pad: u32,
-    /// Currently diced source sprite.
-    sprite: &'a SourceSprite,
+    /// IDs of the units diced so far, mapped by hash of the unit pixels.
+    ids: HashMap<u64, Vec<usize>>,
+    /// Clipped cell size and pixels of the units diced so far, indexed by unit ID.
+    pixels: Vec<(USize, Vec<Pixel>)>,
 }
 
-fn new_ctx<'a>(sprite: &'a SourceSprite, prefs: &Prefs) -> Context<'a> {
+fn new_ctx(prefs: &Prefs) -> Context {
     Context {
         size: prefs.unit_size,
         pad: prefs.padding,
-        sprite,
+        ids: HashMap::new(),
+        pixels: vec![],
     }
 }
 
-fn dice_it(ctx: &Context) -> Option<DicedTexture> {
-    let mut units = Vec::new();
-    let unit_count_x = ctx.sprite.texture.width.div_ceil(ctx.size);
-    let unit_count_y = ctx.sprite.texture.height.div_ceil(ctx.size);
-
-    for x in 0..unit_count_x {
-        for y in 0..unit_count_y {
-            if let Some(unit) = dice_at(x, y, ctx) {
+fn dice_it(sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedTexture> {
+    let tex = &sprite.texture;
+    let mut units = vec![];
+    for y in (0..tex.height).step_by(ctx.size as usize) {
+        for x in (0..tex.width).step_by(ctx.size as usize) {
+            if let Some(unit) = dice_at(x, y, sprite, ctx) {
                 units.push(unit);
             }
         }
@@ -56,45 +57,90 @@ fn dice_it(ctx: &Context) -> Option<DicedTexture> {
         return None;
     }
 
+    let mut unique = units.iter().map(|u| u.id).collect::<Vec<_>>();
+    unique.sort_unstable();
+    unique.dedup();
+
     Some(DicedTexture {
-        id: ctx.sprite.id.to_owned(),
-        size: USize::new(ctx.sprite.texture.width, ctx.sprite.texture.height),
-        unique: units.iter().map(|u| u.hash).collect::<HashSet<_>>(),
-        pivot: ctx.sprite.pivot.to_owned(),
+        id: sprite.id.to_owned(),
+        size: USize::new(tex.width, tex.height),
+        pivot: sprite.pivot.to_owned(),
         units,
+        unique,
     })
 }
 
-fn dice_at(unit_x: u32, unit_y: u32, ctx: &Context) -> Option<DicedUnit> {
-    let unit_rect = IRect {
-        x: unit_x as i32 * ctx.size as i32,
-        y: unit_y as i32 * ctx.size as i32,
-        width: ctx.size,
-        height: ctx.size,
+fn dice_at(x: u32, y: u32, sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedUnit> {
+    let tex = &sprite.texture;
+    let cell = URect {
+        x,
+        y,
+        width: cmp::min(ctx.size, tex.width - x),
+        height: cmp::min(ctx.size, tex.height - y),
     };
-
-    let unit_pixels = get_pixels(&unit_rect, &ctx.sprite.texture);
-    if unit_pixels.iter().all(|p| p.a() == 0) {
+    let cell_pixels = get_pixels(&cell, 0, tex);
+    if cell_pixels.iter().all(|p| p.a() == 0) {
         return None;
     }
 
-    let hash = hash(&unit_pixels);
-    let rect = crop_over_borders(&unit_rect, &ctx.sprite.texture);
-    let padded_rect = pad_rect(&unit_rect, ctx.pad);
-    let pixels = get_pixels(&padded_rect, &ctx.sprite.texture);
-    Some(DicedUnit { rect, pixels, hash })
+    Some(DicedUnit {
+        cell,
+        id: get_id(USize::new(cell.width, cell.height), cell_pixels, ctx),
+        visible: eval_visible_rect(&cell, tex),
+        pixels: get_pixels(&cell, ctx.pad, tex),
+    })
 }
 
-fn get_pixels(rect: &IRect, tex: &Texture) -> Vec<Pixel> {
-    let end_x = rect.x + rect.width as i32;
-    let end_y = rect.y + rect.height as i32;
-    let size = (rect.width * rect.height) as usize;
-    let mut pixels = vec![Pixel::default(); size];
-    let mut idx = 0;
-    for y in rect.y..end_y {
-        for x in rect.x..end_x {
-            pixels[idx] = get_pixel(x, y, tex);
-            idx += 1;
+fn get_id(size: USize, pixels: Vec<Pixel>, ctx: &mut Context) -> usize {
+    let ids = ctx.ids.entry(hash(&size, &pixels)).or_default();
+    for &id in ids.iter() {
+        let (known_size, known_pixels) = &ctx.pixels[id];
+        if *known_size == size && *known_pixels == pixels {
+            return id;
+        }
+    }
+    let id = ctx.pixels.len();
+    ids.push(id);
+    ctx.pixels.push((size, pixels));
+    id
+}
+
+fn eval_visible_rect(cell: &URect, tex: &Texture) -> URect {
+    let (left, top) = (cell.x as i32, cell.y as i32);
+    let (right, bottom) = (left + cell.width as i32, top + cell.height as i32);
+    let (mut min_x, mut min_y) = (i32::MAX, i32::MAX);
+    let (mut max_x, mut max_y) = (i32::MIN, i32::MIN);
+    for y in (top - 1)..=bottom {
+        for x in (left - 1)..=right {
+            if get_pixel(x, y, tex).a() > 0 {
+                min_x = cmp::min(min_x, x);
+                min_y = cmp::min(min_y, y);
+                max_x = cmp::max(max_x, x);
+                max_y = cmp::max(max_y, y);
+            }
+        }
+    }
+    let x = cmp::max(min_x - 1, left);
+    let y = cmp::max(min_y - 1, top);
+    URect {
+        x: (x - left) as u32,
+        y: (y - top) as u32,
+        width: (cmp::min(max_x + 2, right) - x) as u32,
+        height: (cmp::min(max_y + 2, bottom) - y) as u32,
+    }
+}
+
+fn get_pixels(rect: &URect, pad: u32, tex: &Texture) -> Vec<Pixel> {
+    let padded = IRect {
+        x: rect.x as i32 - pad as i32,
+        y: rect.y as i32 - pad as i32,
+        width: rect.width + pad * 2,
+        height: rect.height + pad * 2,
+    };
+    let mut pixels = Vec::with_capacity((padded.width * padded.height) as usize);
+    for y in padded.y..(padded.y + padded.height as i32) {
+        for x in padded.x..(padded.x + padded.width as i32) {
+            pixels.push(get_pixel(x, y, tex));
         }
     }
     pixels
@@ -106,26 +152,10 @@ fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
     tex.pixels[(x + tex.width * y) as usize]
 }
 
-fn pad_rect(rect: &IRect, pad: u32) -> IRect {
-    IRect {
-        x: rect.x - pad as i32,
-        y: rect.y - pad as i32,
-        width: rect.width + pad * 2,
-        height: rect.height + pad * 2,
-    }
-}
-
-fn crop_over_borders(rect: &IRect, tex: &Texture) -> URect {
-    URect {
-        x: rect.x as u32,
-        y: rect.y as u32,
-        width: cmp::min(rect.width, tex.width - rect.x as u32),
-        height: cmp::min(rect.height, tex.height - rect.y as u32),
-    }
-}
-
-fn hash(pixels: &[Pixel]) -> u64 {
+fn hash(size: &USize, pixels: &[Pixel]) -> u64 {
     let mut hasher = DefaultHasher::new();
+    size.width.hash(&mut hasher);
+    size.height.hash(&mut hasher);
     pixels.hash(&mut hasher);
     hasher.finish()
 }
@@ -208,39 +238,107 @@ mod tests {
     }
 
     #[test]
-    fn content_hash_of_equal_pixels_is_equal() {
-        let units = dice1(&BGRT, 1, 0).units;
-        for unit in dice1(&BTGR, 1, 0).units {
-            assert!(units.iter().any(|u| u.hash == unit.hash));
+    fn units_with_equal_pixels_share_id() {
+        let diced = dice(&[src(&BGRT), src(&BTGR)], &pref(1, 0)).unwrap();
+        for unit in diced[1].units.iter() {
+            assert!(diced[0].units.iter().any(|u| u.id == unit.id));
         }
     }
 
     #[test]
-    fn content_hash_of_distinct_pixels_is_not_equal() {
-        assert_ne!(
-            dice1(&B1X1, 1, 0).units[0].hash,
-            dice1(&R1X1, 1, 0).units[0].hash
-        );
+    fn units_with_distinct_pixels_have_distinct_ids() {
+        let diced = dice(&[src(&B1X1), src(&R1X1)], &pref(1, 0)).unwrap();
+        assert_ne!(diced[0].units[0].id, diced[1].units[0].id);
     }
 
     #[test]
-    fn content_hash_ignores_padding() {
+    fn unit_ids_ignore_padding() {
         let no_pad = dice1(&RGB4X4, 1, 0).units;
         for padded in dice1(&RGB4X4, 1, 1).units {
-            assert!(no_pad.iter().any(|u| u.hash == padded.hash))
+            assert!(no_pad.iter().any(|u| u.id == padded.id))
         }
     }
 
     #[test]
-    fn unit_rects_are_mapped_top_left_to_bottom_right() {
+    fn unit_ids_are_assigned_in_order_of_appearance() {
+        let diced = dice(&[src(&RGBY), src(&B1X1)], &pref(1, 0)).unwrap();
+        let ids = diced[0].units.iter().map(|u| u.id).collect::<Vec<_>>();
+        assert_eq!(ids, vec![0, 1, 2, 3]);
+        assert_eq!(diced[1].units[0].id, 2);
+    }
+
+    #[test]
+    fn unit_identity_includes_clipped_cell_size() {
+        let diced = dice(&[src(&RGB3X1), src(&B1X1)], &pref(2, 0)).unwrap();
+        assert_eq!(diced[0].units[1].id, diced[1].units[0].id);
+        let diced = dice(&[src(&RGB3X1), src(&RGB1X3)], &pref(2, 0)).unwrap();
+        assert_ne!(diced[0].units[0].id, diced[1].units[0].id);
+        assert_eq!(diced[0].units[1].id, diced[1].units[1].id);
+    }
+
+    #[test]
+    fn unit_cells_are_mapped_top_left_to_bottom_right() {
         let units = &dice(&[src(&RGBY)], &pref(1, 0)).unwrap()[0].units;
         assert!(has(units, R, URect::new(0, 0, 1, 1)));
         assert!(has(units, G, URect::new(1, 0, 1, 1)));
         assert!(has(units, B, URect::new(0, 1, 1, 1)));
         assert!(has(units, Y, URect::new(1, 1, 1, 1)));
-        fn has(units: &[DicedUnit], pixel: Pixel, rect: URect) -> bool {
-            units.iter().any(|u| u.pixels[0] == pixel && u.rect == rect)
+        fn has(units: &[DicedUnit], pixel: Pixel, cell: URect) -> bool {
+            units.iter().any(|u| u.pixels[0] == pixel && u.cell == cell)
         }
+    }
+
+    #[test]
+    fn units_are_ordered_row_major() {
+        let cells = dice1(&RGB4X4, 2, 0)
+            .units
+            .iter()
+            .map(|u| (u.cell.x, u.cell.y))
+            .collect::<Vec<_>>();
+        assert_eq!(cells, vec![(0, 0), (2, 0), (0, 2), (2, 2)]);
+    }
+
+    #[test]
+    fn edge_cells_are_clipped_to_texture() {
+        let units = dice1(&RGB3X1, 2, 0).units;
+        assert_eq!(units[0].cell, URect::new(0, 0, 2, 1));
+        assert_eq!(units[1].cell, URect::new(2, 0, 1, 1));
+    }
+
+    #[test]
+    fn visible_rect_of_opaque_unit_is_whole_cell() {
+        let units = dice1(&RGB4X4, 2, 0).units;
+        assert!(units.iter().all(|u| u.visible == URect::new(0, 0, 2, 2)));
+    }
+
+    #[test]
+    fn visible_rect_is_visible_pixels_with_fringe() {
+        let unit = &dice1(&dot(5, 5, 2, 2), 5, 0).units[0];
+        assert_eq!(unit.visible, URect::new(1, 1, 3, 3));
+        let unit = &dice1(&dot(5, 5, 0, 0), 5, 0).units[0];
+        assert_eq!(unit.visible, URect::new(0, 0, 2, 2));
+    }
+
+    #[test]
+    fn visible_rect_covers_fringe_of_neighbor_cells() {
+        let diced = dice1(&dot(4, 4, 1, 1), 2, 0);
+        assert_eq!(diced.units.len(), 1);
+        assert_eq!(diced.units[0].visible, URect::new(0, 0, 2, 2));
+        let mut tex = dot(4, 4, 1, 1);
+        tex.pixels[2 + 2 * 4] = M;
+        let diced = dice1(&tex, 2, 0);
+        assert_eq!(diced.units.len(), 2);
+        assert_eq!(diced.units[0].visible, URect::new(0, 0, 2, 2));
+        assert_eq!(diced.units[1].visible, URect::new(0, 0, 2, 2));
+    }
+
+    #[test]
+    fn same_content_at_different_offsets_are_distinct_units() {
+        let sources = [src(&dot(4, 4, 1, 1)), src(&dot(4, 4, 2, 2))];
+        let diced = dice(&sources, &pref(4, 0)).unwrap();
+        assert_ne!(diced[0].units[0].id, diced[1].units[0].id);
+        assert_eq!(diced[0].units[0].visible, URect::new(0, 0, 3, 3));
+        assert_eq!(diced[1].units[0].visible, URect::new(1, 1, 3, 3));
     }
 
     #[test]
@@ -265,6 +363,14 @@ mod tests {
             B, B, G,
             B, B, G,
             R, R, T]));
+    }
+
+    #[test]
+    fn padded_pixels_surround_cell() {
+        let unit = &dice1(&dot(5, 5, 2, 2), 5, 1).units[0];
+        assert_eq!(unit.pixels.len(), 49);
+        assert_eq!(unit.pixels[24], M);
+        assert_eq!(unit.pixels.iter().filter(|p| **p == M).count(), 1);
     }
 
     #[test]

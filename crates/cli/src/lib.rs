@@ -36,6 +36,7 @@ fn collect_sources(dir: &Path, prefs: &FsPrefs) -> Result<Vec<PathBuf>> {
             sprites.push(path);
         }
     }
+    sprites.sort();
     Ok(sprites)
 }
 
@@ -91,6 +92,28 @@ fn write_sprites(sprites: Vec<DicedSprite>, dir: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn collects_sources_in_order_of_relative_paths() {
+        let dir = std::env::temp_dir().join(format!("dicing-sort-{}", std::process::id()));
+        _ = fs::remove_dir_all(&dir);
+        for name in ["b/2.png", "b/1.png", "a/3.png", "c.png", "a.png", "b.txt"] {
+            let path = dir.join(name);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, []).unwrap();
+        }
+        let prefs = FsPrefs {
+            recursive: true,
+            ..FsPrefs::default()
+        };
+        let ids = collect_sources(&dir, &prefs)
+            .unwrap()
+            .iter()
+            .map(|p| eval_sprite_id(&dir, p, "/"))
+            .collect::<Vec<_>>();
+        fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(ids, vec!["a/3", "a", "b/1", "b/2", "c"]);
+    }
 
     #[test]
     fn evaluates_sprite_id_from_path() {

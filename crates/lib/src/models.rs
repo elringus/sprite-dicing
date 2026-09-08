@@ -1,6 +1,6 @@
 //! Common data models.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Result of a dicing operation.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -267,19 +267,21 @@ pub(crate) struct DicedTexture {
     pub pivot: Option<Pivot>,
     /// Associated diced units.
     pub units: Vec<DicedUnit>,
-    /// Hashes of diced units with distinct content.
-    pub unique: HashSet<u64>,
+    /// IDs of diced units with distinct content.
+    pub unique: Vec<usize>,
 }
 
 /// A chunk diced from a source texture.
 #[derive(Debug, Clone)]
 pub(crate) struct DicedUnit {
+    /// ID of the unit, shared with the units with equal content in all the textures.
+    pub id: usize,
     /// Position and dimensions of the unit inside source texture.
-    pub rect: URect,
+    pub cell: URect,
+    /// Part of the cell with visible pixels and their one-texel fringe, relative to the cell.
+    pub visible: URect,
     /// Unit pixels chopped from the source texture, including padding.
     pub pixels: Vec<Pixel>,
-    /// Content hash based on the non-padded pixels of the unit.
-    pub hash: u64,
 }
 
 /// Product of packing [DicedTexture]s.
@@ -287,14 +289,23 @@ pub(crate) struct DicedUnit {
 pub(crate) struct Atlas {
     /// The atlas texture containing unique content of the packed diced textures.
     pub texture: Texture,
-    /// Packed unit UV rects on the atlas texture, mapped by unit hashes.
-    pub rects: HashMap<u64, FRect>,
+    /// Packed units, mapped by unit ID.
+    pub units: HashMap<usize, PackedUnit>,
     /// Diced textures packed into this atlas.
     pub packed: Vec<DicedTexture>,
 }
 
+/// A unit stored on an atlas texture.
+#[derive(Debug, Clone)]
+pub(crate) struct PackedUnit {
+    /// Visible rect of the unit across all its occurrences, relative to the cell.
+    pub visible: URect,
+    /// UV rect of the stored part on the atlas texture.
+    pub uv: FRect,
+}
+
 /// A rectangle in unsigned integer space.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) struct URect {
     /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: u32,
@@ -307,7 +318,6 @@ pub(crate) struct URect {
 }
 
 impl URect {
-    #[allow(dead_code)] // Used in tests.
     pub fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
         URect {
             x,
@@ -319,7 +329,7 @@ impl URect {
 }
 
 /// A rectangle in signed integer space.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) struct IRect {
     /// Position of the top-left corner of the rectangle on horizontal axis.
     pub x: i32,
@@ -356,7 +366,7 @@ impl FRect {
 }
 
 /// Size of arbitrary entity in unsigned integer space.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(crate) struct USize {
     /// Width of the entity.
     pub width: u32,
