@@ -16,7 +16,7 @@ image = { version = "0.25", default-features = false, features = [
     "jpeg",
     "bmp"
 ] }
-rayon = "1.10.0"
-clap = { version = "4.5", features = ["derive"] }
-clap_derive = "4.5"
-indicatif = "0.17"
+rayon = "1.12"
+clap = { version = "4.6", features = ["derive"] }
+clap_derive = "4.6"
+indicatif = "0.18"

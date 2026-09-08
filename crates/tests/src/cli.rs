@@ -2,7 +2,7 @@
 
 use crate::common::*;
 use cli::models::*;
-use rand::{Rng, distr::Alphanumeric};
+use rand::{RngExt, distr::Alphanumeric};
 use serde_json::Value;
 use sprite_dicing::{Artifacts, DicedSprite, Pivot, Prefs, Rect, Uv, Vertex};
 use std::path::{Path, PathBuf};
