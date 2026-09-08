@@ -13,4 +13,4 @@ sprite_dicing = { path = "../lib" }
 cli = { path = "../cli" }
 image = { version = "0.25", default-features = false, features = ["png", "webp"] }
 serde_json = "1.0"
-rand = "0.9"
+rand = "0.10"
