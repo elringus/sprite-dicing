@@ -27,7 +27,7 @@ struct Context<'a> {
     default_pivot: &'a Pivot,
     atlas_idx: usize,
     diced: &'a DicedTexture,
-    uv_rects: &'a HashMap<u64, FRect>,
+    units: &'a HashMap<usize, PackedUnit>,
     vertices: Vec<Vertex>,
     uvs: Vec<Uv>,
     indices: Vec<usize>,
@@ -45,7 +45,7 @@ fn new_ctx<'a>(
         default_pivot: &prefs.pivot,
         atlas_idx,
         diced,
-        uv_rects: &atlas.rects,
+        units: &atlas.units,
         vertices: vec![],
         uvs: vec![],
         indices: vec![],
@@ -54,8 +54,14 @@ fn new_ctx<'a>(
 
 fn build_it(mut ctx: Context) -> DicedSprite {
     for unit in ctx.diced.units.iter() {
-        let uv_rect = &ctx.uv_rects[&unit.hash];
-        build_unit(&mut ctx, &unit.rect, uv_rect);
+        let packed = &ctx.units[&unit.id];
+        let visible_rect = URect {
+            x: unit.cell.x + packed.visible.x,
+            y: unit.cell.y + packed.visible.y,
+            width: packed.visible.width,
+            height: packed.visible.height,
+        };
+        build_unit(&mut ctx, &visible_rect, &packed.uv);
     }
 
     let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
@@ -73,27 +79,27 @@ fn build_it(mut ctx: Context) -> DicedSprite {
     }
 }
 
-fn build_unit(ctx: &mut Context, unit_rect: &URect, uv_rect: &FRect) {
-    let unit_rect = scale_unit_rect(ctx, unit_rect);
-    build_quad(ctx, &unit_rect, uv_rect);
+fn build_unit(ctx: &mut Context, visible_rect: &URect, uv_rect: &FRect) {
+    let visible_rect = scale_rect(ctx, visible_rect);
+    build_quad(ctx, &visible_rect, uv_rect);
 }
 
-fn scale_unit_rect(ctx: &Context, unit_rect: &URect) -> FRect {
+fn scale_rect(ctx: &Context, rect: &URect) -> FRect {
     FRect {
-        x: unit_rect.x as f32 / ctx.ppu,
-        y: unit_rect.y as f32 / ctx.ppu,
-        width: unit_rect.width as f32 / ctx.ppu,
-        height: unit_rect.height as f32 / ctx.ppu,
+        x: rect.x as f32 / ctx.ppu,
+        y: rect.y as f32 / ctx.ppu,
+        width: rect.width as f32 / ctx.ppu,
+        height: rect.height as f32 / ctx.ppu,
     }
 }
 
-fn build_quad(ctx: &mut Context, unit_rect: &FRect, uv_rect: &FRect) {
+fn build_quad(ctx: &mut Context, rect: &FRect, uv_rect: &FRect) {
     let i = ctx.vertices.len();
 
-    let x_min = unit_rect.x;
-    let y_min = unit_rect.y;
-    let x_max = unit_rect.x + unit_rect.width;
-    let y_max = unit_rect.y + unit_rect.height;
+    let x_min = rect.x;
+    let y_min = rect.y;
+    let x_max = rect.x + rect.width;
+    let y_max = rect.y + rect.height;
 
     let u_min = uv_rect.x;
     let v_min = uv_rect.y;
@@ -126,21 +132,23 @@ fn eval_rect(ctx: &Context, pivot: &Pivot) -> Rect {
 }
 
 fn eval_fit_rect(ctx: &Context) -> Rect {
-    let mut min_x = f32::INFINITY;
-    let mut min_y = f32::INFINITY;
-    let mut max_x = f32::NEG_INFINITY;
-    let mut max_y = f32::NEG_INFINITY;
+    let mut min_x = u32::MAX;
+    let mut min_y = u32::MAX;
+    let mut max_x = 0;
+    let mut max_y = 0;
 
-    for vertex in ctx.vertices.iter() {
-        min_x = min_x.min(vertex.x);
-        min_y = min_y.min(vertex.y);
-        max_x = max_x.max(vertex.x);
-        max_y = max_y.max(vertex.y);
+    for unit in ctx.diced.units.iter() {
+        min_x = min_x.min(unit.cell.x);
+        min_y = min_y.min(unit.cell.y);
+        max_x = max_x.max(unit.cell.x + unit.cell.width);
+        max_y = max_y.max(unit.cell.y + unit.cell.height);
     }
 
-    let width = (max_x - min_x).abs();
-    let height = (max_y - min_y).abs();
-    Rect::new(min_x, min_y, width, height)
+    let x = min_x as f32 / ctx.ppu;
+    let y = min_y as f32 / ctx.ppu;
+    let width = (max_x - min_x) as f32 / ctx.ppu;
+    let height = (max_y - min_y) as f32 / ctx.ppu;
+    Rect::new(x, y, width, height)
 }
 
 fn eval_full_rect(ctx: &Context, pivot: &Pivot) -> Rect {
@@ -349,12 +357,12 @@ mod tests {
             ..defaults()
         };
         let sprites = &build(vec![&R1X1, &(&B1X1, (0.5, 0.5))], &prefs);
-        let quad1 = Quad::from_1x1(&sprites[1]);
-        let quad2 = Quad::from_1x1(&sprites[0]);
+        let quad1 = Quad::from_1x1(&sprites[0]);
+        let quad2 = Quad::from_1x1(&sprites[1]);
         assert_eq!(quad1.bottom_right, Vertex::new(1.0, 1.0));
         assert_eq!(quad2.bottom_right, Vertex::new(0.5, 0.5));
-        assert_eq!(sprites[1].pivot, Pivot::new(0.0, 0.0));
-        assert_eq!(sprites[0].pivot, Pivot::new(0.5, 0.5));
+        assert_eq!(sprites[0].pivot, Pivot::new(0.0, 0.0));
+        assert_eq!(sprites[1].pivot, Pivot::new(0.5, 0.5));
     }
 
     #[test]
@@ -471,6 +479,33 @@ mod tests {
             build(vec![&(&TTMT, (1.0, 1.0))], &prefs)[0].rect,
             Rect::new(-2.0, -2.0, 2.0, 2.0)
         );
+    }
+
+    #[test]
+    fn quads_cover_trimmed_content_while_rect_covers_cells() {
+        let prefs = Prefs {
+            unit_size: 5,
+            trim_transparent: true,
+            ..defaults()
+        };
+        let sprite = &build(vec![&dot(5, 5, 2, 2)], &prefs)[0];
+        assert_eq!(sprite.rect, Rect::new(0.0, 0.0, 5.0, 5.0));
+        assert_eq!(sprite.vertices[0], Vertex::new(1.0, 1.0));
+        assert_eq!(sprite.vertices[2], Vertex::new(4.0, 4.0));
+    }
+
+    #[test]
+    fn same_content_at_different_offsets_is_drawn_at_own_positions() {
+        let prefs = Prefs {
+            unit_size: 4,
+            ..defaults()
+        };
+        let sprites = build(vec![&dot(4, 4, 1, 1), &dot(4, 4, 2, 2)], &prefs);
+        assert_eq!(sprites[0].vertices[0], Vertex::new(0.0, 0.0));
+        assert_eq!(sprites[0].vertices[2], Vertex::new(3.0, 3.0));
+        assert_eq!(sprites[1].vertices[0], Vertex::new(1.0, 1.0));
+        assert_eq!(sprites[1].vertices[2], Vertex::new(4.0, 4.0));
+        assert_ne!(sprites[0].uvs, sprites[1].uvs);
     }
 
     #[test]

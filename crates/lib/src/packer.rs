@@ -1,5 +1,7 @@
+use crate::layout::*;
 use crate::models::*;
-use std::collections::{HashMap, HashSet};
+use std::cmp;
+use std::collections::HashMap;
 
 /// Packs diced textures into atlases.
 pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>> {
@@ -19,8 +21,6 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
     while !ctx.to_pack.is_empty() {
         Progress::report(prefs, 2, total - ctx.to_pack.len(), total, "Packing units");
         atlases.push(pack_it(&mut ctx)?);
-        ctx.packed.clear();
-        ctx.units.clear();
     }
 
     Ok(atlases)
@@ -30,205 +30,192 @@ struct Context {
     inset: f32,
     square: bool,
     pot: bool,
-    size_limit: u32,
-    unit_size: u32,
+    limit: u32,
     pad: u32,
-    padded_unit_size: u32,
-    /// Max. number of units single atlas is able to accommodate.
-    unit_capacity: u32,
     /// Total textures left to pack.
     to_pack: Vec<DicedTexture>,
-    /// Indexes of to_pack textures packed into current atlas.
-    packed: HashSet<usize>,
-    /// Units packed into current atlas mapped by hashes.
-    units: HashMap<u64, UnitRef>,
-}
-
-/// Reference to a diced unit of a diced texture.
-struct UnitRef {
-    /// Index of the diced texture (via ctx.to_pack) containing referenced unit.
-    tex_idx: usize,
-    /// Index of the referenced diced unit inside diced texture.
-    unit_idx: usize,
+    /// Visible rects of all the units, indexed by unit ID.
+    visible: Vec<URect>,
+    /// Whether the unit is packed into current atlas, indexed by unit ID.
+    packed: Vec<bool>,
 }
 
 fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
-    let padded_unit_size = prefs.unit_size + prefs.padding * 2;
-    let unit_capacity = (prefs.atlas_size_limit / padded_unit_size).pow(2);
+    let units = || diced.iter().flat_map(|t| t.units.iter());
+    let count = units().map(|u| u.id + 1).max().unwrap_or(0);
+    let mut rects: Vec<Option<URect>> = vec![None; count];
+    for unit in units() {
+        let rect = &mut rects[unit.id];
+        *rect = Some(rect.map_or(unit.visible, |r| union(&r, &unit.visible)));
+    }
     Context {
         inset: prefs.uv_inset,
         square: prefs.atlas_square,
         pot: prefs.atlas_pot,
-        size_limit: prefs.atlas_size_limit,
-        unit_size: prefs.unit_size,
+        limit: prefs.atlas_size_limit,
         pad: prefs.padding,
-        padded_unit_size,
-        unit_capacity,
         to_pack: diced,
-        packed: HashSet::new(),
-        units: HashMap::new(),
+        visible: rects.into_iter().map(|r| r.unwrap()).collect(),
+        packed: vec![],
     }
 }
 
 fn pack_it(ctx: &mut Context) -> Result<Atlas> {
-    while let Some(tex_idx) = find_packable_texture(ctx) {
-        ctx.packed.insert(tex_idx);
-        let units = ctx.to_pack[tex_idx].units.iter().enumerate();
-        let refs = units.map(|(unit_idx, u)| (u.hash, UnitRef { tex_idx, unit_idx }));
-        ctx.units.extend(refs);
+    ctx.packed = vec![false; ctx.visible.len()];
+
+    let mut layout = None;
+    while let Some(units) = find_packable_units(ctx) {
+        match eval_layout_with(ctx, &units) {
+            Some(fit) => layout = Some(fit),
+            None => break,
+        }
+        for id in units {
+            ctx.packed[id] = true;
+        }
     }
 
-    if ctx.packed.is_empty() {
+    let Some(layout) = layout else {
         return Err(Error::Spec(
             "Can't fit single texture; increase atlas size limit.",
         ));
-    }
+    };
 
-    let atlas_size = eval_atlas_size(ctx);
-    let (texture, rects) = bake_atlas(ctx, &atlas_size);
     let packed = extract_packed_textures(ctx);
+    let (texture, units) = bake_atlas(ctx, &layout, &packed);
 
     Ok(Atlas {
         texture,
-        rects,
+        units,
         packed,
     })
 }
 
-fn find_packable_texture(ctx: &Context) -> Option<usize> {
-    let mut optimal_texture_idx: Option<usize> = None;
-    let mut min_units_to_pack = u32::MAX;
-
-    for (idx, texture) in ctx.to_pack.iter().enumerate() {
-        if ctx.packed.contains(&idx) {
-            continue;
-        }
-        let units_to_pack = texture
+fn find_packable_units(ctx: &Context) -> Option<Vec<usize>> {
+    let mut best: Option<(u64, Vec<usize>)> = None;
+    for texture in ctx.to_pack.iter() {
+        let new = texture
             .unique
             .iter()
-            .filter(|u| !ctx.units.contains_key(u))
-            .count() as u32;
-        if units_to_pack < min_units_to_pack {
-            optimal_texture_idx = Some(idx);
-            min_units_to_pack = units_to_pack;
+            .copied()
+            .filter(|&id| !ctx.packed[id])
+            .collect::<Vec<_>>();
+        if new.is_empty() {
+            continue;
+        }
+        let area = new
+            .iter()
+            .map(|&id| padded_size(ctx, id))
+            .map(|s| s.width as u64 * s.height as u64)
+            .sum::<u64>();
+        if best.as_ref().is_none_or(|(min, _)| area < *min) {
+            best = Some((area, new));
         }
     }
-
-    optimal_texture_idx?;
-    if (ctx.units.len() as u32 + min_units_to_pack) <= ctx.unit_capacity {
-        optimal_texture_idx
-    } else {
-        None
-    }
+    best.map(|(_, new)| new)
 }
 
-fn eval_atlas_size(ctx: &Context) -> USize {
-    let units_count = ctx.units.len() as u32;
-    let size = (units_count as f32).sqrt().ceil() as u32;
-
-    if ctx.pot {
-        let size = (size * ctx.padded_unit_size).next_power_of_two();
-        return USize::new(size, size);
-    }
-
-    if ctx.square {
-        let size = size * ctx.padded_unit_size;
-        return USize::new(size, size);
-    }
-
-    let mut size = USize::new(size, size);
-    for width in (1..=size.width).rev() {
-        let height = units_count.div_ceil(width);
-        if height * ctx.padded_unit_size > ctx.size_limit {
-            break;
-        }
-        if width * height < size.width * size.height {
-            size = USize::new(width, height);
-        }
-    }
-
-    USize::new(
-        size.width * ctx.padded_unit_size,
-        size.height * ctx.padded_unit_size,
-    )
+fn eval_layout_with(ctx: &Context, units: &[usize]) -> Option<Layout> {
+    let packed = (0..ctx.packed.len()).filter(|&id| ctx.packed[id]);
+    let sizes = packed
+        .chain(units.iter().copied())
+        .map(|id| (id, padded_size(ctx, id)))
+        .collect::<Vec<_>>();
+    eval_layout(&sizes, ctx.limit, ctx.square, ctx.pot)
 }
 
-fn bake_atlas(ctx: &Context, size: &USize) -> (Texture, HashMap<u64, FRect>) {
-    let units_per_row = size.width / ctx.padded_unit_size;
-    let mut rects = HashMap::new();
-    let mut texture = Texture {
-        width: size.width,
-        height: size.height,
-        pixels: vec![Pixel::default(); (size.width * size.height) as usize],
-    };
-
-    // Hash containers in Rust intentionally randomize order for security, while we need
-    // stable order to produce identical atlases for identical input, hence the sorting here.
-    let mut sorted_hashes = ctx.units.keys().collect::<Vec<_>>();
-    sorted_hashes.sort_unstable();
-
-    for (unit_idx, unit_hash) in sorted_hashes.into_iter().enumerate() {
-        let unit_ref = &ctx.units[unit_hash];
-        let row = unit_idx as u32 / units_per_row;
-        let column = unit_idx as u32 % units_per_row;
-        let unit = &ctx.to_pack[unit_ref.tex_idx].units[unit_ref.unit_idx];
-        set_pixels(ctx, &unit.pixels, column, row, &mut texture);
-
-        let rect = get_uv(ctx, column, row, size);
-        let rect = inset_uv(ctx, rect);
-        let rect = scale_uv(ctx, rect, unit);
-        rects.insert(*unit_hash, rect);
-    }
-
-    (texture, rects)
-}
-
-fn set_pixels(ctx: &Context, pixels: &[Pixel], column: u32, row: u32, atlas: &mut Texture) {
-    let mut from_idx = 0;
-    let start_x = column * ctx.padded_unit_size;
-    let start_y = row * ctx.padded_unit_size;
-    for y in start_y..(start_y + ctx.padded_unit_size) {
-        for x in start_x..(start_x + ctx.padded_unit_size) {
-            let into_idx = (x + atlas.width * y) as usize;
-            atlas.pixels[into_idx] = pixels[from_idx];
-            from_idx += 1;
-        }
-    }
-}
-
-fn get_uv(ctx: &Context, column: u32, row: u32, atlas_size: &USize) -> FRect {
-    let width = ctx.unit_size as f32 / atlas_size.width as f32;
-    let height = ctx.unit_size as f32 / atlas_size.height as f32;
-    let x = (column * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.width as f32;
-    let y = (row * ctx.padded_unit_size + ctx.pad) as f32 / atlas_size.height as f32;
-    FRect::new(x, y, width, height)
-}
-
-fn inset_uv(ctx: &Context, rect: FRect) -> FRect {
-    let d = ctx.inset * (rect.width / 2.0);
-    let dx2 = d * 2.0;
-    FRect::new(rect.x + d, rect.y + d, rect.width - dx2, rect.height - dx2)
-}
-
-fn scale_uv(ctx: &Context, rect: FRect, unit: &DicedUnit) -> FRect {
-    let mx = unit.rect.width as f32 / ctx.unit_size as f32;
-    let my = unit.rect.height as f32 / ctx.unit_size as f32;
-    FRect::new(rect.x, rect.y, rect.width * mx, rect.height * my)
+fn padded_size(ctx: &Context, id: usize) -> USize {
+    let rect = &ctx.visible[id];
+    USize::new(rect.width + ctx.pad * 2, rect.height + ctx.pad * 2)
 }
 
 fn extract_packed_textures(ctx: &mut Context) -> Vec<DicedTexture> {
-    let mut packed = Vec::new();
-    let mut idx = ctx.to_pack.len() - 1;
-    loop {
-        if ctx.packed.contains(&idx) {
-            packed.push(ctx.to_pack.swap_remove(idx));
+    let mut packed = vec![];
+    let mut left = vec![];
+    for texture in ctx.to_pack.drain(..) {
+        if texture.unique.iter().all(|&id| ctx.packed[id]) {
+            packed.push(texture);
+        } else {
+            left.push(texture);
         }
-        if idx == 0 {
-            break;
-        }
-        idx -= 1;
     }
+    ctx.to_pack = left;
     packed
+}
+
+fn bake_atlas(
+    ctx: &Context,
+    layout: &Layout,
+    packed: &[DicedTexture],
+) -> (Texture, HashMap<usize, PackedUnit>) {
+    let mut texture = Texture {
+        width: layout.size.width,
+        height: layout.size.height,
+        pixels: vec![Pixel::default(); (layout.size.width * layout.size.height) as usize],
+    };
+
+    let mut occurrences: HashMap<usize, Vec<&DicedUnit>> = HashMap::new();
+    for unit in packed.iter().flat_map(|t| t.units.iter()) {
+        occurrences.entry(unit.id).or_default().push(unit);
+    }
+
+    let mut units = HashMap::new();
+    for (id, rect) in layout.rects.iter() {
+        let visible = ctx.visible[*id];
+        set_pixels(ctx, &mut texture, rect, &visible, &occurrences[id]);
+        let uv = eval_uv(ctx, rect, &layout.size);
+        units.insert(*id, PackedUnit { visible, uv });
+    }
+
+    (texture, units)
+}
+
+fn set_pixels(
+    ctx: &Context,
+    atlas: &mut Texture,
+    rect: &URect,
+    visible: &URect,
+    occurrences: &[&DicedUnit],
+) {
+    let stride = occurrences[0].cell.width + ctx.pad * 2;
+    let mut pixels = Vec::with_capacity(occurrences.len());
+    for y in 0..rect.height {
+        for x in 0..rect.width {
+            let from_idx = (visible.x + x + (visible.y + y) * stride) as usize;
+            pixels.clear();
+            pixels.extend(occurrences.iter().map(|o| o.pixels[from_idx]));
+            atlas.pixels[(rect.x + x + atlas.width * (rect.y + y)) as usize] = median(&mut pixels);
+        }
+    }
+}
+
+fn median(pixels: &mut [Pixel]) -> Pixel {
+    let mut raw = [0; 4];
+    for (channel, value) in raw.iter_mut().enumerate() {
+        pixels.sort_unstable_by_key(|p| p.to_raw()[channel]);
+        *value = pixels[(pixels.len() - 1) / 2].to_raw()[channel];
+    }
+    Pixel::from_raw(raw)
+}
+
+fn union(a: &URect, b: &URect) -> URect {
+    let x = cmp::min(a.x, b.x);
+    let y = cmp::min(a.y, b.y);
+    URect {
+        x,
+        y,
+        width: cmp::max(a.x + a.width, b.x + b.width) - x,
+        height: cmp::max(a.y + a.height, b.y + b.height) - y,
+    }
+}
+
+fn eval_uv(ctx: &Context, rect: &URect, atlas: &USize) -> FRect {
+    let x = (rect.x + ctx.pad) as f32 / atlas.width as f32;
+    let y = (rect.y + ctx.pad) as f32 / atlas.height as f32;
+    let width = (rect.width - ctx.pad * 2) as f32 / atlas.width as f32;
+    let height = (rect.height - ctx.pad * 2) as f32 / atlas.height as f32;
+    let dx = ctx.inset * (width / 2.0);
+    let dy = ctx.inset * (height / 2.0);
+    FRect::new(x + dx, y + dy, width - dx * 2.0, height - dy * 2.0)
 }
 
 #[cfg(test)]
@@ -297,6 +284,17 @@ mod tests {
     }
 
     #[test]
+    fn packed_textures_keep_input_order() {
+        let atlases = pack(vec![&RGBY, &B1X1, &C1X1], &defaults());
+        let counts = atlases[0]
+            .packed
+            .iter()
+            .map(|t| t.units.len())
+            .collect::<Vec<_>>();
+        assert_eq!(counts, vec![4, 1, 1]);
+    }
+
+    #[test]
     fn when_square_is_optimal_atlas_is_square() {
         let prefs = Prefs {
             atlas_size_limit: 4,
@@ -355,10 +353,64 @@ mod tests {
     }
 
     #[test]
+    fn units_are_stored_once_per_atlas() {
+        let atlas = pack(vec![&RGB4X4, &PLT4X4], &defaults()).pop().unwrap();
+        assert_eq!(atlas.units.len(), 19);
+        assert_eq!(atlas.texture.width * atlas.texture.height, 19);
+    }
+
+    #[test]
+    fn trimmed_units_are_packed_as_rects() {
+        let prefs = Prefs {
+            unit_size: 5,
+            ..defaults()
+        };
+        let atlas = pack(vec![&dot(5, 5, 2, 2)], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 3);
+        assert_eq!(atlas.texture.height, 3);
+        assert_eq!(atlas.texture.pixels[4], M);
+        assert_eq!(atlas.units[&0].visible, URect::new(1, 1, 3, 3));
+        assert_eq!(atlas.units[&0].uv, FRect::new(0.0, 0.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn visible_rect_covers_all_occurrences() {
+        let prefs = Prefs {
+            unit_size: 3,
+            ..defaults()
+        };
+        let alone = dot(3, 3, 0, 0);
+        let atlas = pack(vec![&alone], &prefs).pop().unwrap();
+        assert_eq!(atlas.units[&0].visible, URect::new(0, 0, 2, 2));
+        let mut with_neighbor = dot(6, 3, 0, 0);
+        with_neighbor.pixels[3 + 2 * 6] = M;
+        let atlas = pack(vec![&alone, &with_neighbor], &prefs).pop().unwrap();
+        assert_eq!(atlas.units[&0].visible, URect::new(0, 0, 3, 3));
+        assert_eq!(atlas.units[&1].visible, URect::new(0, 1, 2, 2));
+    }
+
+    #[test]
     fn uvs_are_mapped() {
         let atlas = pack(vec![&R1X1], &defaults()).pop().unwrap();
-        let rect = atlas.rects.values().next().unwrap();
+        let rect = &atlas.units.values().next().unwrap().uv;
         assert_eq!(*rect, FRect::new(0.0, 0.0, 1.0, 1.0));
+    }
+
+    #[test]
+    fn uvs_map_content_inside_padding() {
+        let prefs = Prefs {
+            unit_size: 2,
+            padding: 1,
+            ..defaults()
+        };
+        let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 3);
+        assert_eq!(atlas.texture.height, 3);
+        let rect = &atlas.units.values().next().unwrap().uv;
+        assert_eq!(
+            *rect,
+            FRect::new(1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0)
+        );
     }
 
     #[test]
@@ -368,20 +420,86 @@ mod tests {
             ..defaults()
         };
         let atlas = pack(vec![&Y1X1], &prefs).pop().unwrap();
-        let rect = atlas.rects.values().next().unwrap();
+        let rect = &atlas.units.values().next().unwrap().uv;
         assert_eq!(*rect, FRect::new(0.1, 0.1, 0.8, 0.8));
     }
 
     #[test]
-    fn overflow_uvs_are_cropped() {
+    fn inset_is_applied_per_axis() {
         let prefs = Prefs {
-            unit_size: 2,
+            unit_size: 3,
+            uv_inset: 0.5,
+            atlas_square: true,
+            ..defaults()
+        };
+        let atlas = pack(vec![&RGB3X1], &prefs).pop().unwrap();
+        let rect = &atlas.units.values().next().unwrap().uv;
+        let height = 1.0f32 / 3.0;
+        assert_eq!(*rect, FRect::new(0.25, height / 4.0, 0.5, height / 2.0));
+    }
+
+    #[test]
+    fn padding_of_deduplicated_unit_is_median_of_occurrences() {
+        let reds = [0, 0, 99, 101, 100];
+        let mut pixels = vec![];
+        for red in reds {
+            pixels.extend([M, Pixel::new(red, 0, 0, 255)]);
+        }
+        let tex = Texture {
+            width: 2,
+            height: 5,
+            pixels,
+        };
+        let prefs = Prefs {
             padding: 1,
             ..defaults()
         };
-        let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
-        let rect = atlas.rects.values().next().unwrap();
-        assert_eq!(*rect, FRect::new(0.25, 0.25, 0.25, 0.25));
+        let atlas = pack(vec![&tex], &prefs).pop().unwrap();
+        let unit = atlas.packed[0].units[0].id;
+        let rect = &atlas.units[&unit].uv;
+        let x = (rect.x * atlas.texture.width as f32).round() as u32;
+        let y = (rect.y * atlas.texture.height as f32).round() as u32;
+        let ring = atlas.texture.pixels[(x + 1 + (y) * atlas.texture.width) as usize];
+        assert_eq!(ring, Pixel::new(99, 0, 0, 255));
+    }
+
+    #[test]
+    fn packed_units_dont_overlap_and_fit_atlas() {
+        let prefs = Prefs {
+            unit_size: 3,
+            padding: 1,
+            atlas_size_limit: 24,
+            ..Prefs::default()
+        };
+        let textures = (0..6).map(|i| noise(7 + i, 11 - i, i)).collect::<Vec<_>>();
+        let sources = textures.iter().map(|t| t as &dyn AnySource).collect();
+        let atlases = pack(sources, &prefs);
+        assert!(atlases.len() > 1);
+        for atlas in atlases {
+            let (w, h) = (atlas.texture.width as f32, atlas.texture.height as f32);
+            let padded = atlas
+                .units
+                .values()
+                .map(|u| &u.uv)
+                .map(|r| {
+                    let x = (r.x * w).round() as i32 - 1;
+                    let y = (r.y * h).round() as i32 - 1;
+                    let width = (r.width * w).round() as i32 + 2;
+                    let height = (r.height * h).round() as i32 + 2;
+                    (x, y, width, height)
+                })
+                .collect::<Vec<_>>();
+            for (i, a) in padded.iter().enumerate() {
+                assert!(a.0 >= 0 && a.1 >= 0);
+                assert!(a.0 + a.2 <= atlas.texture.width as i32);
+                assert!(a.1 + a.3 <= atlas.texture.height as i32);
+                for b in padded.iter().skip(i + 1) {
+                    let apart = a.0 >= b.0 + b.2 || b.0 >= a.0 + a.2;
+                    let apart = apart || a.1 >= b.1 + b.3 || b.1 >= a.1 + a.3;
+                    assert!(apart, "{a:?} overlaps {b:?}");
+                }
+            }
+        }
     }
 
     #[test]

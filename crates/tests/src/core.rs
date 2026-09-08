@@ -1,7 +1,7 @@
 //! End-to-end tests of the core library.
 
 use crate::common::*;
-use sprite_dicing::Prefs;
+use sprite_dicing::{Pivot, Prefs};
 
 #[test]
 fn mono_1x_reproduced() {
@@ -52,7 +52,7 @@ fn trim_1x_reproduced() {
     let prefs = Prefs {
         unit_size: 1,
         padding: 0,
-        trim_transparent: false, // TODO: Make repro assert work with trimming.
+        trim_transparent: true,
         ..Prefs::default()
     };
     let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
@@ -64,7 +64,7 @@ fn trim_2x_reproduced() {
     let prefs = Prefs {
         unit_size: 2,
         padding: 0,
-        trim_transparent: false,
+        trim_transparent: true,
         ..Prefs::default()
     };
     let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
@@ -76,7 +76,8 @@ fn trim_2x_with_padding_reproduced() {
     let prefs = Prefs {
         unit_size: 2,
         padding: 2,
-        trim_transparent: false,
+        trim_transparent: true,
+        pivot: Pivot::new(0.2, 0.9),
         ..Prefs::default()
     };
     let diced = sprite_dicing::dice(&SRC[TRIM], &prefs).unwrap();
@@ -86,7 +87,6 @@ fn trim_2x_with_padding_reproduced() {
 #[test]
 fn icons_reproduced() {
     let prefs = Prefs {
-        ppu: 1.0, // TODO: Works up to 8.0; accumulating f32 error in repro assert?
         trim_transparent: false,
         ..Prefs::default()
     };
@@ -159,4 +159,34 @@ fn multiple_atlases_when_limited() {
     let diced = sprite_dicing::dice(&SRC[MONO], &prefs).unwrap();
     assert_eq!(diced.atlases.len(), 2);
     assert_repro(MONO, diced, &prefs);
+}
+
+#[test]
+fn filter_reproduced() {
+    let prefs = Prefs {
+        unit_size: 8,
+        padding: 2,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[FILTER], &prefs).unwrap();
+    assert_repro(FILTER, diced, &prefs);
+}
+
+#[test]
+#[should_panic(expected = "off the pixel grid")]
+fn shifted_uvs_are_not_reproduced() {
+    let prefs = Prefs {
+        unit_size: 8,
+        padding: 2,
+        ..Prefs::default()
+    };
+    let mut diced = sprite_dicing::dice(&SRC[FILTER], &prefs).unwrap();
+    for sprite in diced.sprites.iter_mut() {
+        let atlas = &diced.atlases[sprite.atlas_index];
+        for uv in sprite.uvs.iter_mut() {
+            uv.u += 0.1 / atlas.width as f32;
+            uv.v += 0.1 / atlas.height as f32;
+        }
+    }
+    assert_repro(FILTER, diced, &prefs);
 }

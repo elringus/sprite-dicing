@@ -78,6 +78,24 @@ pub static RGB4X4: LazyLock<Texture> = LazyLock::new(|| tex(4, 4, vec![
 ]));
 pub static PLT4X4: LazyLock<Texture> = LazyLock::new(|| palette(4, 4));
 
+pub fn dot(width: u32, height: u32, x: u32, y: u32) -> Texture {
+    let mut pixels = vec![T; (width * height) as usize];
+    pixels[(x + y * width) as usize] = M;
+    tex(width, height, pixels)
+}
+
+pub fn noise(width: u32, height: u32, seed: u32) -> Texture {
+    let mut state = seed.wrapping_mul(2654435761).wrapping_add(1);
+    let mut next = || {
+        state = state.wrapping_mul(1664525).wrapping_add(1013904223);
+        (state >> 24) as u8
+    };
+    let pixels = (0..width * height)
+        .map(|_| Pixel::new(next(), next(), next(), 255))
+        .collect();
+    tex(width, height, pixels)
+}
+
 pub fn sample_progress(act: impl Fn(Prefs)) -> Progress {
     let progress = Rc::new(RefCell::new(None));
     let progress_copy = progress.clone();
@@ -98,6 +116,15 @@ pub trait AnySource {
             texture: self.texture(),
             pivot: self.pivot(),
         }
+    }
+}
+
+impl AnySource for Texture {
+    fn texture(&self) -> Texture {
+        self.to_owned()
+    }
+    fn pivot(&self) -> Option<Pivot> {
+        None
     }
 }
 

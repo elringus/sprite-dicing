@@ -1,6 +1,7 @@
 mod builder;
 mod dicer;
 mod fixtures;
+mod layout;
 mod models;
 mod packer;
 
