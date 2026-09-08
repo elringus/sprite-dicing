@@ -19,7 +19,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -6341361573505629445
@@ -230,7 +229,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -3192478513198526949
@@ -441,7 +439,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -3045034261375767669
@@ -652,7 +649,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -2588366799167587372
@@ -863,7 +859,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -1658526890125033912
@@ -1074,7 +1069,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -1409846382414967448
@@ -1285,7 +1279,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -1326273705734227879
@@ -1496,7 +1489,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -195919693999774411
@@ -1707,7 +1699,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: -16524913204161876
@@ -1944,7 +1935,7 @@ MonoBehaviour:
   includeSubfolders: 0
   separator: .
   generatedSpritesFolderGuid: 571765cb37d0b80438c919b3eabbf5ab
-  lastRatioValue: 4494 KB / (282 KB + 79 KB) = <color=lime>12.45</color>
+  lastRatioValue: 4494 KB / (282 KB + 78 KB) = <color=lime>12.48</color>
 --- !u!213 &675979214048547275
 Sprite:
   m_ObjectHideFlags: 0
@@ -1964,7 +1955,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 675979214048547275
@@ -2175,7 +2165,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 830759369045492232
@@ -2386,7 +2375,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 1005917293538465954
@@ -2597,7 +2585,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 2984681399933240032
@@ -2808,7 +2795,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 3722839162155251689
@@ -3019,7 +3005,6 @@ Sprite:
   m_Pivot: {x: 0.5, y: 0.5}
   m_Extrude: 0
   m_IsPolygon: 0
-  m_AtlasName: 
   m_PackingTag: 
   m_RenderDataKey:
     dd0b19c22aab3cb49b0100d308452a02: 5636249778341899347
