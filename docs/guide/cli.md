@@ -39,7 +39,7 @@ Options:
       --separator <SEPARATOR>  When recursive, the separator to join ID of nested sprites [default: /]
   -f, --format <FORMAT>        Format of the generated atlas textures [default: png] [possible values: png, webp, tga]
   -s, --size <SIZE>            The size of a single diced unit, in pixels [default: 64]
-  -p, --pad <PAD>              The size of border between adjacent diced units, in pixels [default: 2]
+  -p, --pad <PAD>              The size of border between adjacent diced units, in pixels [default: 1]
   -i, --inset <INSET>          Relative inset (in 0.0-1.0 range) of the diced units UV coordinates [default: 0]
   -t, --trim                   Trim transparent areas on the built meshes
   -l, --limit <LIMIT>          Maximum size of a single generated atlas texture [default: 2048]

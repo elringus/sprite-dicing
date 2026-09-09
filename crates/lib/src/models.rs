@@ -60,7 +60,7 @@ impl Default for Prefs {
     fn default() -> Self {
         Self {
             unit_size: 64,
-            padding: 2,
+            padding: 1,
             uv_inset: 0.0,
             trim_transparent: true,
             atlas_size_limit: 2048,

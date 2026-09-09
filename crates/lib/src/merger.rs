@@ -80,7 +80,8 @@ fn merge_it(idx: usize, texture: &DicedTexture, ctx: &mut Context) -> DicedTextu
             ctx.blocks.push(ids);
         }
         let block_id = ctx.block_ids[unit.id].unwrap();
-        if let Some(color) = ctx.solid[unit.id] {
+        let alone = ctx.blocks[block_id].len() == 1;
+        if let Some(color) = ctx.solid[unit.id].filter(|_| alone) {
             if let Some(src_rect) = coalesce(idx, unit, ctx) {
                 units.push(new_solid(block_id, src_rect, color));
             }
@@ -125,7 +126,7 @@ fn grow(anchor: usize, ctx: &Context) -> Vec<usize> {
 }
 
 /// Finds IDs of the units filling a block with specified size (in units) anchored at the unit, in
-/// row-major order; none when a unit is missing, merged, solid or doesn't co-occur with the anchor.
+/// row-major order; none when a unit is missing, merged or doesn't co-occur with the anchor.
 fn find_units(anchor: usize, size: &USize, ctx: &Context) -> Option<Vec<usize>> {
     if cmp::max(size.width, size.height) * ctx.unit > ctx.limit {
         return None;
@@ -145,7 +146,7 @@ fn find_units(anchor: usize, size: &USize, ctx: &Context) -> Option<Vec<usize>> 
             let actual = ctx.occurrences[id]
                 .iter()
                 .map(|&(t, u)| (t, u.src_rect.x, u.src_rect.y));
-            if ctx.block_ids[id].is_some() || ctx.solid[id].is_some() || !shifted.eq(actual) {
+            if ctx.block_ids[id].is_some() || !shifted.eq(actual) {
                 return None;
             }
             ids.push(id);
@@ -485,30 +486,32 @@ mod tests {
     }
 
     #[test]
-    fn solid_units_are_not_merged_into_blocks() {
+    fn co_occurring_solid_units_are_merged_into_blocks() {
         let prefs = Prefs {
             unit_size: 2,
             ..defaults()
         };
-        #[rustfmt::skip]
-        let tex = Texture { width: 4, height: 2, pixels: vec![
-            R, R, R, G,
-            R, R, R, B,
-        ]};
+        // Squares of unique colors offset from the grid: every other unit is solid,
+        // all are unique, so the whole texture is one block, as without solids.
+        let pixels = (0..64)
+            .map(|i| {
+                Pixel::new(
+                    ((i % 8 + 1) / 4 * 100) as u8,
+                    ((i / 8 + 1) / 4 * 100) as u8,
+                    0,
+                    255,
+                )
+            })
+            .collect();
+        let tex = Texture {
+            width: 8,
+            height: 8,
+            pixels,
+        };
         let merged = merge(vec![&tex], &prefs);
-        let rects = merged[0]
-            .units
-            .iter()
-            .map(|u| u.src_rect)
-            .collect::<Vec<_>>();
-        assert_eq!(rects, vec![URect::new(0, 0, 2, 2), URect::new(2, 0, 2, 2)]);
-        let solid = merged[0]
-            .units
-            .iter()
-            .map(|u| u.is_solid())
-            .collect::<Vec<_>>();
-        assert_eq!(solid, vec![true, false]);
-        assert_eq!(merged[0].unique, vec![0, 1]);
+        assert_eq!(merged[0].units.len(), 1);
+        assert_eq!(merged[0].units[0].src_rect, URect::new(0, 0, 8, 8));
+        assert!(!merged[0].units[0].is_solid());
     }
 
     #[test]
@@ -544,10 +547,10 @@ mod tests {
             padding: 0,
             ..defaults()
         };
-        let merged = merge(vec![&RGBY], &prefs);
-        assert_eq!(merged[0].units.len(), 4);
-        assert!(merged[0].units.iter().all(|u| u.is_solid()));
-        assert!(merged[0].units.iter().all(|u| u.pixels.len() == 1));
+        let merged = merge(vec![&fill(2, 2, R)], &prefs);
+        assert_eq!(merged[0].units.len(), 1);
+        assert!(merged[0].units[0].is_solid());
+        assert_eq!(merged[0].units[0].src_rect, URect::new(0, 0, 2, 2));
     }
 
     #[test]

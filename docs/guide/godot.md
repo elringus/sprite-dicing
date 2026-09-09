@@ -54,7 +54,7 @@ You can optionally configure atlas generation settings in the inspector.
 | POT | The generated atlas textures will always have width and height of power of two. Extremely inefficient, but may be required by some older GPUs. |
 | Pixels Per Unit | How many pixels in the sprite correspond to the unit in the world. |
 | Dice Unit Size | The size of a single diced unit. |
-| Padding | The size of a pixel border to add between adjacent diced units inside atlas. Increase to prevent texture bleeding artifacts (usually appear as thin gaps between diced units). Larger values will consume more texture space, but yield better anti-bleeding results. Minimum value of 2 is recommended in most cases. When 2 is not enough to prevent bleeding, consider adding a bit of `UV Inset` before increasing the padding. |
+| Padding | The size of a pixel border to add between adjacent diced units inside atlas. Increase to prevent texture bleeding artifacts (usually appear as thin gaps between diced units). Larger values will consume more texture space, but yield better anti-bleeding results. 1 is enough for bilinear filtering; use 2 or more (powers of two) when mipmaps are enabled. When padding is not enough to prevent bleeding, consider adding a bit of `UV Inset` before increasing it. |
 | UV Inset | Relative inset of the diced units UV coordinates. Can be used in addition to (or instead of) `Padding` to prevent texture bleeding artifacts. Won't consume any texture space, but higher values could visually distort the final result. |
 | Input Folder | Asset folder with source sprite textures. |
 | Include Subfolders | Whether to recursively search for textures inside the input folder. |
