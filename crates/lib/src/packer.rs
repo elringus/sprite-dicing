@@ -1,6 +1,5 @@
 use crate::layout::*;
 use crate::models::*;
-use std::cmp;
 use std::collections::HashMap;
 
 /// Packs diced textures into atlases.
@@ -19,7 +18,7 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
     let mut atlases = vec![];
     let mut ctx = new_ctx(diced, prefs);
     while !ctx.to_pack.is_empty() {
-        Progress::report(prefs, 2, total - ctx.to_pack.len(), total, "Packing units");
+        Progress::report(prefs, 3, total - ctx.to_pack.len(), total, "Packing units");
         atlases.push(pack_it(&mut ctx)?);
     }
 
@@ -27,10 +26,15 @@ pub(crate) fn pack(diced: Vec<DicedTexture>, prefs: &Prefs) -> Result<Vec<Atlas>
 }
 
 struct Context {
+    /// Relative inset of the unit UVs.
     inset: f32,
+    /// Whether the atlases have to be square.
     square: bool,
+    /// Whether the atlas sides have to be powers of two.
     pot: bool,
+    /// Max side of an atlas, in pixels.
     limit: u32,
+    /// Size of the padding stored around the units, in pixels.
     pad: u32,
     /// Total textures left to pack.
     to_pack: Vec<DicedTexture>,
@@ -46,7 +50,7 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     let mut rects: Vec<Option<URect>> = vec![None; count];
     for unit in units() {
         let rect = &mut rects[unit.id];
-        *rect = Some(rect.map_or(unit.visible, |r| union(&r, &unit.visible)));
+        *rect = Some(rect.map_or(unit.visible, |r| r.union(&unit.visible)));
     }
     Context {
         inset: prefs.uv_inset,
@@ -60,6 +64,7 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     }
 }
 
+/// Packs the next atlas.
 fn pack_it(ctx: &mut Context) -> Result<Atlas> {
     ctx.packed = vec![false; ctx.visible.len()];
 
@@ -90,6 +95,8 @@ fn pack_it(ctx: &mut Context) -> Result<Atlas> {
     })
 }
 
+/// Finds units not yet packed of the texture that adds the least padded area to current atlas;
+/// returns none when all the textures are packed.
 fn find_packable_units(ctx: &Context) -> Option<Vec<usize>> {
     let mut best: Option<(u64, Vec<usize>)> = None;
     for texture in ctx.to_pack.iter() {
@@ -105,7 +112,7 @@ fn find_packable_units(ctx: &Context) -> Option<Vec<usize>> {
         let area = new
             .iter()
             .map(|&id| padded_size(ctx, id))
-            .map(|s| s.width as u64 * s.height as u64)
+            .map(|s| s.area())
             .sum::<u64>();
         if best.as_ref().is_none_or(|(min, _)| area < *min) {
             best = Some((area, new));
@@ -114,6 +121,7 @@ fn find_packable_units(ctx: &Context) -> Option<Vec<usize>> {
     best.map(|(_, new)| new)
 }
 
+/// Evaluates layout of the units packed into current atlas together with the specified ones.
 fn eval_layout_with(ctx: &Context, units: &[usize]) -> Option<Layout> {
     let packed = (0..ctx.packed.len()).filter(|&id| ctx.packed[id]);
     let sizes = packed
@@ -123,11 +131,13 @@ fn eval_layout_with(ctx: &Context, units: &[usize]) -> Option<Layout> {
     eval_layout(&sizes, ctx.limit, ctx.square, ctx.pot)
 }
 
+/// Size of the unit on the atlas, with padding.
 fn padded_size(ctx: &Context, id: usize) -> USize {
     let rect = &ctx.visible[id];
     USize::new(rect.width + ctx.pad * 2, rect.height + ctx.pad * 2)
 }
 
+/// Returns the textures packed into current atlas out of the textures left to pack, in order.
 fn extract_packed_textures(ctx: &mut Context) -> Vec<DicedTexture> {
     let mut packed = vec![];
     let mut left = vec![];
@@ -142,6 +152,7 @@ fn extract_packed_textures(ctx: &mut Context) -> Vec<DicedTexture> {
     packed
 }
 
+/// Renders the laid out units into the atlas texture and maps their UVs.
 fn bake_atlas(
     ctx: &Context,
     layout: &Layout,
@@ -169,6 +180,7 @@ fn bake_atlas(
     (texture, units)
 }
 
+/// Copies the visible part of the unit (with padding) into the atlas rect.
 fn set_pixels(
     ctx: &Context,
     atlas: &mut Texture,
@@ -188,6 +200,7 @@ fn set_pixels(
     }
 }
 
+/// Per-channel lower median of the pixels.
 fn median(pixels: &mut [Pixel]) -> Pixel {
     let mut raw = [0; 4];
     for (channel, value) in raw.iter_mut().enumerate() {
@@ -197,17 +210,7 @@ fn median(pixels: &mut [Pixel]) -> Pixel {
     Pixel::from_raw(raw)
 }
 
-fn union(a: &URect, b: &URect) -> URect {
-    let x = cmp::min(a.x, b.x);
-    let y = cmp::min(a.y, b.y);
-    URect {
-        x,
-        y,
-        width: cmp::max(a.x + a.width, b.x + b.width) - x,
-        height: cmp::max(a.y + a.height, b.y + b.height) - y,
-    }
-}
-
+/// Evaluates UV rect of the visible part inside the padded atlas rect, inset per axis.
 fn eval_uv(ctx: &Context, rect: &URect, atlas: &USize) -> FRect {
     let x = (rect.x + ctx.pad) as f32 / atlas.width as f32;
     let y = (rect.y + ctx.pad) as f32 / atlas.height as f32;
@@ -505,7 +508,7 @@ mod tests {
     #[test]
     fn reports_progress() {
         let progress = sample_progress(|p| drop(pack(vec![&M1X1], &p)));
-        assert_eq!(progress.ratio, 0.6);
+        assert_eq!(progress.ratio, 4.0 / 6.0);
     }
 
     fn pack(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<Atlas> {

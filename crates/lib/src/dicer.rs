@@ -25,7 +25,9 @@ pub(crate) fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Vec<DicedT
 }
 
 struct Context {
+    /// Size of a unit, in pixels.
     size: u32,
+    /// Size of the padding stored around the units, in pixels.
     pad: u32,
     /// IDs of the units diced so far, mapped by hash of the unit pixels.
     ids: HashMap<u64, Vec<usize>>,
@@ -70,6 +72,8 @@ fn dice_it(sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedTexture> {
     })
 }
 
+/// Dices the unit at the cell with specified top-left position;
+/// returns none when the cell is fully transparent.
 fn dice_at(x: u32, y: u32, sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedUnit> {
     let tex = &sprite.texture;
     let cell = URect {
@@ -91,6 +95,7 @@ fn dice_at(x: u32, y: u32, sprite: &SourceSprite, ctx: &mut Context) -> Option<D
     })
 }
 
+/// Returns ID of a unit with equal size and pixels diced before, or assigns the next one.
 fn get_id(size: USize, pixels: Vec<Pixel>, ctx: &mut Context) -> usize {
     let ids = ctx.ids.entry(hash(&size, &pixels)).or_default();
     for &id in ids.iter() {
@@ -105,6 +110,9 @@ fn get_id(size: USize, pixels: Vec<Pixel>, ctx: &mut Context) -> usize {
     id
 }
 
+/// Evaluates the part of the cell worth storing: bounds of the visible pixels in the cell
+/// and its one-pixel neighborhood, expanded by one pixel and clipped to the cell, so that
+/// filtered rendering samples the same neighbors as in the source; relative to the cell.
 fn eval_visible_rect(cell: &URect, tex: &Texture) -> URect {
     let (left, top) = (cell.x as i32, cell.y as i32);
     let (right, bottom) = (left + cell.width as i32, top + cell.height as i32);
@@ -130,6 +138,8 @@ fn eval_visible_rect(cell: &URect, tex: &Texture) -> URect {
     }
 }
 
+/// Copies pixels of the rect with specified padding around it, repeating the edge pixels
+/// of the texture where the padding is out of bounds.
 fn get_pixels(rect: &URect, pad: u32, tex: &Texture) -> Vec<Pixel> {
     let padded = IRect {
         x: rect.x as i32 - pad as i32,
@@ -146,6 +156,7 @@ fn get_pixels(rect: &URect, pad: u32, tex: &Texture) -> Vec<Pixel> {
     pixels
 }
 
+/// Returns the pixel at the position clamped to the texture bounds.
 fn get_pixel(x: i32, y: i32, tex: &Texture) -> Pixel {
     let x = saturate(x, tex.width - 1);
     let y = saturate(y, tex.height - 1);
@@ -388,7 +399,7 @@ mod tests {
     #[test]
     fn reports_progress() {
         let progress = sample_progress(|p| drop(dice(&[src(&B1X1)], &p)));
-        assert_eq!(progress.ratio, 0.4);
+        assert_eq!(progress.ratio, 2.0 / 6.0);
     }
 
     fn dice1(tex: &Texture, size: u32, pad: u32) -> DicedTexture {

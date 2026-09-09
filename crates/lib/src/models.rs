@@ -90,12 +90,13 @@ impl Progress {
         // Stages:
         // 0 Decoding source textures (cli only)
         // 1 Dicing source textures
-        // 2 Packing diced units
-        // 3 Building diced sprites
-        // 4 Encoding atlas textures (cli only)
+        // 2 Merging diced units
+        // 3 Packing diced units
+        // 4 Building diced sprites
+        // 5 Encoding atlas textures (cli only)
         if let Some(cb) = &prefs.on_progress {
             let num = idx + 1;
-            let ratio = (stage as f32 / 5.0) + 0.2 * (num as f32 / len as f32);
+            let ratio = (stage as f32 + num as f32 / len as f32) / 6.0;
             let activity = format!("{activity}... ({num} of {len})");
             cb(Progress { ratio, activity });
         }
@@ -326,6 +327,34 @@ impl URect {
             height,
         }
     }
+
+    /// Expands the rectangle to also cover the other one.
+    pub fn union(&self, other: &URect) -> URect {
+        let x = self.x.min(other.x);
+        let y = self.y.min(other.y);
+        URect {
+            x,
+            y,
+            width: (self.x + self.width).max(other.x + other.width) - x,
+            height: (self.y + self.height).max(other.y + other.height) - y,
+        }
+    }
+
+    /// Whether the rectangles overlap.
+    pub fn intersects(&self, other: &URect) -> bool {
+        self.x < other.x + other.width
+            && other.x < self.x + self.width
+            && self.y < other.y + other.height
+            && other.y < self.y + self.height
+    }
+
+    /// Whether the other rectangle is inside this one.
+    pub fn contains(&self, other: &URect) -> bool {
+        other.x >= self.x
+            && other.y >= self.y
+            && other.x + other.width <= self.x + self.width
+            && other.y + other.height <= self.y + self.height
+    }
 }
 
 /// A rectangle in signed integer space.
@@ -377,6 +406,10 @@ pub(crate) struct USize {
 impl USize {
     pub fn new(width: u32, height: u32) -> Self {
         USize { width, height }
+    }
+
+    pub fn area(&self) -> u64 {
+        self.width as u64 * self.height as u64
     }
 }
 

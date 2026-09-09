@@ -2,6 +2,7 @@ mod builder;
 mod dicer;
 mod fixtures;
 mod layout;
+mod merger;
 mod models;
 mod packer;
 
@@ -67,7 +68,8 @@ pub use models::*;
 /// ```
 pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Artifacts> {
     let diced = dicer::dice(sprites, prefs)?;
-    let packed = packer::pack(diced, prefs)?;
+    let merged = merger::merge(&diced, prefs);
+    let packed = packer::pack(merged, prefs)?;
     let sprites = builder::build(&packed, prefs)?;
     let atlases = packed.into_iter().map(|p| p.texture).collect();
     Ok(Artifacts { atlases, sprites })
