@@ -69,8 +69,29 @@ pub use models::*;
 pub fn dice(sprites: &[SourceSprite], prefs: &Prefs) -> Result<Artifacts> {
     let diced = dicer::dice(sprites, prefs)?;
     let merged = merger::merge(&diced, prefs);
-    let packed = packer::pack(merged, prefs)?;
+    let packed = packer::pack(merged, prefs).or_else(|_| packer::pack(diced, prefs))?;
     let sprites = builder::build(&packed, prefs)?;
     let atlases = packed.into_iter().map(|p| p.texture).collect();
     Ok(Artifacts { atlases, sprites })
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::fixtures::*;
+    use crate::models::*;
+
+    #[test]
+    fn falls_back_to_unmerged_units_when_blocks_dont_fit_atlas() {
+        let prefs = Prefs {
+            unit_size: 8,
+            padding: 1,
+            atlas_size_limit: 32,
+            ..Prefs::default()
+        };
+        let sprites = [noise(64, 8, 0).sprite()];
+        let diced = crate::dicer::dice(&sprites, &prefs).unwrap();
+        let merged = crate::merger::merge(&diced, &prefs);
+        assert!(crate::packer::pack(merged, &prefs).is_err());
+        assert_eq!(crate::dice(&sprites, &prefs).unwrap().atlases.len(), 1);
+    }
 }

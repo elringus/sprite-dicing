@@ -27,6 +27,8 @@ struct Context<'a> {
     occurrences: Vec<Vec<(usize, &'a DicedUnit)>>,
     /// IDs of the merged units, anchor first, indexed by block ID.
     blocks: Vec<Vec<usize>>,
+    /// Visible rects of the blocks, indexed by block ID.
+    visible: Vec<URect>,
     /// ID of the block the unit is merged into, indexed by unit ID.
     block_ids: Vec<Option<usize>>,
 }
@@ -52,6 +54,7 @@ fn new_ctx<'a>(diced: &'a [DicedTexture], prefs: &Prefs) -> Context<'a> {
         cells,
         occurrences,
         blocks: vec![],
+        visible: vec![],
         block_ids: vec![None; count],
     }
 }
@@ -64,6 +67,7 @@ fn merge_it(idx: usize, texture: &DicedTexture, ctx: &mut Context) -> DicedTextu
             for &id in ids.iter() {
                 ctx.block_ids[id] = Some(ctx.blocks.len());
             }
+            ctx.visible.push(eval_visible(&ids, ctx));
             ctx.blocks.push(ids);
         }
         let block_id = ctx.block_ids[unit.id].unwrap();
@@ -199,7 +203,7 @@ fn new_unit(id: usize, tex: usize, at: &URect, ctx: &Context) -> DicedUnit {
     DicedUnit {
         id,
         cell,
-        visible: eval_visible(ids, ctx),
+        visible: ctx.visible[id],
         pixels,
     }
 }
