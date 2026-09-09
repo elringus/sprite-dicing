@@ -38,8 +38,8 @@ struct Context {
     pad: u32,
     /// Total textures left to pack.
     to_pack: Vec<DicedTexture>,
-    /// Visible rects of all the units, indexed by unit ID.
-    visible: Vec<URect>,
+    /// Pack rects of the units, or the texel of the solid ones, indexed by unit ID.
+    pack_rects: Vec<URect>,
     /// Whether the unit is packed into current atlas, indexed by unit ID.
     packed: Vec<bool>,
 }
@@ -50,7 +50,11 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
     let mut rects: Vec<Option<URect>> = vec![None; count];
     for unit in units() {
         let rect = &mut rects[unit.id];
-        *rect = Some(rect.map_or(unit.visible, |r| r.union(&unit.visible)));
+        let pack_rect = match unit.is_solid() {
+            true => URect::new(0, 0, 1, 1),
+            false => unit.pack_rect,
+        };
+        *rect = Some(rect.map_or(pack_rect, |r| r.union(&pack_rect)));
     }
     Context {
         inset: prefs.uv_inset,
@@ -59,14 +63,14 @@ fn new_ctx(diced: Vec<DicedTexture>, prefs: &Prefs) -> Context {
         limit: prefs.atlas_size_limit,
         pad: prefs.padding,
         to_pack: diced,
-        visible: rects.into_iter().map(|r| r.unwrap()).collect(),
+        pack_rects: rects.into_iter().map(|r| r.unwrap()).collect(),
         packed: vec![],
     }
 }
 
 /// Packs the next atlas.
 fn pack_it(ctx: &mut Context) -> Result<Atlas> {
-    ctx.packed = vec![false; ctx.visible.len()];
+    ctx.packed = vec![false; ctx.pack_rects.len()];
 
     let mut layout = None;
     while let Some(units) = find_packable_units(ctx) {
@@ -133,7 +137,7 @@ fn eval_layout_with(ctx: &Context, units: &[usize]) -> Option<Layout> {
 
 /// Size of the unit on the atlas, with padding.
 fn padded_size(ctx: &Context, id: usize) -> USize {
-    let rect = &ctx.visible[id];
+    let rect = &ctx.pack_rects[id];
     USize::new(rect.width + ctx.pad * 2, rect.height + ctx.pad * 2)
 }
 
@@ -171,47 +175,50 @@ fn bake_atlas(
 
     let mut units = HashMap::new();
     for (id, rect) in layout.rects.iter() {
-        let visible = ctx.visible[*id];
-        set_pixels(ctx, &mut texture, rect, &visible, &occurrences[id]);
-        let uv = eval_uv(ctx, rect, &layout.size);
-        units.insert(*id, PackedUnit { visible, uv });
+        let pack_rect = ctx.pack_rects[*id];
+        set_pixels(ctx, &mut texture, rect, &pack_rect, &occurrences[id]);
+        let uv = eval_uv(ctx, rect, &layout.size, occurrences[id][0].is_solid());
+        units.insert(*id, PackedUnit { pack_rect, uv });
     }
 
     (texture, units)
 }
 
-/// Copies the visible part of the unit (with padding) into the atlas rect.
+/// Copies the pack rect of the unit (with padding) into the atlas rect;
+/// the single pixel of a solid unit fills the rect.
 fn set_pixels(
     ctx: &Context,
     atlas: &mut Texture,
     rect: &URect,
-    visible: &URect,
+    pack_rect: &URect,
     occurrences: &[&DicedUnit],
 ) {
-    let stride = occurrences[0].cell.width + ctx.pad * 2;
+    let solid = occurrences[0].is_solid();
+    let stride = occurrences[0].src_rect.width + ctx.pad * 2;
     let mut pixels = Vec::with_capacity(occurrences.len());
     for y in 0..rect.height {
         for x in 0..rect.width {
-            let from_idx = (visible.x + x + (visible.y + y) * stride) as usize;
+            let from_idx = match solid {
+                true => 0,
+                false => (pack_rect.x + x + (pack_rect.y + y) * stride) as usize,
+            };
             pixels.clear();
             pixels.extend(occurrences.iter().map(|o| o.pixels[from_idx]));
-            atlas.pixels[(rect.x + x + atlas.width * (rect.y + y)) as usize] = median(&mut pixels);
+            atlas.pixels[(rect.x + x + atlas.width * (rect.y + y)) as usize] =
+                Pixel::median(&mut pixels);
         }
     }
 }
 
-/// Per-channel lower median of the pixels.
-fn median(pixels: &mut [Pixel]) -> Pixel {
-    let mut raw = [0; 4];
-    for (channel, value) in raw.iter_mut().enumerate() {
-        pixels.sort_unstable_by_key(|p| p.to_raw()[channel]);
-        *value = pixels[(pixels.len() - 1) / 2].to_raw()[channel];
+/// Evaluates UV rect of the pack rect inside the padded atlas rect, inset per axis;
+/// for a solid unit, a zero-size rect at the center of the stored texel, which has no
+/// extent to inset.
+fn eval_uv(ctx: &Context, rect: &URect, atlas: &USize, solid: bool) -> FRect {
+    if solid {
+        let x = ((rect.x + ctx.pad) as f32 + 0.5) / atlas.width as f32;
+        let y = ((rect.y + ctx.pad) as f32 + 0.5) / atlas.height as f32;
+        return FRect::new(x, y, 0.0, 0.0);
     }
-    Pixel::from_raw(raw)
-}
-
-/// Evaluates UV rect of the visible part inside the padded atlas rect, inset per axis.
-fn eval_uv(ctx: &Context, rect: &URect, atlas: &USize) -> FRect {
     let x = (rect.x + ctx.pad) as f32 / atlas.width as f32;
     let y = (rect.y + ctx.pad) as f32 / atlas.height as f32;
     let width = (rect.width - ctx.pad * 2) as f32 / atlas.width as f32;
@@ -372,29 +379,33 @@ mod tests {
         assert_eq!(atlas.texture.width, 3);
         assert_eq!(atlas.texture.height, 3);
         assert_eq!(atlas.texture.pixels[4], M);
-        assert_eq!(atlas.units[&0].visible, URect::new(1, 1, 3, 3));
+        assert_eq!(atlas.units[&0].pack_rect, URect::new(1, 1, 3, 3));
         assert_eq!(atlas.units[&0].uv, FRect::new(0.0, 0.0, 1.0, 1.0));
     }
 
     #[test]
-    fn visible_rect_covers_all_occurrences() {
+    fn pack_rect_covers_all_occurrences() {
         let prefs = Prefs {
             unit_size: 3,
             ..defaults()
         };
         let alone = dot(3, 3, 0, 0);
         let atlas = pack(vec![&alone], &prefs).pop().unwrap();
-        assert_eq!(atlas.units[&0].visible, URect::new(0, 0, 2, 2));
+        assert_eq!(atlas.units[&0].pack_rect, URect::new(0, 0, 2, 2));
         let mut with_neighbor = dot(6, 3, 0, 0);
         with_neighbor.pixels[3 + 2 * 6] = M;
         let atlas = pack(vec![&alone, &with_neighbor], &prefs).pop().unwrap();
-        assert_eq!(atlas.units[&0].visible, URect::new(0, 0, 3, 3));
-        assert_eq!(atlas.units[&1].visible, URect::new(0, 1, 2, 2));
+        assert_eq!(atlas.units[&0].pack_rect, URect::new(0, 0, 3, 3));
+        assert_eq!(atlas.units[&1].pack_rect, URect::new(0, 1, 2, 2));
     }
 
     #[test]
     fn uvs_are_mapped() {
-        let atlas = pack(vec![&R1X1], &defaults()).pop().unwrap();
+        let prefs = Prefs {
+            unit_size: 2,
+            ..defaults()
+        };
+        let atlas = pack(vec![&RGBY], &prefs).pop().unwrap();
         let rect = &atlas.units.values().next().unwrap().uv;
         assert_eq!(*rect, FRect::new(0.0, 0.0, 1.0, 1.0));
     }
@@ -406,25 +417,66 @@ mod tests {
             padding: 1,
             ..defaults()
         };
-        let atlas = pack(vec![&M1X1], &prefs).pop().unwrap();
-        assert_eq!(atlas.texture.width, 3);
-        assert_eq!(atlas.texture.height, 3);
+        let atlas = pack(vec![&RGBY], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 4);
+        assert_eq!(atlas.texture.height, 4);
         let rect = &atlas.units.values().next().unwrap().uv;
-        assert_eq!(
-            *rect,
-            FRect::new(1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0)
-        );
+        assert_eq!(*rect, FRect::new(0.25, 0.25, 0.5, 0.5));
     }
 
     #[test]
     fn inset_uvs_are_scaled() {
         let prefs = Prefs {
+            unit_size: 2,
             uv_inset: 0.2,
             ..defaults()
         };
-        let atlas = pack(vec![&Y1X1], &prefs).pop().unwrap();
+        let atlas = pack(vec![&RGBY], &prefs).pop().unwrap();
         let rect = &atlas.units.values().next().unwrap().uv;
         assert_eq!(*rect, FRect::new(0.1, 0.1, 0.8, 0.8));
+    }
+
+    #[test]
+    fn solid_units_are_stored_as_padded_texel_with_point_uv() {
+        let prefs = Prefs {
+            unit_size: 2,
+            padding: 1,
+            ..defaults()
+        };
+        let atlas = pack(vec![&fill(4, 4, R)], &prefs).pop().unwrap();
+        assert_eq!(atlas.texture.width, 3);
+        assert_eq!(atlas.texture.height, 3);
+        assert!(atlas.texture.pixels.iter().all(|p| *p == R));
+        assert_eq!(atlas.units[&0].pack_rect, URect::new(0, 0, 1, 1));
+        assert_eq!(atlas.units[&0].uv, FRect::new(0.5, 0.5, 0.0, 0.0));
+    }
+
+    #[test]
+    fn solid_uvs_ignore_inset() {
+        let prefs = Prefs {
+            padding: 1,
+            uv_inset: 0.5,
+            ..defaults()
+        };
+        let atlas = pack(vec![&Y1X1], &prefs).pop().unwrap();
+        assert_eq!(atlas.units[&0].uv, FRect::new(0.5, 0.5, 0.0, 0.0));
+    }
+
+    #[test]
+    fn solid_units_are_stored_in_each_atlas() {
+        let prefs = Prefs {
+            unit_size: 2,
+            padding: 1,
+            atlas_size_limit: 3,
+            ..defaults()
+        };
+        let atlases = pack(vec![&fill(4, 4, R), &fill(4, 4, B)], &prefs);
+        assert_eq!(atlases.len(), 2);
+        for atlas in atlases {
+            assert_eq!(atlas.texture.pixels.len(), 9);
+            let unit = atlas.units.values().next().unwrap();
+            assert_eq!(unit.uv, FRect::new(0.5, 0.5, 0.0, 0.0));
+        }
     }
 
     #[test]
@@ -514,7 +566,8 @@ mod tests {
     fn pack(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<Atlas> {
         let sprites = src.into_iter().map(|s| s.sprite()).collect::<Vec<_>>();
         let diced = crate::dicer::dice(&sprites, prefs).unwrap();
-        crate::packer::pack(diced, prefs).unwrap()
+        let merged = crate::merger::merge(&diced, prefs);
+        crate::packer::pack(merged, prefs).unwrap()
     }
 
     fn defaults() -> Prefs {

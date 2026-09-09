@@ -148,14 +148,14 @@ fn bilinear(img: &RgbaImage, x: f32, y: f32) -> [f32; 4] {
 }
 
 /// Pixels of each source excluded from the filtered check: the one-pixel border inside grid
-/// cells without content, where the fringe of the neighbors is not drawn, and inside the
-/// cells of units occurring with different padding, where the median padding is blended in.
+/// rects without content, where the fringe of the neighbors is not drawn, and inside the
+/// units occurring with different padding, where the median padding is blended in.
 fn eval_excluded(sources: &[SourceSprite], prefs: &Prefs) -> Vec<Vec<bool>> {
     let (unit, pad) = (prefs.unit_size as i64, prefs.padding as i64);
     let mut masks = vec![];
-    // Cells with equal pixels, keyed by the pixels: (source index, x, y, w, h, padded pixels).
-    type Cell = (usize, i64, i64, i64, i64, Vec<u8>);
-    let mut occurrences: HashMap<Vec<u8>, Vec<Cell>> = HashMap::new();
+    // Units with equal pixels, keyed by the pixels: (source index, x, y, w, h, padded pixels).
+    type Unit = (usize, i64, i64, i64, i64, Vec<u8>);
+    let mut occurrences: HashMap<Vec<u8>, Vec<Unit>> = HashMap::new();
     for (idx, source) in sources.iter().enumerate() {
         let tex = &source.texture;
         let (width, height) = (tex.width as i64, tex.height as i64);
@@ -167,21 +167,21 @@ fn eval_excluded(sources: &[SourceSprite], prefs: &Prefs) -> Vec<Vec<bool>> {
         for cy in (0..height).step_by(unit as usize) {
             for cx in (0..width).step_by(unit as usize) {
                 let (w, h) = ((width - cx).min(unit), (height - cy).min(unit));
-                let mut cell = vec![];
+                let mut pixels = vec![];
                 let mut padded = vec![];
                 for y in (cy - pad)..(cy + h + pad) {
                     for x in (cx - pad)..(cx + w + pad) {
                         padded.extend(pixel(x, y));
                         if (cx..cx + w).contains(&x) && (cy..cy + h).contains(&y) {
-                            cell.extend(pixel(x, y));
+                            pixels.extend(pixel(x, y));
                         }
                     }
                 }
-                if cell.chunks(4).all(|p| p[3] == 0) {
+                if pixels.chunks(4).all(|p| p[3] == 0) {
                     mark_border(&mut mask, width, cx, cy, w, h);
                 } else {
                     let mut key = vec![w as u8, h as u8];
-                    key.extend(cell);
+                    key.extend(pixels);
                     let occurrence = (idx, cx, cy, w, h, padded);
                     occurrences.entry(key).or_default().push(occurrence);
                 }

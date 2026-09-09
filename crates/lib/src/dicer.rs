@@ -31,7 +31,7 @@ struct Context {
     pad: u32,
     /// IDs of the units diced so far, mapped by hash of the unit pixels.
     ids: HashMap<u64, Vec<usize>>,
-    /// Clipped cell size and pixels of the units diced so far, indexed by unit ID.
+    /// Size and unpadded pixels of the units diced so far, indexed by unit ID.
     pixels: Vec<(USize, Vec<Pixel>)>,
 }
 
@@ -49,9 +49,7 @@ fn dice_it(sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedTexture> {
     let mut units = vec![];
     for y in (0..tex.height).step_by(ctx.size as usize) {
         for x in (0..tex.width).step_by(ctx.size as usize) {
-            if let Some(unit) = dice_at(x, y, sprite, ctx) {
-                units.push(unit);
-            }
+            units.extend(dice_at(x, y, sprite, ctx));
         }
     }
 
@@ -72,26 +70,25 @@ fn dice_it(sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedTexture> {
     })
 }
 
-/// Dices the unit at the cell with specified top-left position;
-/// returns none when the cell is fully transparent.
+/// Dices the unit with specified top-left position; returns none when it's fully transparent.
 fn dice_at(x: u32, y: u32, sprite: &SourceSprite, ctx: &mut Context) -> Option<DicedUnit> {
     let tex = &sprite.texture;
-    let cell = URect {
+    let rect = URect {
         x,
         y,
         width: cmp::min(ctx.size, tex.width - x),
         height: cmp::min(ctx.size, tex.height - y),
     };
-    let cell_pixels = get_pixels(&cell, 0, tex);
-    if cell_pixels.iter().all(|p| p.a() == 0) {
+    let pixels = get_pixels(&rect, 0, tex);
+    if pixels.iter().all(|p| p.a() == 0) {
         return None;
     }
 
     Some(DicedUnit {
-        cell,
-        id: get_id(USize::new(cell.width, cell.height), cell_pixels, ctx),
-        visible: eval_visible_rect(&cell, tex),
-        pixels: get_pixels(&cell, ctx.pad, tex),
+        id: get_id(rect.size(), pixels, ctx),
+        pack_rect: eval_pack_rect(&rect, tex),
+        pixels: get_pixels(&rect, ctx.pad, tex),
+        src_rect: rect,
     })
 }
 
@@ -110,12 +107,12 @@ fn get_id(size: USize, pixels: Vec<Pixel>, ctx: &mut Context) -> usize {
     id
 }
 
-/// Evaluates the part of the cell worth storing: bounds of the visible pixels in the cell
-/// and its one-pixel neighborhood, expanded by one pixel and clipped to the cell, so that
-/// filtered rendering samples the same neighbors as in the source; relative to the cell.
-fn eval_visible_rect(cell: &URect, tex: &Texture) -> URect {
-    let (left, top) = (cell.x as i32, cell.y as i32);
-    let (right, bottom) = (left + cell.width as i32, top + cell.height as i32);
+/// Evaluates the part of the rect to pack: bounds of the non-transparent pixels in the rect
+/// and its one-pixel neighborhood, expanded by one pixel and clipped to the rect, so that
+/// filtered rendering samples the same neighbors as in the source; relative to the rect.
+fn eval_pack_rect(rect: &URect, tex: &Texture) -> URect {
+    let (left, top) = (rect.x as i32, rect.y as i32);
+    let (right, bottom) = (left + rect.width as i32, top + rect.height as i32);
     let (mut min_x, mut min_y) = (i32::MAX, i32::MAX);
     let (mut max_x, mut max_y) = (i32::MIN, i32::MIN);
     for y in (top - 1)..=bottom {
@@ -141,19 +138,14 @@ fn eval_visible_rect(cell: &URect, tex: &Texture) -> URect {
 /// Copies pixels of the rect with specified padding around it, repeating the edge pixels
 /// of the texture where the padding is out of bounds.
 fn get_pixels(rect: &URect, pad: u32, tex: &Texture) -> Vec<Pixel> {
-    let padded = IRect {
-        x: rect.x as i32 - pad as i32,
-        y: rect.y as i32 - pad as i32,
-        width: rect.width + pad * 2,
-        height: rect.height + pad * 2,
-    };
-    let mut pixels = Vec::with_capacity((padded.width * padded.height) as usize);
-    for y in padded.y..(padded.y + padded.height as i32) {
-        for x in padded.x..(padded.x + padded.width as i32) {
-            pixels.push(get_pixel(x, y, tex));
-        }
-    }
-    pixels
+    let (left, top) = (rect.x as i32 - pad as i32, rect.y as i32 - pad as i32);
+    let (right, bottom) = (
+        left + (rect.width + pad * 2) as i32,
+        top + (rect.height + pad * 2) as i32,
+    );
+    (top..bottom)
+        .flat_map(|y| (left..right).map(move |x| get_pixel(x, y, tex)))
+        .collect()
 }
 
 /// Returns the pixel at the position clamped to the texture bounds.
@@ -279,7 +271,7 @@ mod tests {
     }
 
     #[test]
-    fn unit_identity_includes_clipped_cell_size() {
+    fn unit_identity_includes_clipped_size() {
         let diced = dice(&[src(&RGB3X1), src(&B1X1)], &pref(2, 0)).unwrap();
         assert_eq!(diced[0].units[1].id, diced[1].units[0].id);
         let diced = dice(&[src(&RGB3X1), src(&RGB1X3)], &pref(2, 0)).unwrap();
@@ -288,59 +280,61 @@ mod tests {
     }
 
     #[test]
-    fn unit_cells_are_mapped_top_left_to_bottom_right() {
+    fn unit_rects_are_mapped_top_left_to_bottom_right() {
         let units = &dice(&[src(&RGBY)], &pref(1, 0)).unwrap()[0].units;
         assert!(has(units, R, URect::new(0, 0, 1, 1)));
         assert!(has(units, G, URect::new(1, 0, 1, 1)));
         assert!(has(units, B, URect::new(0, 1, 1, 1)));
         assert!(has(units, Y, URect::new(1, 1, 1, 1)));
-        fn has(units: &[DicedUnit], pixel: Pixel, cell: URect) -> bool {
-            units.iter().any(|u| u.pixels[0] == pixel && u.cell == cell)
+        fn has(units: &[DicedUnit], pixel: Pixel, rect: URect) -> bool {
+            units
+                .iter()
+                .any(|u| u.pixels[0] == pixel && u.src_rect == rect)
         }
     }
 
     #[test]
     fn units_are_ordered_row_major() {
-        let cells = dice1(&RGB4X4, 2, 0)
+        let rects = dice1(&RGB4X4, 2, 0)
             .units
             .iter()
-            .map(|u| (u.cell.x, u.cell.y))
+            .map(|u| (u.src_rect.x, u.src_rect.y))
             .collect::<Vec<_>>();
-        assert_eq!(cells, vec![(0, 0), (2, 0), (0, 2), (2, 2)]);
+        assert_eq!(rects, vec![(0, 0), (2, 0), (0, 2), (2, 2)]);
     }
 
     #[test]
-    fn edge_cells_are_clipped_to_texture() {
+    fn edge_units_are_clipped_to_texture() {
         let units = dice1(&RGB3X1, 2, 0).units;
-        assert_eq!(units[0].cell, URect::new(0, 0, 2, 1));
-        assert_eq!(units[1].cell, URect::new(2, 0, 1, 1));
+        assert_eq!(units[0].src_rect, URect::new(0, 0, 2, 1));
+        assert_eq!(units[1].src_rect, URect::new(2, 0, 1, 1));
     }
 
     #[test]
-    fn visible_rect_of_opaque_unit_is_whole_cell() {
+    fn pack_rect_of_opaque_unit_is_whole_rect() {
         let units = dice1(&RGB4X4, 2, 0).units;
-        assert!(units.iter().all(|u| u.visible == URect::new(0, 0, 2, 2)));
+        assert!(units.iter().all(|u| u.pack_rect == URect::new(0, 0, 2, 2)));
     }
 
     #[test]
-    fn visible_rect_is_visible_pixels_with_fringe() {
+    fn pack_rect_is_content_with_fringe() {
         let unit = &dice1(&dot(5, 5, 2, 2), 5, 0).units[0];
-        assert_eq!(unit.visible, URect::new(1, 1, 3, 3));
+        assert_eq!(unit.pack_rect, URect::new(1, 1, 3, 3));
         let unit = &dice1(&dot(5, 5, 0, 0), 5, 0).units[0];
-        assert_eq!(unit.visible, URect::new(0, 0, 2, 2));
+        assert_eq!(unit.pack_rect, URect::new(0, 0, 2, 2));
     }
 
     #[test]
-    fn visible_rect_covers_fringe_of_neighbor_cells() {
+    fn pack_rect_covers_fringe_of_neighbor_units() {
         let diced = dice1(&dot(4, 4, 1, 1), 2, 0);
         assert_eq!(diced.units.len(), 1);
-        assert_eq!(diced.units[0].visible, URect::new(0, 0, 2, 2));
+        assert_eq!(diced.units[0].pack_rect, URect::new(0, 0, 2, 2));
         let mut tex = dot(4, 4, 1, 1);
         tex.pixels[2 + 2 * 4] = M;
         let diced = dice1(&tex, 2, 0);
         assert_eq!(diced.units.len(), 2);
-        assert_eq!(diced.units[0].visible, URect::new(0, 0, 2, 2));
-        assert_eq!(diced.units[1].visible, URect::new(0, 0, 2, 2));
+        assert_eq!(diced.units[0].pack_rect, URect::new(0, 0, 2, 2));
+        assert_eq!(diced.units[1].pack_rect, URect::new(0, 0, 2, 2));
     }
 
     #[test]
@@ -348,8 +342,8 @@ mod tests {
         let sources = [src(&dot(4, 4, 1, 1)), src(&dot(4, 4, 2, 2))];
         let diced = dice(&sources, &pref(4, 0)).unwrap();
         assert_ne!(diced[0].units[0].id, diced[1].units[0].id);
-        assert_eq!(diced[0].units[0].visible, URect::new(0, 0, 3, 3));
-        assert_eq!(diced[1].units[0].visible, URect::new(1, 1, 3, 3));
+        assert_eq!(diced[0].units[0].pack_rect, URect::new(0, 0, 3, 3));
+        assert_eq!(diced[1].units[0].pack_rect, URect::new(1, 1, 3, 3));
     }
 
     #[test]
@@ -377,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn padded_pixels_surround_cell() {
+    fn padded_pixels_surround_rect() {
         let unit = &dice1(&dot(5, 5, 2, 2), 5, 1).units[0];
         assert_eq!(unit.pixels.len(), 49);
         assert_eq!(unit.pixels[24], M);
