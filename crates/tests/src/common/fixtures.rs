@@ -26,14 +26,13 @@ pub type RawBySpriteId = HashMap<String, RgbaImage>;
 
 fn cache_sources() -> SourcesByFixture {
     let mut src = HashMap::new();
-    for entry in fs::read_dir(get_fixtures_root()).unwrap() {
-        let root = entry.unwrap().path();
-        let fixture = root.file_name().unwrap().to_str().unwrap().to_owned();
-        let sources = img::load_all(&root)
-            .into_iter()
-            .map(|(path, image)| create_sprite(&path, image, &root))
-            .collect();
-        src.insert(fixture, sources);
+    for (fixture, raws) in RAW.iter() {
+        let mut sources = raws
+            .iter()
+            .map(|(id, image)| create_sprite(id, image))
+            .collect::<Vec<_>>();
+        sources.sort_by(|a, b| a.id.cmp(&b.id));
+        src.insert(fixture.to_owned(), sources);
     }
     src
 }
@@ -62,10 +61,10 @@ fn cache_raws() -> RawsByFixture {
     raws
 }
 
-fn create_sprite(path: &Path, image: RgbaImage, root: &Path) -> SourceSprite {
+fn create_sprite(id: &str, image: &RgbaImage) -> SourceSprite {
     SourceSprite {
-        id: build_id(path, root),
-        texture: img::to_texture(&image),
+        id: id.to_owned(),
+        texture: img::to_texture(image),
         pivot: None,
     }
 }
