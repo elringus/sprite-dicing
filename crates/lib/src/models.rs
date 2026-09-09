@@ -129,6 +129,15 @@ impl Pixel {
     pub fn to_raw(self) -> [u8; 4] {
         self.0
     }
+    /// Per-channel lower median of the pixels.
+    pub(crate) fn median(pixels: &mut [Pixel]) -> Pixel {
+        let mut raw = [0; 4];
+        for (channel, value) in raw.iter_mut().enumerate() {
+            pixels.sort_unstable_by_key(|p| p.to_raw()[channel]);
+            *value = pixels[(pixels.len() - 1) / 2].to_raw()[channel];
+        }
+        Pixel::from_raw(raw)
+    }
 }
 
 /// A set of pixels forming sprite texture.
@@ -278,11 +287,18 @@ pub(crate) struct DicedUnit {
     /// ID of the unit, shared with the units with equal content in all the textures.
     pub id: usize,
     /// Position and dimensions of the unit inside source texture.
-    pub cell: URect,
-    /// Part of the cell with visible pixels and their one-texel fringe, relative to the cell.
-    pub visible: URect,
-    /// Unit pixels chopped from the source texture, including padding.
+    pub src_rect: URect,
+    /// Part of the source rect to pack, relative to it: non-transparent pixels with fringe.
+    pub pack_rect: URect,
+    /// Unit pixels chopped from the source texture (including padding), or single color when solid.
     pub pixels: Vec<Pixel>,
+}
+
+impl DicedUnit {
+    /// Whether the unit is a single color, including the padding.
+    pub fn is_solid(&self) -> bool {
+        self.pixels.len() == 1
+    }
 }
 
 /// Product of packing [DicedTexture]s.
@@ -299,8 +315,8 @@ pub(crate) struct Atlas {
 /// A unit stored on an atlas texture.
 #[derive(Debug, Clone)]
 pub(crate) struct PackedUnit {
-    /// Visible rect of the unit across all its occurrences, relative to the cell.
-    pub visible: URect,
+    /// Pack rect of the unit across all its occurrences, relative to the source rect.
+    pub pack_rect: URect,
     /// UV rect of the stored part on the atlas texture.
     pub uv: FRect,
 }
@@ -326,6 +342,11 @@ impl URect {
             width,
             height,
         }
+    }
+
+    /// Dimensions of the rectangle.
+    pub fn size(&self) -> USize {
+        USize::new(self.width, self.height)
     }
 
     /// Expands the rectangle to also cover the other one.
@@ -355,19 +376,6 @@ impl URect {
             && other.x + other.width <= self.x + self.width
             && other.y + other.height <= self.y + self.height
     }
-}
-
-/// A rectangle in signed integer space.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(crate) struct IRect {
-    /// Position of the top-left corner of the rectangle on horizontal axis.
-    pub x: i32,
-    /// Position of the top-left corner of the rectangle on vertical axis.
-    pub y: i32,
-    /// Length of the rectangle over horizontal axis, starting from X.
-    pub width: u32,
-    /// Length of the rectangle over vertical axis, starting from Y.
-    pub height: u32,
 }
 
 /// A rectangle in floating point space.

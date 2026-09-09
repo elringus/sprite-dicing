@@ -173,6 +173,29 @@ fn filter_reproduced() {
 }
 
 #[test]
+fn flat_reproduced() {
+    let prefs = Prefs {
+        unit_size: 4,
+        padding: 2,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[FLAT], &prefs).unwrap();
+    assert_repro(FLAT, diced, &prefs);
+}
+
+#[test]
+fn solid_units_are_coalesced_into_quads() {
+    let prefs = Prefs {
+        unit_size: 4,
+        padding: 2,
+        ..Prefs::default()
+    };
+    let diced = sprite_dicing::dice(&SRC[FLAT], &prefs).unwrap();
+    let quads = diced.sprites.iter().map(|s| s.indices.len() / 6);
+    assert_eq!(quads.collect::<Vec<_>>(), vec![5, 5, 1]);
+}
+
+#[test]
 #[should_panic(expected = "off the pixel grid")]
 fn shifted_uvs_are_not_reproduced() {
     let prefs = Prefs {

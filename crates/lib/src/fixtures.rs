@@ -84,6 +84,10 @@ pub fn dot(width: u32, height: u32, x: u32, y: u32) -> Texture {
     tex(width, height, pixels)
 }
 
+pub fn fill(width: u32, height: u32, pixel: Pixel) -> Texture {
+    tex(width, height, vec![pixel; (width * height) as usize])
+}
+
 pub fn noise(width: u32, height: u32, seed: u32) -> Texture {
     let mut state = seed.wrapping_mul(2654435761).wrapping_add(1);
     let mut next = || {

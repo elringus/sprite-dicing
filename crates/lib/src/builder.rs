@@ -64,13 +64,16 @@ fn new_ctx<'a>(
 fn build_it(mut ctx: Context) -> DicedSprite {
     for unit in ctx.diced.units.iter() {
         let packed = &ctx.units[&unit.id];
-        let visible_rect = URect {
-            x: unit.cell.x + packed.visible.x,
-            y: unit.cell.y + packed.visible.y,
-            width: packed.visible.width,
-            height: packed.visible.height,
+        let src_rect = match unit.is_solid() {
+            true => unit.src_rect, // the texel is drawn over the whole source rect
+            false => URect {
+                x: unit.src_rect.x + packed.pack_rect.x,
+                y: unit.src_rect.y + packed.pack_rect.y,
+                width: packed.pack_rect.width,
+                height: packed.pack_rect.height,
+            },
         };
-        build_unit(&mut ctx, &visible_rect, &packed.uv);
+        build_unit(&mut ctx, &src_rect, &packed.uv);
     }
 
     let pivot = ctx.diced.pivot.as_ref().unwrap_or(ctx.default_pivot);
@@ -88,10 +91,10 @@ fn build_it(mut ctx: Context) -> DicedSprite {
     }
 }
 
-/// Builds a quad drawing the unit occurrence at specified visible rect.
-fn build_unit(ctx: &mut Context, visible_rect: &URect, uv_rect: &FRect) {
-    let visible_rect = scale_rect(ctx, visible_rect);
-    build_quad(ctx, &visible_rect, uv_rect);
+/// Builds a quad drawing the unit occurrence at specified source rect.
+fn build_unit(ctx: &mut Context, src_rect: &URect, uv_rect: &FRect) {
+    let src_rect = scale_rect(ctx, src_rect);
+    build_quad(ctx, &src_rect, uv_rect);
 }
 
 /// Converts the rect from pixels to conventional units.
@@ -144,7 +147,7 @@ fn eval_rect(ctx: &Context, pivot: &Pivot) -> Rect {
     }
 }
 
-/// Evaluates bounds of the unit cells.
+/// Evaluates bounds of the units.
 fn eval_fit_rect(ctx: &Context) -> Rect {
     let mut min_x = u32::MAX;
     let mut min_y = u32::MAX;
@@ -152,10 +155,10 @@ fn eval_fit_rect(ctx: &Context) -> Rect {
     let mut max_y = 0;
 
     for unit in ctx.diced.units.iter() {
-        min_x = min_x.min(unit.cell.x);
-        min_y = min_y.min(unit.cell.y);
-        max_x = max_x.max(unit.cell.x + unit.cell.width);
-        max_y = max_y.max(unit.cell.y + unit.cell.height);
+        min_x = min_x.min(unit.src_rect.x);
+        min_y = min_y.min(unit.src_rect.y);
+        max_x = max_x.max(unit.src_rect.x + unit.src_rect.width);
+        max_y = max_y.max(unit.src_rect.y + unit.src_rect.height);
     }
 
     let x = min_x as f32 / ctx.ppu;
@@ -498,7 +501,7 @@ mod tests {
     }
 
     #[test]
-    fn quads_cover_trimmed_content_while_rect_covers_cells() {
+    fn quads_cover_trimmed_content_while_rect_covers_units() {
         let prefs = Prefs {
             unit_size: 5,
             trim_transparent: true,
@@ -522,6 +525,22 @@ mod tests {
         assert_eq!(sprites[1].vertices[0], Vertex::new(1.0, 1.0));
         assert_eq!(sprites[1].vertices[2], Vertex::new(4.0, 4.0));
         assert_ne!(sprites[0].uvs, sprites[1].uvs);
+    }
+
+    #[test]
+    fn solid_occurrences_are_drawn_at_own_rects() {
+        let prefs = Prefs {
+            unit_size: 2,
+            padding: 1,
+            ..defaults()
+        };
+        let sprites = build(vec![&fill(4, 4, R), &fill(4, 2, R)], &prefs);
+        assert_eq!(sprites[0].vertices.len(), 4);
+        assert_eq!(sprites[0].vertices[2], Vertex::new(4.0, 4.0));
+        assert_eq!(sprites[1].vertices.len(), 4);
+        assert_eq!(sprites[1].vertices[2], Vertex::new(4.0, 2.0));
+        assert_eq!(sprites[0].uvs, sprites[1].uvs);
+        assert!(sprites[0].uvs.iter().all(|uv| *uv == sprites[0].uvs[0]));
     }
 
     #[test]
@@ -573,7 +592,8 @@ mod tests {
     fn build(src: Vec<&dyn AnySource>, prefs: &Prefs) -> Vec<DicedSprite> {
         let sprites = src.into_iter().map(|s| s.sprite()).collect::<Vec<_>>();
         let diced = crate::dicer::dice(&sprites, prefs).unwrap();
-        let packed = crate::packer::pack(diced, prefs).unwrap();
+        let merged = crate::merger::merge(&diced, prefs);
+        let packed = crate::packer::pack(merged, prefs).unwrap();
         crate::builder::build(&packed, prefs).unwrap()
     }
 
