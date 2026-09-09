@@ -17,7 +17,7 @@ pub(crate) fn eval_layout(
     square: bool,
     pot: bool,
 ) -> Option<Layout> {
-    let area = sizes.iter().map(|(_, s)| area(s)).sum::<u64>();
+    let area = sizes.iter().map(|(_, s)| s.area()).sum::<u64>();
     let max_width = sizes.iter().map(|(_, s)| s.width).max().unwrap_or(0);
     let mut best: Option<Layout> = None;
     for width in candidate_widths(area, max_width, limit) {
@@ -34,8 +34,7 @@ pub(crate) fn eval_layout(
     best
 }
 
-/// Places all the rects into a bin of specified size, tallest first, using maximal
-/// rectangles with the bottom-left rule; none when any of the rects doesn't fit.
+/// Places all the rects into a bin of specified size; none when any of the rects doesn't fit.
 fn place(sizes: &[(usize, USize)], width: u32, height: u32) -> Option<Vec<(usize, URect)>> {
     let mut sorted = sizes.to_vec();
     sorted.sort_unstable_by_key(|(id, s)| (Reverse(s.height), Reverse(s.width), *id));
@@ -47,6 +46,8 @@ fn place(sizes: &[(usize, USize)], width: u32, height: u32) -> Option<Vec<(usize
     Some(rects)
 }
 
+/// Atlas widths to try: from 60% to 200% of the side of a square with the total area of
+/// the rects, plus the max; within the min (the widest rect) and the max (the size limit).
 fn candidate_widths(area: u64, min: u32, max: u32) -> Vec<u32> {
     let side = area.isqrt();
     let mut widths = [60, 70, 80, 90, 100, 110, 125, 150, 175, 200]
@@ -60,6 +61,7 @@ fn candidate_widths(area: u64, min: u32, max: u32) -> Vec<u32> {
     widths
 }
 
+/// Describes layout of the placed rects with the atlas size covering them.
 fn new_layout(rects: Vec<(usize, URect)>, square: bool, pot: bool) -> Layout {
     let mut size = USize::new(0, 0);
     for (_, rect) in rects.iter() {
@@ -76,15 +78,14 @@ fn new_layout(rects: Vec<(usize, URect)>, square: bool, pot: bool) -> Layout {
     Layout { size, rects }
 }
 
+/// Whether the atlas size is preferable: smaller area, then closer to square, then wider.
 fn is_smaller(a: &USize, b: &USize) -> bool {
-    let key = |s: &USize| (area(s), cmp::max(s.width, s.height), Reverse(s.width));
+    let key = |s: &USize| (s.area(), cmp::max(s.width, s.height), Reverse(s.width));
     key(a) < key(b)
 }
 
-fn area(size: &USize) -> u64 {
-    size.width as u64 * size.height as u64
-}
-
+/// Places a rect of specified size into the free rect where it ends up the highest, then
+/// the leftmost (the bottom-left rule) and updates the free rects; none when it doesn't fit.
 fn insert_rect(free: &mut Vec<URect>, size: &USize) -> Option<URect> {
     let mut best: Option<(u32, u32)> = None;
     for rect in free.iter() {
@@ -101,40 +102,35 @@ fn insert_rect(free: &mut Vec<URect>, size: &USize) -> Option<URect> {
     Some(placed)
 }
 
+/// Removes the placed rect from the free rects: the intersecting ones are split into
+/// maximal pieces, of which only the ones not contained in another free rect are kept.
 fn occupy(free: &mut Vec<URect>, placed: &URect) {
     let mut new = vec![];
     free.retain(|rect| {
-        if intersects(rect, placed) {
+        if rect.intersects(placed) {
             split(rect, placed, &mut new);
             false
         } else {
             true
         }
     });
-    // Pieces can't contain other free rects (none is contained in another), so only
-    // the pieces are checked for containment.
+    // Pieces can't contain other free rects (none is contained in another),
+    // so check only the pieces for containment.
     new.sort_unstable_by_key(|r| (r.x, r.y, r.width, r.height));
     new.dedup();
     for (idx, piece) in new.iter().enumerate() {
-        let in_free = free.iter().any(|r| contains(r, piece));
+        let in_free = free.iter().any(|r| r.contains(piece));
         let in_new = new
             .iter()
             .enumerate()
-            .any(|(i, r)| i != idx && contains(r, piece));
+            .any(|(i, r)| i != idx && r.contains(piece));
         if !in_free && !in_new {
             free.push(*piece);
         }
     }
 }
 
-fn intersects(a: &URect, b: &URect) -> bool {
-    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
-}
-
-fn contains(a: &URect, b: &URect) -> bool {
-    b.x >= a.x && b.y >= a.y && b.x + b.width <= a.x + a.width && b.y + b.height <= a.y + a.height
-}
-
+/// Splits the free rect around the placed one into up to four overlapping max pieces.
 fn split(free: &URect, placed: &URect, into: &mut Vec<URect>) {
     let (free_right, free_bottom) = (free.x + free.width, free.y + free.height);
     let (placed_right, placed_bottom) = (placed.x + placed.width, placed.y + placed.height);

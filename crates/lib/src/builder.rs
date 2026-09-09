@@ -12,7 +12,7 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 
     for (atlas_idx, atlas) in packed.iter().enumerate() {
         for diced_tex in atlas.packed.iter() {
-            Progress::report(prefs, 3, sprites.len(), total, "Building diced sprites");
+            Progress::report(prefs, 4, sprites.len(), total, "Building diced sprites");
             let ctx = new_ctx(atlas, atlas_idx, diced_tex, prefs);
             sprites.push(build_it(ctx));
         }
@@ -22,14 +22,23 @@ pub(crate) fn build(packed: &[Atlas], prefs: &Prefs) -> Result<Vec<DicedSprite>>
 }
 
 struct Context<'a> {
+    /// Pixels per conventional unit of the mesh.
     ppu: f32,
+    /// Whether to trim transparent areas around the sprite.
     trim: bool,
+    /// Pivot to use when the texture doesn't have its own.
     default_pivot: &'a Pivot,
+    /// Index of the atlas the texture is packed into.
     atlas_idx: usize,
+    /// The texture to build the sprite from.
     diced: &'a DicedTexture,
+    /// Units of the atlas, mapped by unit ID.
     units: &'a HashMap<usize, PackedUnit>,
+    /// Mesh vertices built so far, in conventional units.
     vertices: Vec<Vertex>,
+    /// Atlas texture coordinates of the vertices built so far.
     uvs: Vec<Uv>,
+    /// Mesh triangles built so far, as indices of the vertices.
     indices: Vec<usize>,
 }
 
@@ -79,11 +88,13 @@ fn build_it(mut ctx: Context) -> DicedSprite {
     }
 }
 
+/// Builds a quad drawing the unit occurrence at specified visible rect.
 fn build_unit(ctx: &mut Context, visible_rect: &URect, uv_rect: &FRect) {
     let visible_rect = scale_rect(ctx, visible_rect);
     build_quad(ctx, &visible_rect, uv_rect);
 }
 
+/// Converts the rect from pixels to conventional units.
 fn scale_rect(ctx: &Context, rect: &URect) -> FRect {
     FRect {
         x: rect.x as f32 / ctx.ppu,
@@ -93,6 +104,7 @@ fn scale_rect(ctx: &Context, rect: &URect) -> FRect {
     }
 }
 
+/// Builds a quad with specified position and UV rects.
 fn build_quad(ctx: &mut Context, rect: &FRect, uv_rect: &FRect) {
     let i = ctx.vertices.len();
 
@@ -123,6 +135,7 @@ fn build_quad(ctx: &mut Context, rect: &FRect, uv_rect: &FRect) {
     ctx.indices.extend([i, i + 1, i + 2, i + 2, i + 3, i]);
 }
 
+/// Evaluates rect of the sprite.
 fn eval_rect(ctx: &Context, pivot: &Pivot) -> Rect {
     if ctx.trim {
         eval_fit_rect(ctx)
@@ -131,6 +144,7 @@ fn eval_rect(ctx: &Context, pivot: &Pivot) -> Rect {
     }
 }
 
+/// Evaluates bounds of the unit cells.
 fn eval_fit_rect(ctx: &Context) -> Rect {
     let mut min_x = u32::MAX;
     let mut min_y = u32::MAX;
@@ -151,6 +165,7 @@ fn eval_fit_rect(ctx: &Context) -> Rect {
     Rect::new(x, y, width, height)
 }
 
+/// Evaluates rect of the whole texture with the pivot at the origin.
 fn eval_full_rect(ctx: &Context, pivot: &Pivot) -> Rect {
     let width = ctx.diced.size.width as f32 / ctx.ppu;
     let height = ctx.diced.size.height as f32 / ctx.ppu;
@@ -159,6 +174,7 @@ fn eval_full_rect(ctx: &Context, pivot: &Pivot) -> Rect {
     Rect::new(x, y, width, height)
 }
 
+/// Moves the vertices so that the pivot point of the sprite rect is at the origin.
 fn offset_vertices(ctx: &mut Context, rect: &Rect, pivot: &Pivot) {
     let mut offset_x = pivot.x * rect.width;
     let mut offset_y = pivot.y * rect.height;
@@ -520,7 +536,7 @@ mod tests {
     #[test]
     fn reports_progress() {
         let progress = sample_progress(|p| drop(build(vec![&BTGT], &p)));
-        assert_eq!(progress.ratio, 0.8);
+        assert_eq!(progress.ratio, 5.0 / 6.0);
     }
 
     struct Quad {

@@ -71,7 +71,7 @@ fn eval_sprite_id(root: &Path, path: &Path, separator: &str) -> String {
 }
 
 fn write_atlases(tex: Vec<Texture>, dir: &Path, fmt: &AtlasFormat, prefs: &Prefs) -> Result<()> {
-    Progress::report(prefs, 4, 0, tex.len(), "Encoding atlas textures");
+    Progress::report(prefs, 5, 0, tex.len(), "Encoding atlas textures");
     tex.into_par_iter().enumerate().try_for_each(|(idx, tex)| {
         let name = format!("atlas_{idx}.{}", fmt.extension());
         write_atlas(&dir.join(name), tex)
