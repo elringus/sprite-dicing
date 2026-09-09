@@ -138,14 +138,15 @@ fn eval_pack_rect(rect: &URect, tex: &Texture) -> URect {
 /// Copies pixels of the rect with specified padding around it, repeating the edge pixels
 /// of the texture where the padding is out of bounds.
 fn get_pixels(rect: &URect, pad: u32, tex: &Texture) -> Vec<Pixel> {
+    let (width, height) = (rect.width + pad * 2, rect.height + pad * 2);
     let (left, top) = (rect.x as i32 - pad as i32, rect.y as i32 - pad as i32);
-    let (right, bottom) = (
-        left + (rect.width + pad * 2) as i32,
-        top + (rect.height + pad * 2) as i32,
-    );
-    (top..bottom)
-        .flat_map(|y| (left..right).map(move |x| get_pixel(x, y, tex)))
-        .collect()
+    let mut pixels = Vec::with_capacity((width * height) as usize);
+    for y in top..top + height as i32 {
+        for x in left..left + width as i32 {
+            pixels.push(get_pixel(x, y, tex));
+        }
+    }
+    pixels
 }
 
 /// Returns the pixel at the position clamped to the texture bounds.

@@ -32,7 +32,7 @@ var compression_ratio: String = "N/A (never built)"
 ## The size of a single diced unit, in pixels.
 @export var dice_unit_size: int = 64
 ## The size of a pixel border to add between adjacent diced units inside atlas to prevent bleeding artifacts.
-@export_range(0, 128, 2) var padding: int = 2
+@export_range(0, 128) var padding: int = 1
 ## Relative inset of the diced units UV coordinates to prevent texture bleeding artifacts (in addition to padding).
 @export_range(0, 0.5, 0.001) var uv_inset: float = 0.0
 ## Whether to trim transparent areas on the built meshes. Disable to preserve aspect ratio of the source sprites.

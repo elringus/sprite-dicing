@@ -26,7 +26,7 @@ struct Args {
     #[arg(short, long, default_value_t = 64)]
     size: u32,
     /// The size of border between adjacent diced units, in pixels.
-    #[arg(short, long, default_value_t = 2)]
+    #[arg(short, long, default_value_t = 1)]
     pad: u32,
     /// Relative inset (in 0.0-1.0 range) of the diced units UV coordinates.
     #[arg(short, long, default_value_t = 0.0)]

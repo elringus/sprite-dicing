@@ -301,7 +301,7 @@ mod tests {
             .iter()
             .map(|t| t.units.len())
             .collect::<Vec<_>>();
-        assert_eq!(counts, vec![4, 1, 1]);
+        assert_eq!(counts, vec![3, 1, 1]);
     }
 
     #[test]
@@ -365,8 +365,8 @@ mod tests {
     #[test]
     fn units_are_stored_once_per_atlas() {
         let atlas = pack(vec![&RGB4X4, &PLT4X4], &defaults()).pop().unwrap();
-        assert_eq!(atlas.units.len(), 19);
-        assert_eq!(atlas.texture.width * atlas.texture.height, 19);
+        assert_eq!(atlas.units.len(), 4); // 3 solids and the palette block
+        assert_eq!(atlas.texture.width * atlas.texture.height, 20);
     }
 
     #[test]
