@@ -12,6 +12,7 @@ namespace SpriteDicing
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass")]
     public static unsafe class Native
     {
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct SourceSprite
         {
             public string Id { get; init; }
@@ -19,6 +20,7 @@ namespace SpriteDicing
             public Pivot? Pivot { get; init; }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Texture
         {
             public uint Width { get; init; }
@@ -26,6 +28,7 @@ namespace SpriteDicing
             public IReadOnlyList<Pixel> Pixels { get; init; }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Pixel : IEquatable<Pixel>
         {
             public readonly byte R;
@@ -46,6 +49,7 @@ namespace SpriteDicing
             public override int GetHashCode () => HashCode.Combine(R, G, B, A);
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Prefs
         {
             public uint UnitSize { get; init; }
@@ -60,12 +64,14 @@ namespace SpriteDicing
             public ProgressCallback OnProgress { get; init; }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Artifacts
         {
             public IReadOnlyList<Texture> Atlases { get; init; }
             public IReadOnlyList<DicedSprite> Sprites { get; init; }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct DicedSprite
         {
             public string Id { get; init; }
@@ -77,30 +83,21 @@ namespace SpriteDicing
             public Pivot Pivot { get; init; }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Vertex
         {
             public readonly float X;
             public readonly float Y;
-
-            public Vertex (float x, float y)
-            {
-                X = x;
-                Y = y;
-            }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct UV
         {
             public readonly float U;
             public readonly float V;
-
-            public UV (float u, float v)
-            {
-                U = u;
-                V = v;
-            }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Pivot
         {
             public readonly float X;
@@ -113,22 +110,16 @@ namespace SpriteDicing
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Rect
         {
             public readonly float X;
             public readonly float Y;
             public readonly float Width;
             public readonly float Height;
-
-            public Rect (float x, float y, float width, float height)
-            {
-                X = x;
-                Y = y;
-                Width = width;
-                Height = height;
-            }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public readonly struct Progress
         {
             public float Ratio { get; init; }

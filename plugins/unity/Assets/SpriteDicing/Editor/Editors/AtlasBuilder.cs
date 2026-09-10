@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -31,7 +30,7 @@ namespace SpriteDicing.Editors
                 var diced = Native.Dice(sources.Select(s => s.Native), BuildPrefs());
                 var atlases = ImportAtlases(diced.Atlases);
                 BuildDicedSprites(diced.Sprites, atlases);
-                UpdateCompressionRatio(sources.Select(s => s.Texture), atlases);
+                UpdateCompressionRatio(sources, atlases);
             }
             catch (Exception e)
             {
@@ -135,33 +134,39 @@ namespace SpriteDicing.Editors
             new DicedSpriteSerializer(serializedObject).Serialize(sprites);
         }
 
-        private void UpdateCompressionRatio (IEnumerable<Texture2D> sources, IEnumerable<Texture2D> atlases)
+        private void UpdateCompressionRatio (IReadOnlyList<SourceSprite> sources, IReadOnlyList<Texture2D> atlases)
         {
             AssetDatabase.SaveAssets();
-            var sourceSize = sources.Sum(GetAssetSize);
-            var atlasSize = atlases.Sum(GetAssetSize);
-            var dataSize = GetDataSize();
-            var ratio = sourceSize / (float)(atlasSize + dataSize);
-            var color = ratio > 2 ? EditorGUIUtility.isProSkin ? "lime" : "green" : ratio > 1 ? "yellow" : "red";
-            LastRatioValueProperty.stringValue = $"{sourceSize} KB / ({atlasSize} KB + {dataSize} KB) = <color={color}>{ratio:F2}</color>";
+            var srcTextures = sources.Select(s => s.Managed.texture).Distinct().Sum(GetTextureSize);
+            var srcSprites = sources.Sum(s => GetSpriteSize(s.Managed));
+            var dicedAtlases = atlases.Sum(GetTextureSize);
+            var dicedSprites = GetDicedSpritesSize();
+            var srcSize = srcTextures + srcSprites;
+            var dicedSize = dicedAtlases + dicedSprites;
+            var ratio = dicedSize > 0 ? srcSize / (float)dicedSize : 0f;
+            LastRatioValueProperty.stringValue = FormattableString.Invariant(
+                $"({Fmt(srcTextures)} + {Fmt(srcSprites)}) / ({Fmt(dicedAtlases)} + {Fmt(dicedSprites)}) = {ratio:F2}");
             LastRatioValueProperty.serializedObject.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssetIfDirty(target);
 
-            long GetAssetSize (UnityEngine.Object asset)
+            static long GetTextureSize (Texture2D tex) => tex.width * (long)tex.height * 4;
+            // 20 is Unity's per-vertex storage, a Vector3 position and Vector2 UV, and 2 is the ushort index
+            static long GetSpriteSize (Sprite spr) => spr.vertices.Length * 20L + spr.triangles.Length * 2L;
+
+            static long GetDicedSpritesSize ()
             {
-                var assetPath = AssetDatabase.GetAssetPath(asset);
-                if (!File.Exists(assetPath)) return 0;
-                return new FileInfo(assetPath).Length / 1024;
+                var size = 0L;
+                for (int i = 0; i < SpritesProperty.arraySize; i++)
+                    if (SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue is Sprite sprite)
+                        size += GetSpriteSize(sprite);
+                return size;
             }
 
-            long GetDataSize ()
-            {
-                var size = GetAssetSize(target);
-                if (DecoupleSpriteData)
-                    for (int i = SpritesProperty.arraySize - 1; i >= 0; i--)
-                        size += GetAssetSize(SpritesProperty.GetArrayElementAtIndex(i).objectReferenceValue);
-                return size / (EditorSettings.serializationMode == SerializationMode.ForceText ? 2 : 1);
-            }
+            static string Fmt (long bytes) => bytes switch {
+                >= 1048576L => FormattableString.Invariant($"{bytes / 1048576f:F1} MB"),
+                >= 1024L => FormattableString.Invariant($"{bytes / 1024f:F1} KB"),
+                _ => $"{bytes} B"
+            };
         }
 
         private void DisplayProgressBar (string activity, float progress)

@@ -40,7 +40,7 @@ namespace SpriteDicing
                 Texture = BuildTexture(sprite),
                 Pivot = GetPivot(sprite)
             },
-            Texture = sprite.texture
+            Managed = sprite
         };
 
         private string BuildID (string path, Sprite sprite)
