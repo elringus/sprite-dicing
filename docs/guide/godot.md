@@ -6,7 +6,7 @@ SpriteDicing has a [Godot](https://godotengine.org/) integration with a full-fle
 
 The plugin bundles pre-built binaries for Windows x64, Mac ARM and Linux x64. All the code is editor-only, so this covers all the Godot editor-supported platforms.
 
-Minimum supported Godot version: 4.6.
+Minimum supported Godot version: 4.7.
 
 ## Installation
 
@@ -122,7 +122,6 @@ sprite_node.atlas = new_atlas
    cd godot/addons/sprite_dicing/editor/native
    git clone https://github.com/godotengine/godot-cpp
    cd godot-cpp
-   git checkout 4.6  # Match your Godot version
    git submodule update --init --recursive
    ```
 
