@@ -5,3 +5,5 @@ members = ["lib", "abi", "cli", "tests"]
 [profile.release]
 lto = true
 panic = "abort"
+codegen-units = 1
+strip = true

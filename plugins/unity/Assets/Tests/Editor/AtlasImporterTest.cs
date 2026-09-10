@@ -15,7 +15,7 @@ namespace SpriteDicing.Test
         private static readonly Native.Texture mockTexture = new() {
             Width = 1,
             Height = 1,
-            Pixels = new[] { new Native.Pixel { R = 255, G = 255, B = 255, A = 255 } }
+            Pixels = new[] { new Native.Pixel(255, 255, 255, 255) }
         };
 
         private string basePath;

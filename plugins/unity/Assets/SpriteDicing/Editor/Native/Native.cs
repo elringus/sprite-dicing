@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
-using UnityEngine.TestTools;
 
 namespace SpriteDicing
 {
@@ -29,10 +28,10 @@ namespace SpriteDicing
 
         public readonly struct Pixel : IEquatable<Pixel>
         {
-            public byte R { get; init; }
-            public byte G { get; init; }
-            public byte B { get; init; }
-            public byte A { get; init; }
+            public readonly byte R;
+            public readonly byte G;
+            public readonly byte B;
+            public readonly byte A;
 
             public Pixel (byte r, byte g, byte b, byte a)
             {
@@ -61,26 +60,10 @@ namespace SpriteDicing
             public ProgressCallback OnProgress { get; init; }
         }
 
-        public class Artifacts : IDisposable
+        public readonly struct Artifacts
         {
-            public IReadOnlyList<Texture> Atlases { get; }
-            public IReadOnlyList<DicedSprite> Sprites { get; }
-
-            private readonly List<IntPtr> pts;
-
-            internal Artifacts (Texture[] atlases, DicedSprite[] sprites, List<IntPtr> pts)
-            {
-                Atlases = atlases;
-                Sprites = sprites;
-                this.pts = pts;
-            }
-
-            [ExcludeFromCoverage]
-            public void Dispose ()
-            {
-                foreach (var ptr in pts)
-                    Marshal.FreeHGlobal(ptr);
-            }
+            public IReadOnlyList<Texture> Atlases { get; init; }
+            public IReadOnlyList<DicedSprite> Sprites { get; init; }
         }
 
         public readonly struct DicedSprite
@@ -96,28 +79,54 @@ namespace SpriteDicing
 
         public readonly struct Vertex
         {
-            public float X { get; init; }
-            public float Y { get; init; }
+            public readonly float X;
+            public readonly float Y;
+
+            public Vertex (float x, float y)
+            {
+                X = x;
+                Y = y;
+            }
         }
 
         public readonly struct UV
         {
-            public float U { get; init; }
-            public float V { get; init; }
+            public readonly float U;
+            public readonly float V;
+
+            public UV (float u, float v)
+            {
+                U = u;
+                V = v;
+            }
         }
 
         public readonly struct Pivot
         {
-            public float X { get; init; }
-            public float Y { get; init; }
+            public readonly float X;
+            public readonly float Y;
+
+            public Pivot (float x, float y)
+            {
+                X = x;
+                Y = y;
+            }
         }
 
         public readonly struct Rect
         {
-            public float X { get; init; }
-            public float Y { get; init; }
-            public float Width { get; init; }
-            public float Height { get; init; }
+            public readonly float X;
+            public readonly float Y;
+            public readonly float Width;
+            public readonly float Height;
+
+            public Rect (float x, float y, float width, float height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
         }
 
         public readonly struct Progress
@@ -129,22 +138,32 @@ namespace SpriteDicing
         public delegate void ProgressCallback (Progress progress);
 
         [StructLayout(LayoutKind.Sequential)]
+        private struct CTexture
+        {
+            public uint width;
+            public uint height;
+            public Pixel* pixels;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         private struct CSourceSprite
         {
             public IntPtr id;
             public CTexture texture;
             [MarshalAs(UnmanagedType.I1)]
             public bool has_pivot;
-            public CPivot pivot;
+            public Pivot pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CTexture
+        private struct CProgress
         {
-            public uint width;
-            public uint height;
-            public CSlice pixels;
+            public float ratio;
+            public IntPtr activity;
         }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void CProgressCallback (CProgress progress, IntPtr userData);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct CPrefs
@@ -160,106 +179,79 @@ namespace SpriteDicing
             [MarshalAs(UnmanagedType.I1)]
             public bool atlas_pot;
             public float ppu;
-            public CPivot pivot;
-            [MarshalAs(UnmanagedType.I1)]
-            public bool has_progress_callback;
-            public CProgressCallback progress_callback;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CArtifacts
-        {
-            public CSlice atlases;
-            public CSlice sprites;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CResult
-        {
-            public IntPtr error;
-            public CArtifacts ok;
+            public Pivot pivot;
+            public CProgressCallback on_progress;
+            public IntPtr user_data;
         }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct CDicedSprite
         {
             public IntPtr id;
-            public ulong atlas;
-            public CSlice vertices;
-            public CSlice uvs;
-            public CSlice indices;
-            public CRect rect;
-            public CPivot pivot;
+            public nuint atlas_index;
+            public Vertex* vertices;
+            public UV* uvs;
+            public nuint vertex_count;
+            public uint* indices;
+            public nuint index_count;
+            public Rect rect;
+            public Pivot pivot;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct CVertex
+        private struct CResult
         {
-            public float x;
-            public float y;
+            public IntPtr error;
+            public CTexture* atlases;
+            public nuint atlas_count;
+            public CDicedSprite* sprites;
+            public nuint sprite_count;
         }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CUv
-        {
-            public float u;
-            public float v;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CRect
-        {
-            public float x;
-            public float y;
-            public float width;
-            public float height;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CPivot
-        {
-            public float x;
-            public float y;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CProgress
-        {
-            public float ratio;
-            public IntPtr activity;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct CSlice
-        {
-            public IntPtr ptr;
-            public ulong len;
-        }
-
-        private delegate void CProgressCallback (CProgress progress);
 
         public static Artifacts Dice (IEnumerable<SourceSprite> sprites, Prefs prefs)
         {
-            var pts = new List<IntPtr>();
-            var pins = new List<GCHandle>();
-            var result = dice(MarshalSourceSprites(sprites, pins), MarshalPrefs(prefs));
-            pins.ForEach(c => c.Free());
-
-            var error = Marshal.PtrToStringUTF8(result.error);
-            if (!string.IsNullOrEmpty(error))
-                throw new Exception(error);
-
-            return new Artifacts(
-                MarshalAtlases(result.ok.atlases, pts),
-                MarshalDicedSprites(result.ok.sprites, pts),
-                pts
-            );
+            var result = DiceNative(sprites, prefs);
+            try
+            {
+                var error = Marshal.PtrToStringUTF8(result.error);
+                if (error != null) throw new(error);
+                return new() {
+                    Atlases = MarshalArray(result.atlases, result.atlas_count, MarshalTexture),
+                    Sprites = MarshalArray(result.sprites, result.sprite_count, MarshalDicedSprite)
+                };
+            }
+            finally { sd_free(result); }
         }
 
-        [DllImport("sprite_dicing")]
-        private static extern CResult dice (CSlice sprites, CPrefs prefs);
+        [DllImport("sprite_dicing", CallingConvention = CallingConvention.Cdecl)]
+        private static extern CResult sd_dice (CSourceSprite* sprites, nuint count, in CPrefs prefs);
 
-        private static CPrefs MarshalPrefs (Prefs prefs) => new() {
+        [DllImport("sprite_dicing", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void sd_free (CResult result);
+
+        private static CResult DiceNative (IEnumerable<SourceSprite> sprites, Prefs prefs)
+        {
+            var pins = new List<GCHandle>();
+            var strings = new List<IntPtr>();
+            CProgressCallback onProgress = prefs.OnProgress is { } callback
+                ? (progress, _) => callback(MarshalProgress(progress))
+                : null;
+            try
+            {
+                var cSprites = sprites.Select(s => MarshalSourceSprite(s, pins, strings)).ToArray();
+                var cPrefs = MarshalPrefs(prefs, onProgress);
+                fixed (CSourceSprite* ptr = cSprites)
+                    return sd_dice(ptr, (nuint)cSprites.Length, in cPrefs);
+            }
+            finally
+            {
+                GC.KeepAlive(onProgress);
+                pins.ForEach(pin => pin.Free());
+                strings.ForEach(Marshal.FreeCoTaskMem);
+            }
+        }
+
+        private static CPrefs MarshalPrefs (Prefs prefs, CProgressCallback onProgress) => new() {
             unit_size = prefs.UnitSize,
             padding = prefs.Padding,
             uv_inset = prefs.UVInset,
@@ -267,127 +259,68 @@ namespace SpriteDicing
             atlas_size_limit = prefs.AtlasSizeLimit,
             atlas_square = prefs.AtlasSquare,
             atlas_pot = prefs.AtlasPOT,
-            pivot = MarshalPivot(prefs.Pivot),
             ppu = prefs.PPU,
-            has_progress_callback = prefs.OnProgress != null,
-            progress_callback = p => prefs.OnProgress(MarshalProgress(p))
+            pivot = prefs.Pivot,
+            on_progress = onProgress
         };
 
-        private static T[] MarshalSlice<T> (CSlice c, List<IntPtr> pts)
+        private static CSourceSprite MarshalSourceSprite (SourceSprite src, List<GCHandle> pins, List<IntPtr> strings)
         {
-            pts.Add(c.ptr);
-
-            var size = Marshal.SizeOf(typeof(T));
-            var structs = new T[c.len];
-
-            for (long i = 0; i < (int)c.len; i++)
-            {
-                var ins = new IntPtr(c.ptr.ToInt64() + (i * size));
-                structs[i] = Marshal.PtrToStructure<T>(ins);
-            }
-
-            return structs;
-        }
-
-        private static CSlice MarshalSlice<T> (IReadOnlyList<T> array, List<GCHandle> pins)
-        {
-            var pin = GCHandle.Alloc(array, GCHandleType.Pinned);
-            pins.Add(pin);
-            return new CSlice {
-                ptr = pin.AddrOfPinnedObject(),
-                len = (ulong)array.Count
+            var id = Marshal.StringToCoTaskMemUTF8(src.Id);
+            strings.Add(id);
+            return new() {
+                id = id,
+                texture = MarshalTexture(src.Texture, pins),
+                has_pivot = src.Pivot.HasValue,
+                pivot = src.Pivot.GetValueOrDefault()
             };
         }
 
-        private static Texture[] MarshalAtlases (CSlice c, List<IntPtr> pts)
+        private static CTexture MarshalTexture (Texture texture, List<GCHandle> pins)
         {
-            var atlasSlices = MarshalSlice<CTexture>(c, pts);
-            return atlasSlices.Select(s => MarshalTexture(s, pts)).ToArray();
+            var pixels = texture.Pixels as Pixel[] ?? texture.Pixels.ToArray();
+            var pin = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+            pins.Add(pin);
+            return new() {
+                width = texture.Width,
+                height = texture.Height,
+                pixels = (Pixel*)pin.AddrOfPinnedObject()
+            };
         }
 
-        private static CSlice MarshalSourceSprites (IEnumerable<SourceSprite> sources, List<GCHandle> pins)
+        private static Texture MarshalTexture (CTexture texture) => new() {
+            Width = texture.width,
+            Height = texture.height,
+            Pixels = MarshalArray(texture.pixels, texture.width * texture.height)
+        };
+
+        private static DicedSprite MarshalDicedSprite (CDicedSprite sprite) => new() {
+            Id = Marshal.PtrToStringUTF8(sprite.id),
+            Atlas = (int)sprite.atlas_index,
+            Vertices = MarshalArray(sprite.vertices, sprite.vertex_count),
+            UVs = MarshalArray(sprite.uvs, sprite.vertex_count),
+            Indices = MarshalArray((int*)sprite.indices, sprite.index_count),
+            Rect = sprite.rect,
+            Pivot = sprite.pivot
+        };
+
+        private static Progress MarshalProgress (CProgress progress) => new() {
+            Ratio = progress.ratio,
+            Activity = Marshal.PtrToStringUTF8(progress.activity)
+        };
+
+        private static T[] MarshalArray<T> (T* array, nuint count) where T : unmanaged
         {
-            var sprites = sources.Select(s => MarshalSourceSprite(s, pins)).ToArray();
-            return MarshalSlice(sprites, pins);
+            return new ReadOnlySpan<T>(array, (int)count).ToArray();
         }
 
-        private static CSourceSprite MarshalSourceSprite (SourceSprite s, List<GCHandle> pins) => new() {
-            id = Marshal.StringToHGlobalAnsi(s.Id),
-            texture = MarshalTexture(s.Texture, pins),
-            has_pivot = s.Pivot.HasValue,
-            pivot = new CPivot {
-                x = s.Pivot.GetValueOrDefault().X,
-                y = s.Pivot.GetValueOrDefault().Y
-            }
-        };
-
-        private static DicedSprite MarshalDicedSprite (CDicedSprite c, List<IntPtr> pts) => new() {
-            Id = Marshal.PtrToStringUTF8(c.id),
-            Atlas = (int)c.atlas,
-            Vertices = MarshalSlice<CVertex>(c.vertices, pts).Select(MarshalVertex).ToArray(),
-            UVs = MarshalSlice<CUv>(c.uvs, pts).Select(MarshalUV).ToArray(),
-            Indices = MarshalIndices(c.indices),
-            Rect = MarshalRect(c.rect),
-            Pivot = MarshalPivot(c.pivot)
-        };
-
-        private static DicedSprite[] MarshalDicedSprites (CSlice c, List<IntPtr> pts)
+        private static T[] MarshalArray<TNative, T> (TNative* array, nuint count, Func<TNative, T> marshal)
+            where TNative : unmanaged
         {
-            var sprites = MarshalSlice<CDicedSprite>(c, pts);
-            return sprites.Select(s => MarshalDicedSprite(s, pts)).ToArray();
+            var result = new T[(int)count];
+            for (var i = 0; i < result.Length; i++)
+                result[i] = marshal(array[i]);
+            return result;
         }
-
-        private static Vertex MarshalVertex (CVertex c) => new() {
-            X = c.x,
-            Y = c.y
-        };
-
-        private static UV MarshalUV (CUv c) => new() {
-            U = c.u,
-            V = c.v
-        };
-
-        private static int[] MarshalIndices (CSlice c)
-        {
-            var array = new int[c.len];
-            var longPtr = (ulong*)c.ptr;
-            for (int i = 0; i < array.Length; ++i)
-                array[i] = (int)*longPtr++;
-            return array;
-        }
-
-        private static Rect MarshalRect (CRect c) => new() {
-            X = c.x,
-            Y = c.y,
-            Width = c.width,
-            Height = c.height
-        };
-
-        private static Pivot MarshalPivot (CPivot c) => new() {
-            X = c.x,
-            Y = c.y
-        };
-
-        private static CPivot MarshalPivot (Pivot p) => new() {
-            x = p.X,
-            y = p.Y
-        };
-
-        private static Texture MarshalTexture (CTexture c, List<IntPtr> pts) => new() {
-            Width = c.width,
-            Height = c.height,
-            Pixels = MarshalSlice<Pixel>(c.pixels, pts)
-        };
-
-        private static CTexture MarshalTexture (Texture p, List<GCHandle> pins) => new() {
-            width = p.Width,
-            height = p.Height,
-            pixels = MarshalSlice(p.Pixels, pins)
-        };
-
-        private static Progress MarshalProgress (CProgress p) => new() {
-            Ratio = p.ratio,
-            Activity = Marshal.PtrToStringUTF8(p.activity)
-        };
     }
 }

@@ -1,26 +1,12 @@
-use std::ffi::c_char;
-use std::ptr::null;
+//! Data models of `sprite_dicing.h`, mirrored verbatim.
+
+#![allow(non_camel_case_types)]
+
+use std::ffi::{c_char, c_void};
 
 #[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CSourceSprite {
-    pub id: *const c_char,
-    pub texture: CTexture,
-    pub has_pivot: bool,
-    pub pivot: CPivot,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CTexture {
-    pub width: u32,
-    pub height: u32,
-    pub pixels: CSlice<CPixel>,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CPixel {
+#[derive(Clone, Copy, PartialEq, Default)]
+pub struct sd_pixel {
     pub r: u8,
     pub g: u8,
     pub b: u8,
@@ -29,7 +15,38 @@ pub struct CPixel {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct CPrefs {
+pub struct sd_texture {
+    pub width: u32,
+    pub height: u32,
+    pub pixels: *const sd_pixel,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct sd_pivot {
+    pub x: f32,
+    pub y: f32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct sd_source_sprite {
+    pub id: *const c_char,
+    pub texture: sd_texture,
+    pub has_pivot: bool,
+    pub pivot: sd_pivot,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct sd_progress {
+    pub ratio: f32,
+    pub activity: *const c_char,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct sd_prefs {
     pub unit_size: u32,
     pub padding: u32,
     pub uv_inset: f32,
@@ -38,54 +55,28 @@ pub struct CPrefs {
     pub atlas_square: bool,
     pub atlas_pot: bool,
     pub ppu: f32,
-    pub pivot: CPivot,
-    pub has_progress_callback: bool,
-    pub progress_callback: unsafe extern "C" fn(CProgress),
+    pub pivot: sd_pivot,
+    pub on_progress: Option<unsafe extern "C" fn(progress: sd_progress, user_data: *mut c_void)>,
+    pub user_data: *mut c_void,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct CResult {
-    pub error: *const c_char,
-    pub ok: CArtifacts,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CArtifacts {
-    pub atlases: CSlice<CTexture>,
-    pub sprites: CSlice<CDicedSprite>,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CDicedSprite {
-    pub id: *const c_char,
-    pub atlas_index: u64,
-    pub vertices: CSlice<CVertex>,
-    pub uvs: CSlice<CUv>,
-    pub indices: CSlice<u64>,
-    pub rect: CRect,
-    pub pivot: CPivot,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CVertex {
+pub struct sd_vertex {
     pub x: f32,
     pub y: f32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CUv {
+#[derive(Clone, Copy, Default)]
+pub struct sd_uv {
     pub u: f32,
     pub v: f32,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct CRect {
+pub struct sd_rect {
     pub x: f32,
     pub y: f32,
     pub width: f32,
@@ -94,30 +85,24 @@ pub struct CRect {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct CPivot {
-    pub x: f32,
-    pub y: f32,
+pub struct sd_diced_sprite {
+    pub id: *const c_char,
+    pub atlas_index: usize,
+    pub vertices: *const sd_vertex,
+    pub uvs: *const sd_uv,
+    pub vertex_count: usize,
+    pub indices: *const u32,
+    pub index_count: usize,
+    pub rect: sd_rect,
+    pub pivot: sd_pivot,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct CProgress {
-    pub ratio: f32,
-    pub activity: *const c_char,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CSlice<T> {
-    pub ptr: *const T,
-    pub len: u64,
-}
-
-impl<T> CSlice<T> {
-    pub const fn empty() -> CSlice<T> {
-        CSlice {
-            ptr: null(),
-            len: 0,
-        }
-    }
+pub struct sd_result {
+    pub error: *const c_char,
+    pub atlases: *const sd_texture,
+    pub atlas_count: usize,
+    pub sprites: *const sd_diced_sprite,
+    pub sprite_count: usize,
 }

@@ -56,7 +56,7 @@ namespace SpriteDicing
         {
             if (!keepPivot) return null;
             var pivot = sprite.pivot / sprite.rect.size;
-            return new Native.Pivot { X = pivot.x, Y = pivot.y };
+            return new Native.Pivot(pivot.x, pivot.y);
         }
 
         private static Native.Texture BuildTexture (Sprite sprite) => new() {
@@ -75,7 +75,7 @@ namespace SpriteDicing
             for (int x = (int)sprite.rect.xMin; x < sprite.rect.xMax; x++)
             {
                 var c = colors[y * sprite.texture.width + x];
-                pixels[idx++] = new() { R = c.r, G = c.g, B = c.b, A = c.a };
+                pixels[idx++] = new(c.r, c.g, c.b, c.a);
             }
             return pixels;
         }
@@ -86,7 +86,7 @@ namespace SpriteDicing
             for (int i = 0; i < colors.Length; i++)
             {
                 var c = colors[i];
-                pixels[i] = new() { R = c.r, G = c.g, B = c.b, A = c.a };
+                pixels[i] = new(c.r, c.g, c.b, c.a);
             }
             return pixels;
         }

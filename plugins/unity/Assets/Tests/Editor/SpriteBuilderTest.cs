@@ -93,7 +93,7 @@ namespace SpriteDicing.Test
                 AtlasSquare = square,
                 AtlasPOT = pot,
                 PPU = ppu,
-                Pivot = new Native.Pivot { X = pivot.x, Y = pivot.y },
+                Pivot = new Native.Pivot(pivot.x, pivot.y),
                 OnProgress = onProgress
             };
             var diced = Native.Dice(sources.Select(s => s.Native), prefs);
