@@ -38,11 +38,11 @@ namespace SpriteDicing.Test
         {
             var pixels = Load(BGRT)[0].Texture.Pixels;
             AreEqual(4, pixels.Count);
-            AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 255 }, pixels[0]);
+            AreEqual(new Native.Pixel(255, 0, 0, 255), pixels[0]);
             // Neighbors of clear pixels leak color components when reading with Unity's API.
-            AreEqual(new Native.Pixel { R = 255, G = 0, B = 0, A = 0 }, pixels[1]);
-            AreEqual(new Native.Pixel { R = 0, G = 0, B = 255, A = 255 }, pixels[2]);
-            AreEqual(new Native.Pixel { R = 0, G = 255, B = 0, A = 255 }, pixels[3]);
+            AreEqual(new Native.Pixel(255, 0, 0, 0), pixels[1]);
+            AreEqual(new Native.Pixel(0, 0, 255, 255), pixels[2]);
+            AreEqual(new Native.Pixel(0, 255, 0, 255), pixels[3]);
         }
 
         [Test]

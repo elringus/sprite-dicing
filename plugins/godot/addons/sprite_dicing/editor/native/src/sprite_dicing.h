@@ -1,5 +1,5 @@
-#ifndef SPRITE_DICING_H
-#define SPRITE_DICING_H
+#ifndef SPRITE_DICING_GODOT_H
+#define SPRITE_DICING_GODOT_H
 
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/variant/dictionary.hpp>

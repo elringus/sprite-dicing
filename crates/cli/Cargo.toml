@@ -18,5 +18,4 @@ image = { version = "0.25", default-features = false, features = [
 ] }
 rayon = "1.12"
 clap = { version = "4.6", features = ["derive"] }
-clap_derive = "4.6"
 indicatif = "0.18"

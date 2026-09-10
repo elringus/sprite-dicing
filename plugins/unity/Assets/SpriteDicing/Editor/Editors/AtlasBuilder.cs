@@ -28,7 +28,7 @@ namespace SpriteDicing.Editors
             try
             {
                 var sources = CollectSourceSprites();
-                using var diced = Native.Dice(sources.Select(s => s.Native), BuildPrefs());
+                var diced = Native.Dice(sources.Select(s => s.Native), BuildPrefs());
                 var atlases = ImportAtlases(diced.Atlases);
                 BuildDicedSprites(diced.Sprites, atlases);
                 UpdateCompressionRatio(sources.Select(s => s.Texture), atlases);
@@ -69,7 +69,7 @@ namespace SpriteDicing.Editors
             AtlasSquare = ForceSquare,
             AtlasPOT = ForcePot,
             PPU = PPU,
-            Pivot = new Native.Pivot { X = DefaultPivot.x, Y = DefaultPivot.y },
+            Pivot = new Native.Pivot(DefaultPivot.x, DefaultPivot.y),
             OnProgress = p => DisplayProgressBar(p.Activity, .25f + (p.Ratio / 4))
         };
 

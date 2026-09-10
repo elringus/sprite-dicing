@@ -1,4 +1,4 @@
-use clap_derive::ValueEnum;
+use clap::ValueEnum;
 use std::path::PathBuf;
 
 /// Result of a dicing operation executed via CLI.

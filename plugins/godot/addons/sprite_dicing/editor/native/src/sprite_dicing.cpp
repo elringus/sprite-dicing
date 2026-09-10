@@ -1,4 +1,5 @@
 #include "sprite_dicing.h"
+#include "abi/sprite_dicing.h"
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
@@ -34,19 +35,16 @@ namespace godot {
 void* SpriteDicing::lib_handle = nullptr;
 bool SpriteDicing::lib_loaded = false;
 
-struct CSlice { const void* ptr; uint64_t len; };
-struct CPivot { float x, y; };
-struct CRect { float x, y, width, height; };
-struct CVertex { float x, y; };
-struct CUv { float u, v; };
-struct CTexture { uint32_t width; uint32_t height; CSlice pixels; };
-struct CSourceSprite { const char* id; CTexture texture; bool has_pivot; CPivot pivot; };
-struct CPrefs { uint32_t unit_size; uint32_t padding; float uv_inset; bool trim_transparent; uint32_t atlas_size_limit; bool atlas_square; bool atlas_pot; float ppu; CPivot pivot; bool has_progress_callback; void* progress_callback; };
-struct CDicedSprite { const char* id; uint64_t atlas; CSlice vertices; CSlice uvs; CSlice indices; CRect rect; CPivot pivot; };
-struct CArtifacts { CSlice atlases; CSlice sprites; };
-struct CResult { const char* error; CArtifacts ok; };
+static decltype(&sd_dice) dice_fn = nullptr;
+static decltype(&sd_free) free_fn = nullptr;
 
-typedef CResult (*DiceFunc)(CSlice sprites, CPrefs prefs);
+struct ResultGuard {
+    sd_result result;
+    explicit ResultGuard(sd_result r) : result(r) {}
+    ~ResultGuard() { free_fn(result); }
+    ResultGuard(const ResultGuard&) = delete;
+    ResultGuard& operator=(const ResultGuard&) = delete;
+};
 
 void SpriteDicing::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_available"), &SpriteDicing::is_available);
@@ -77,10 +75,13 @@ bool SpriteDicing::load_library() {
     lib_handle = LOAD_LIB(path_utf8.get_data());
     if (!lib_handle) return false;
 
-    DiceFunc dice_func = (DiceFunc)GET_PROC(lib_handle, "dice");
-    if (!dice_func) {
+    dice_fn = (decltype(dice_fn))GET_PROC(lib_handle, "sd_dice");
+    free_fn = (decltype(free_fn))GET_PROC(lib_handle, "sd_free");
+    if (!dice_fn || !free_fn) {
         FREE_LIB(lib_handle);
         lib_handle = nullptr;
+        dice_fn = nullptr;
+        free_fn = nullptr;
         return false;
     }
 
@@ -96,14 +97,8 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         return result;
     }
 
-    DiceFunc dice_func = (DiceFunc)GET_PROC(lib_handle, "dice");
-    if (!dice_func) {
-        result["error"] = "Failed to get dice function";
-        return result;
-    }
-
-    std::vector<CSourceSprite> c_sprites;
-    std::vector<std::vector<uint8_t>> pixel_buffers;
+    std::vector<sd_source_sprite> c_sprites;
+    std::vector<PackedByteArray> pixel_buffers;
     std::vector<CharString> id_buffers;
 
     c_sprites.reserve(sources.size());
@@ -112,21 +107,23 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
 
     for (int i = 0; i < sources.size(); i++) {
         Dictionary src = sources[i];
+        uint32_t width = (uint32_t)(int)src["width"];
+        uint32_t height = (uint32_t)(int)src["height"];
+
+        pixel_buffers.push_back(src["pixels"]);
+        const PackedByteArray& pixels = pixel_buffers.back();
+        if ((uint64_t)pixels.size() != (uint64_t)width * height * sizeof(sd_pixel)) {
+            result["error"] = "Pixel buffer size doesn't match the texture dimensions";
+            return result;
+        }
 
         id_buffers.push_back(String(src["id"]).utf8());
-        pixel_buffers.push_back(std::vector<uint8_t>());
 
-        PackedByteArray pixels = src["pixels"];
-        auto& pixel_buf = pixel_buffers.back();
-        pixel_buf.resize(pixels.size());
-        memcpy(pixel_buf.data(), pixels.ptr(), pixels.size());
-
-        CSourceSprite c_sprite;
+        sd_source_sprite c_sprite;
         c_sprite.id = id_buffers.back().get_data();
-        c_sprite.texture.width = (uint32_t)(int)src["width"];
-        c_sprite.texture.height = (uint32_t)(int)src["height"];
-        c_sprite.texture.pixels.ptr = pixel_buf.data();
-        c_sprite.texture.pixels.len = pixel_buf.size() / 4;
+        c_sprite.texture.width = width;
+        c_sprite.texture.height = height;
+        c_sprite.texture.pixels = reinterpret_cast<const sd_pixel*>(pixels.ptr());
         c_sprite.has_pivot = src["has_pivot"];
         Vector2 pivot = src["pivot"];
         c_sprite.pivot.x = pivot.x;
@@ -135,7 +132,7 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
         c_sprites.push_back(c_sprite);
     }
 
-    CPrefs c_prefs;
+    sd_prefs c_prefs;
     c_prefs.unit_size = (uint32_t)(int)prefs["unit_size"];
     c_prefs.padding = (uint32_t)(int)prefs["padding"];
     c_prefs.uv_inset = prefs["uv_inset"];
@@ -147,33 +144,27 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
     Vector2 pivot = prefs["pivot"];
     c_prefs.pivot.x = pivot.x;
     c_prefs.pivot.y = pivot.y;
-    c_prefs.has_progress_callback = false;
-    c_prefs.progress_callback = nullptr;
+    c_prefs.on_progress = nullptr;
+    c_prefs.user_data = nullptr;
 
-    CSlice sprites_slice;
-    sprites_slice.ptr = c_sprites.data();
-    sprites_slice.len = c_sprites.size();
+    ResultGuard guard(dice_fn(c_sprites.data(), c_sprites.size(), &c_prefs));
+    const sd_result& c_result = guard.result;
 
-    CResult c_result = dice_func(sprites_slice, c_prefs);
-
-    if (c_result.error && c_result.error[0] != '\0') {
-        result["error"] = String(c_result.error);
+    if (c_result.error) {
+        result["error"] = String::utf8(c_result.error);
         return result;
     }
 
     Array atlases;
-    const CTexture* atlas_textures = static_cast<const CTexture*>(c_result.ok.atlases.ptr);
-    for (uint64_t i = 0; i < c_result.ok.atlases.len; i++) {
+    for (size_t i = 0; i < c_result.atlas_count; i++) {
+        const sd_texture& c_atlas = c_result.atlases[i];
         Dictionary atlas;
-        atlas["width"] = (int)atlas_textures[i].width;
-        atlas["height"] = (int)atlas_textures[i].height;
-
-        uint64_t pixel_count = atlas_textures[i].pixels.len;
-        uint64_t byte_count = pixel_count * 4;
+        atlas["width"] = (int)c_atlas.width;
+        atlas["height"] = (int)c_atlas.height;
 
         PackedByteArray pixels;
-        pixels.resize(byte_count);
-        memcpy(pixels.ptrw(), atlas_textures[i].pixels.ptr, byte_count);
+        pixels.resize((int64_t)c_atlas.width * c_atlas.height * sizeof(sd_pixel));
+        if (c_atlas.pixels) memcpy(pixels.ptrw(), c_atlas.pixels, pixels.size());
         atlas["pixels"] = pixels;
 
         atlases.push_back(atlas);
@@ -181,43 +172,32 @@ Dictionary SpriteDicing::dice(const Array& sources, const Dictionary& prefs) {
     result["atlases"] = atlases;
 
     Array sprites;
-    const CDicedSprite* diced_sprites = static_cast<const CDicedSprite*>(c_result.ok.sprites.ptr);
-    for (uint64_t i = 0; i < c_result.ok.sprites.len; i++) {
+    for (size_t i = 0; i < c_result.sprite_count; i++) {
+        const sd_diced_sprite& c_sprite = c_result.sprites[i];
         Dictionary sprite;
-        sprite["id"] = String(diced_sprites[i].id);
-        sprite["atlas_index"] = (int)diced_sprites[i].atlas;
+        sprite["id"] = String::utf8(c_sprite.id);
+        sprite["atlas_index"] = (int)c_sprite.atlas_index;
 
         PackedVector2Array vertices;
-        const CVertex* verts = static_cast<const CVertex*>(diced_sprites[i].vertices.ptr);
-        vertices.resize(diced_sprites[i].vertices.len);
-        for (uint64_t j = 0; j < diced_sprites[i].vertices.len; j++) {
-            vertices.set(j, Vector2(verts[j].x, verts[j].y));
+        PackedVector2Array uvs;
+        vertices.resize(c_sprite.vertex_count);
+        uvs.resize(c_sprite.vertex_count);
+        for (size_t j = 0; j < c_sprite.vertex_count; j++) {
+            vertices.set(j, Vector2(c_sprite.vertices[j].x, c_sprite.vertices[j].y));
+            uvs.set(j, Vector2(c_sprite.uvs[j].u, c_sprite.uvs[j].v));
         }
         sprite["vertices"] = vertices;
-
-        PackedVector2Array uvs;
-        const CUv* uv_data = static_cast<const CUv*>(diced_sprites[i].uvs.ptr);
-        uvs.resize(diced_sprites[i].uvs.len);
-        for (uint64_t j = 0; j < diced_sprites[i].uvs.len; j++) {
-            uvs.set(j, Vector2(uv_data[j].u, uv_data[j].v));
-        }
         sprite["uvs"] = uvs;
 
         PackedInt32Array indices;
-        const uint64_t* idx_data = static_cast<const uint64_t*>(diced_sprites[i].indices.ptr);
-        indices.resize(diced_sprites[i].indices.len);
-        for (uint64_t j = 0; j < diced_sprites[i].indices.len; j++) {
-            indices.set(j, (int32_t)idx_data[j]);
+        indices.resize(c_sprite.index_count);
+        for (size_t j = 0; j < c_sprite.index_count; j++) {
+            indices.set(j, (int32_t)c_sprite.indices[j]);
         }
         sprite["indices"] = indices;
 
-        sprite["rect"] = Rect2(
-            diced_sprites[i].rect.x,
-            diced_sprites[i].rect.y,
-            diced_sprites[i].rect.width,
-            diced_sprites[i].rect.height
-        );
-        sprite["pivot"] = Vector2(diced_sprites[i].pivot.x, diced_sprites[i].pivot.y);
+        sprite["rect"] = Rect2(c_sprite.rect.x, c_sprite.rect.y, c_sprite.rect.width, c_sprite.rect.height);
+        sprite["pivot"] = Vector2(c_sprite.pivot.x, c_sprite.pivot.y);
 
         sprites.push_back(sprite);
     }
