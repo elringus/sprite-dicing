@@ -12,7 +12,7 @@ config_version=5
 
 config/name="SpriteDicing"
 run/main_scene="uid://80lm2bnvb2ex"
-config/features=PackedStringArray("4.6", "GL Compatibility")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [editor_plugins]
 

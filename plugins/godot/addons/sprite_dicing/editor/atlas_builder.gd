@@ -180,8 +180,18 @@ func _update_compression_ratio(sources: Array, atlases: Array, sprites: Array) -
         sprite_size += 16
         sprite_size += 8
 
-    var ratio := float(source_size) / float(atlas_size + sprite_size)
-    _atlas.compression_ratio = "%.2f" % ratio
+    var diced_size := atlas_size + sprite_size
+    var ratio := float(source_size) / float(diced_size) if diced_size > 0 else 0.0
+    _atlas.compression_ratio = "%s / (%s + %s) = %.2f" % [
+        _format_size(source_size), _format_size(atlas_size), _format_size(sprite_size), ratio]
+
+
+func _format_size(bytes: int) -> String:
+    if bytes >= 1024 * 1024:
+        return "%.1f MB" % (bytes / (1024.0 * 1024.0))
+    if bytes >= 1024:
+        return "%.1f KB" % (bytes / 1024.0)
+    return "%d B" % bytes
 
 
 func _build_texture_path(idx: int) -> String:
