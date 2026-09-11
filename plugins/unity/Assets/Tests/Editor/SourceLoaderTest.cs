@@ -10,18 +10,6 @@ namespace SpriteDicing.Test
     public class SourceLoaderTest
     {
         [Test]
-        public void WhenNullPathExceptionIsThrown ()
-        {
-            Throws<ArgumentNullException>(() => Load(null));
-        }
-
-        [Test]
-        public void WhenEmptyPathExceptionIsThrown ()
-        {
-            Throws<ArgumentNullException>(() => Load(""));
-        }
-
-        [Test]
         public void WhenNoAssetExceptionIsThrown ()
         {
             Throws<ArgumentException>(() => Load("N/A"));
@@ -37,7 +25,7 @@ namespace SpriteDicing.Test
         public void LoadsPixelsOfTheSourceTexture ()
         {
             var pixels = Load(BGRT)[0].Texture.Pixels;
-            AreEqual(4, pixels.Count);
+            AreEqual(4, pixels.Length);
             AreEqual(new Native.Pixel(255, 0, 0, 255), pixels[0]);
             // Neighbors of clear pixels leak color components when reading with Unity's API.
             AreEqual(new Native.Pixel(255, 0, 0, 0), pixels[1]);

@@ -4,7 +4,7 @@ SpriteDicing has a [Unity](https://unity.com/) integration with a full-fledged a
 
 The extension package bundles pre-built binaries for Windows x64, Mac ARM and Linux x64. All the code is editor-only, so this covers all the Unity editor-supported platforms.
 
-Minimum supported Unity version: 2022.3. For previous Unity versions use the legacy v1.x branch: https://github.com/elringus/sprite-dicing/tree/arch/v1.
+Minimum supported Unity version: 6.3 LTS (6000.3). For previous Unity versions use the legacy v1.x branch: https://github.com/elringus/sprite-dicing/tree/arch/v1.
 
 ## Installation
 
