@@ -13,8 +13,6 @@ namespace SpriteDicing.Editors
         private readonly DicedSpriteAtlas target;
         private readonly string atlasPath;
 
-        private double? buildStartTime;
-
         public AtlasBuilder (SerializedObject serializedObject)
         {
             this.serializedObject = serializedObject;
@@ -76,11 +74,10 @@ namespace SpriteDicing.Editors
         {
             DisplayProgressBar("Importing atlases...", .5f);
             var textureSettings = GetExistingAtlasTextureSettings();
-            DeleteExistingAtlasTextures();
+            var exPaths = target.Textures.Select(AssetDatabase.GetAssetPath).ToArray();
             var basePath = atlasPath[..atlasPath.LastIndexOf('.')];
             var importer = new AtlasImporter(basePath, textureSettings, AtlasSizeLimit);
-            var paths = atlases.Select(importer.Save).ToArray();
-            AssetDatabase.Refresh();
+            var paths = atlases.Select((atlas, i) => importer.Save(atlas, exPaths.ElementAtOrDefault(i))).ToArray();
             var imported = new Texture2D[paths.Length];
             for (int i = 0; i < paths.Length; i++)
             {
@@ -89,6 +86,9 @@ namespace SpriteDicing.Editors
                 imported[i] = importer.Import(paths[i]);
             }
             SaveAtlasTextures(imported);
+            foreach (var path in exPaths.Except(paths))
+                if (!string.IsNullOrEmpty(path))
+                    AssetDatabase.DeleteAsset(path);
             return imported;
 
             TextureSettings GetExistingAtlasTextureSettings ()
@@ -98,18 +98,6 @@ namespace SpriteDicing.Editors
                 var texture = TexturesProperty.GetArrayElementAtIndex(0).objectReferenceValue as Texture;
                 if (texture) settings.TryImportExisting(texture);
                 return settings;
-            }
-
-            void DeleteExistingAtlasTextures ()
-            {
-                for (int i = TexturesProperty.arraySize - 1; i >= 0; i--)
-                {
-                    var texture = TexturesProperty.GetArrayElementAtIndex(i).objectReferenceValue;
-                    if (!texture) continue;
-                    AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(texture));
-                    UnityEngine.Object.DestroyImmediate(texture, true);
-                }
-                TexturesProperty.arraySize = 0;
             }
 
             void SaveAtlasTextures (IReadOnlyList<Texture2D> textures)
@@ -171,10 +159,7 @@ namespace SpriteDicing.Editors
 
         private void DisplayProgressBar (string activity, float progress)
         {
-            buildStartTime ??= EditorApplication.timeSinceStartup;
-            var elapsed = TimeSpan.FromSeconds(EditorApplication.timeSinceStartup - buildStartTime.Value);
-            var title = $"Building Diced Atlas ({elapsed:mm\\:ss})";
-            if (EditorUtility.DisplayCancelableProgressBar(title, activity, progress))
+            if (EditorUtility.DisplayCancelableProgressBar("Building Diced Atlas", activity, progress))
                 throw new OperationCanceledException("Diced sprite atlas building was canceled by the user.");
         }
     }

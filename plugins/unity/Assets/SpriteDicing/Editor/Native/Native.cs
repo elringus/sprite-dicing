@@ -25,7 +25,7 @@ namespace SpriteDicing
         {
             public uint Width { get; init; }
             public uint Height { get; init; }
-            public IReadOnlyList<Pixel> Pixels { get; init; }
+            public Pixel[] Pixels { get; init; }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -67,8 +67,8 @@ namespace SpriteDicing
         [StructLayout(LayoutKind.Sequential)]
         public readonly struct Artifacts
         {
-            public IReadOnlyList<Texture> Atlases { get; init; }
-            public IReadOnlyList<DicedSprite> Sprites { get; init; }
+            public Texture[] Atlases { get; init; }
+            public DicedSprite[] Sprites { get; init; }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -76,9 +76,9 @@ namespace SpriteDicing
         {
             public string Id { get; init; }
             public int Atlas { get; init; }
-            public IReadOnlyList<Vertex> Vertices { get; init; }
-            public IReadOnlyList<UV> UVs { get; init; }
-            public IReadOnlyList<int> Indices { get; init; }
+            public Vertex[] Vertices { get; init; }
+            public UV[] UVs { get; init; }
+            public int[] Indices { get; init; }
             public Rect Rect { get; init; }
             public Pivot Pivot { get; init; }
         }
@@ -269,8 +269,7 @@ namespace SpriteDicing
 
         private static CTexture MarshalTexture (Texture texture, List<GCHandle> pins)
         {
-            var pixels = texture.Pixels as Pixel[] ?? texture.Pixels.ToArray();
-            var pin = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+            var pin = GCHandle.Alloc(texture.Pixels, GCHandleType.Pinned);
             pins.Add(pin);
             return new() {
                 width = texture.Width,

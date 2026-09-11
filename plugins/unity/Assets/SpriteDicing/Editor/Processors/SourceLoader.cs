@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,21 +24,21 @@ namespace SpriteDicing
             this.keepPivot = keepPivot;
         }
 
-        public void Load (string sourcePath, ICollection<SourceSprite> sources)
+        public void Load (string path, ICollection<SourceSprite> sources)
         {
-            if (string.IsNullOrEmpty(sourcePath))
-                throw new ArgumentNullException(nameof(sourcePath));
-            if (AssetImporter.GetAtPath(sourcePath) is not TextureImporter importer)
-                throw new ArgumentException($"Invalid source path: '{sourcePath}' is not a sprite.");
+            if (AssetImporter.GetAtPath(path) is not TextureImporter importer)
+                throw new ArgumentException($"Invalid source path: '{path}' is not a sprite.");
             EnsureReadable(importer);
-            foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<Sprite>())
-                sources.Add(BuildSource(sourcePath, sprite));
+            var colors = AssetDatabase.LoadAssetAtPath<Texture2D>(path).GetPixels32();
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>();
+            foreach (var sprite in sprites.OrderBy(s => s.name, StringComparer.Ordinal))
+                sources.Add(BuildSource(path, sprite, colors));
         }
 
-        private SourceSprite BuildSource (string path, Sprite sprite) => new() {
+        private SourceSprite BuildSource (string path, Sprite sprite, Color32[] colors) => new() {
             Native = new Native.SourceSprite {
                 Id = BuildID(path, sprite),
-                Texture = BuildTexture(sprite),
+                Texture = BuildTexture(sprite, colors),
                 Pivot = GetPivot(sprite)
             },
             Managed = sprite
@@ -59,40 +60,29 @@ namespace SpriteDicing
             return new Native.Pivot(pivot.x, pivot.y);
         }
 
-        private static Native.Texture BuildTexture (Sprite sprite) => new() {
+        private static Native.Texture BuildTexture (Sprite sprite, Color32[] colors) => new() {
             Width = (uint)sprite.rect.width,
             Height = (uint)sprite.rect.height,
-            Pixels = BuildPixels(sprite)
+            Pixels = BuildPixels(sprite, colors)
         };
 
-        private static Native.Pixel[] BuildPixels (Sprite sprite)
+        private static Native.Pixel[] BuildPixels (Sprite sprite, Color32[] colors)
         {
-            var colors = sprite.texture.GetPixels32(); // GetPixelData is actually slower in the editor.
-            if (IsSingleMode(sprite)) return BuildPixelsSingle(colors); // This is much faster for large sprites.
-            var pixels = new Native.Pixel[(int)(sprite.rect.width * sprite.rect.height)];
-            int idx = 0;
-            for (int y = (int)sprite.rect.yMin; y < sprite.rect.yMax; y++)
-            for (int x = (int)sprite.rect.xMin; x < sprite.rect.xMax; x++)
-            {
-                var c = colors[y * sprite.texture.width + x];
-                pixels[idx++] = new(c.r, c.g, c.b, c.a);
-            }
-            return pixels;
-        }
-
-        private static Native.Pixel[] BuildPixelsSingle (Color32[] colors)
-        {
-            var pixels = new Native.Pixel[colors.Length];
-            for (int i = 0; i < colors.Length; i++)
-            {
-                var c = colors[i];
-                pixels[i] = new(c.r, c.g, c.b, c.a);
-            }
+            // Both structs are packed RGBA bytes; bulk copying avoids a managed call per pixel.
+            var span = MemoryMarshal.Cast<Color32, Native.Pixel>(colors.AsSpan());
+            var w = (int)sprite.rect.width;
+            var h = (int)sprite.rect.height;
+            if (w == sprite.texture.width && w * h == colors.Length) return span.ToArray();
+            var pixels = new Native.Pixel[w * h];
+            var start = (int)sprite.rect.y * sprite.texture.width + (int)sprite.rect.x;
+            for (int y = 0; y < h; y++)
+                span.Slice(start + y * sprite.texture.width, w).CopyTo(pixels.AsSpan(y * w, w));
             return pixels;
         }
 
         private static void EnsureReadable (TextureImporter importer)
         {
+            if (importer.isReadable && !importer.crunchedCompression && !EditorUtility.IsDirty(importer)) return;
             importer.isReadable = true;
             importer.crunchedCompression = false;
             importer.SaveAndReimport();

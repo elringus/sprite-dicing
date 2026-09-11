@@ -54,13 +54,13 @@ namespace SpriteDicing
             foreach (var kv in platforms)
                 if (kv.Key == defaultPlatformId || kv.Value.overridden)
                     importer.SetPlatformTextureSettings(kv.Value);
+                else importer.ClearPlatformTextureSettings(kv.Key);
         }
 
         [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
         private static string[] GetPlatformIds ()
         {
             // https://github.com/Unity-Technologies/UnityCsReference/blob/2019.4/Editor/Mono/BuildPipeline/BuildPlatform.cs
-
             Type platformsType = default, platformType = default;
             foreach (var type in Assembly.GetAssembly(typeof(Editor)).GetTypes())
                 if (type.Name == "BuildPlatforms") platformsType = type;
