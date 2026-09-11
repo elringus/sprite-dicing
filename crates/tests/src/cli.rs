@@ -1,7 +1,7 @@
 //! End-to-end tests of the command line utility.
 
 use crate::common::*;
-use cli::models::*;
+use dicing::models::*;
 use rand::{RngExt, distr::Alphanumeric};
 use serde_json::Value;
 use sprite_dicing::{Artifacts, DicedSprite, Pivot, Prefs, Rect, Uv, Vertex};
@@ -22,7 +22,7 @@ fn mono_reproduced() {
         ..FsPrefs::default()
     };
 
-    cli::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
+    dicing::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
     assert_repro(MONO, build_arts(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();
 }
@@ -42,7 +42,7 @@ fn nested_reproduced() {
         ..FsPrefs::default()
     };
 
-    cli::dice_dir(&DIR[NESTED], &fs_prefs, &prefs).unwrap();
+    dicing::dice_dir(&DIR[NESTED], &fs_prefs, &prefs).unwrap();
     assert_repro(NESTED, build_arts(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();
 }
@@ -62,7 +62,7 @@ fn exotic_reproduced() {
         ..FsPrefs::default()
     };
 
-    cli::dice_dir(&DIR[EXOTIC], &fs_prefs, &prefs).unwrap();
+    dicing::dice_dir(&DIR[EXOTIC], &fs_prefs, &prefs).unwrap();
     assert_repro(EXOTIC, build_arts(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();
 }
@@ -73,7 +73,7 @@ fn errs_on_invalid_source() {
     let prefs = Prefs::default();
     let fs_prefs = FsPrefs::default();
     assert!(
-        cli::dice_dir(&DIR[INVALID], &fs_prefs, &prefs)
+        dicing::dice_dir(&DIR[INVALID], &fs_prefs, &prefs)
             .is_err_and(|e| e.to_string().contains("error decoding"))
     );
     fs::remove_dir_all(out_dir).unwrap();
@@ -94,7 +94,7 @@ fn can_write_webp() {
         ..FsPrefs::default()
     };
 
-    cli::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
+    dicing::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
     assert!(Path::new(&format!("{}/atlas_0.webp", out_dir.to_str().unwrap())).exists());
     assert_repro(MONO, build_arts(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();
@@ -115,7 +115,7 @@ fn can_write_tga() {
         ..FsPrefs::default()
     };
 
-    cli::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
+    dicing::dice_dir(&DIR[MONO], &fs_prefs, &prefs).unwrap();
     assert!(Path::new(&format!("{}/atlas_0.tga", out_dir.to_str().unwrap())).exists());
     assert_repro(MONO, build_arts(&out_dir, &fs_prefs), &prefs);
     fs::remove_dir_all(out_dir).unwrap();

@@ -12,6 +12,18 @@ The simplest way to use SpriteDicing is via standalone CLI utility. Download lat
 ./dice-windows-x64.exe dir
 ```
 
+Alternatively, when [Rust toolchain](https://rustup.rs) is available, install the CLI from [crates.io](https://crates.io/crates/dicing):
+
+```sh
+cargo install dicing
+```
+
+— and run it with the directory where source sprites/textures are located:
+
+```sh
+dicing dir
+```
+
 Tool can read textures in the following formats:
 
 - PNG

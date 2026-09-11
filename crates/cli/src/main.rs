@@ -1,7 +1,7 @@
 //! Command line interface of the library.
 
 use clap::Parser;
-use cli::models::*;
+use dicing::models::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use sprite_dicing::{Pivot, Prefs};
 use std::path::PathBuf;
@@ -79,5 +79,5 @@ fn main() -> Result<()> {
             bar.set_message(p.activity);
         })),
     };
-    cli::dice_dir(&args.dir, &fs_prefs, &prefs)
+    dicing::dice_dir(&args.dir, &fs_prefs, &prefs)
 }
