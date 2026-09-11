@@ -5,11 +5,15 @@ on:
   schedule:
     - cron: '45 3 * * *'
 
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v11
         id: stale
         with:
           stale-issue-label: stale
