@@ -7,6 +7,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write # codecov upload via oidc
+
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings" # Fail on Clippy warnings
@@ -16,11 +20,11 @@ jobs:
     name: test and cover
     runs-on: ubuntu-latest
     container:
-      image: xd009642/tarpaulin
+      image: xd009642/tarpaulin:0.37.2
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check formatting
         run: |
@@ -34,13 +38,19 @@ jobs:
           rustup component add clippy
           cargo clippy --all-targets --all-features
 
+      - name: Run doc tests
+        run: |
+          cd crates
+          cargo test -p sprite_dicing --all-features --doc
+
       - name: Generate code coverage
         run: |
           cd crates
           cargo tarpaulin --all-features --include-files lib/*/* --timeout 120 --out xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
+          use_oidc: true
+          files: crates/cobertura.xml
           fail_ci_if_error: true

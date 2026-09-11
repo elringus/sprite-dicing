@@ -1,17 +1,18 @@
 name: lint
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-  lint:
-    name: lint editorconfig
+  editor:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: editorconfig
-      run: |
-          docker run --rm --volume=$PWD:/check mstruebing/editorconfig-checker ec --exclude ".git|\.meta$|\.anim$|\.dds$|\.controller$|\.asset$|\.unity$|\.asmdef$|ProjectSettings"
+      - uses: actions/checkout@v7
+      - uses: editorconfig-checker/action-editorconfig-checker@v3.0.0
+      - name: editorconfig
+        run: editorconfig-checker --exclude 'docs/public/imgit/|\.meta$|\.anim$|\.dds$|\.controller$|\.asset$|\.unity$|\.asmdef$|ProjectSettings'
