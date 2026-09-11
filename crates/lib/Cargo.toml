@@ -1,6 +1,6 @@
 [package]
 name = "sprite_dicing"
-version = "0.1.4"
+version = "1.0.0"
 edition = "2024"
 description = "Cross-engine tool for lossless compression of sprite textures with identical areas."
 license = "MIT"
