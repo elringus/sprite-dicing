@@ -62,33 +62,34 @@ namespace SpriteDicing.Editors
             EditorGUILayout.PropertyField(TexturesProperty, true);
             EditorGUILayout.PropertyField(SpritesProperty, true);
             EditorGUI.EndDisabledGroup();
-            DrawMeter(EditorGUI.PrefixLabel(EditorGUILayout.GetControlRect(), ratioContent), LastRatioValue);
+            DrawCompressionMeter();
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(DecoupleSpriteDataProperty, decoupleSpriteDataContent);
+        }
 
-            static void DrawMeter (Rect rect, string value)
+        private void DrawCompressionMeter ()
+        {
+            var rect = EditorGUI.PrefixLabel(EditorGUILayout.GetControlRect(), ratioContent);
+            var idx = LastRatioValue.LastIndexOf("= ", StringComparison.Ordinal);
+            if (idx < 0 || !float.TryParse(LastRatioValue[(idx + 2)..],
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out var ratio))
             {
-                var idx = value.LastIndexOf("= ", StringComparison.Ordinal);
-                if (idx < 0 || !float.TryParse(value[(idx + 2)..],
-                        NumberStyles.Float, CultureInfo.InvariantCulture, out var ratio))
-                {
-                    EditorGUI.LabelField(rect, value);
-                    return;
-                }
-                var pro = EditorGUIUtility.isProSkin;
-                var dec = ratio > 0 ? 1f - 1f / ratio : 0f;
-                var per = Mathf.RoundToInt(dec * 100);
-                var grade = per >= 75 ? "GREAT" : per == 69 ? "NICE" : per >= 50 ? "GOOD" : per >= 25 ? "FINE" : "BAD";
-                var fill = grade switch {
-                    "GREAT" => pro ? new Color(.12f, .36f, .18f) : new Color(.60f, .85f, .62f),
-                    "NICE" or "GOOD" => pro ? new Color(.32f, .42f, .12f) : new Color(.80f, .88f, .50f),
-                    "FINE" => pro ? new Color(.45f, .34f, .05f) : new Color(.95f, .82f, .45f),
-                    _ => pro ? new Color(.55f, .16f, .16f) : new Color(.93f, .60f, .60f)
-                };
-                EditorGUI.DrawRect(rect, pro ? new Color(.16f, .16f, .16f) : new Color(.72f, .72f, .72f));
-                EditorGUI.DrawRect(new(rect.x, rect.y, rect.width * Mathf.Clamp01(dec), rect.height), fill);
-                EditorGUI.LabelField(rect, new GUIContent($"{per}% ({grade})", value), meterStyle);
+                EditorGUI.LabelField(rect, LastRatioValue);
+                return;
             }
+            var pro = EditorGUIUtility.isProSkin;
+            var dec = ratio > 0 ? 1f - 1f / ratio : 0f;
+            var per = Mathf.RoundToInt(dec * 100);
+            var grade = per >= 75 ? "GREAT" : per == 69 ? "NICE" : per >= 50 ? "GOOD" : per >= 25 ? "FINE" : "BAD";
+            var fill = grade switch {
+                "GREAT" => pro ? new Color(.12f, .36f, .18f) : new Color(.60f, .85f, .62f),
+                "NICE" or "GOOD" => pro ? new Color(.32f, .42f, .12f) : new Color(.80f, .88f, .50f),
+                "FINE" => pro ? new Color(.45f, .34f, .05f) : new Color(.95f, .82f, .45f),
+                _ => pro ? new Color(.55f, .16f, .16f) : new Color(.93f, .60f, .60f)
+            };
+            EditorGUI.DrawRect(rect, pro ? new Color(.16f, .16f, .16f) : new Color(.72f, .72f, .72f));
+            EditorGUI.DrawRect(new(rect.x, rect.y, rect.width * Mathf.Clamp01(dec), rect.height), fill);
+            EditorGUI.LabelField(rect, new GUIContent($"{per}% ({grade})", LastRatioValue), meterStyle);
         }
 
         private void DrawPaddingSlider ()
